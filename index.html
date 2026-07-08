@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тренажер умножения</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --line: #d9e0ea;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --bad: #b91c1c;
+      --good: #15803d;
+      --focus: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel,
+    .trainer {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .trainer {
+      min-height: 520px;
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice {
+      min-width: 48px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .choice.active,
+    .choice[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .choice:focus-visible,
+    .answer:focus-visible,
+    .primary:focus-visible,
+    .secondary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .toggle-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 72px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .task {
+      display: grid;
+      gap: 16px;
+      justify-items: center;
+      padding: 28px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      text-align: center;
+    }
+
+    .example {
+      min-height: 88px;
+      font-size: clamp(46px, 9vw, 78px);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .answer-row {
+      display: flex;
+      width: min(420px, 100%);
+      gap: 10px;
+    }
+
+    .answer {
+      width: 100%;
+      height: 52px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .primary,
+    .secondary {
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .secondary {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+    }
+
+    .message {
+      min-height: 28px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .message.good {
+      color: var(--good);
+    }
+
+    .message.bad {
+      color: var(--bad);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 20px, 520px);
+        padding: 16px 0;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .trainer {
+        min-height: auto;
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .answer-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Тренажер умножения</h1>
+
+    <div class="layout">
+      <section class="panel" aria-label="Настройки тренировки">
+        <h2>Настройки</h2>
+
+        <div class="field">
+          <span class="label">Таблица</span>
+          <div class="choices" id="tables"></div>
+        </div>
+
+        <div class="field">
+          <span class="label">Множители</span>
+          <div class="toggle-row">
+            <button class="choice active" id="allNumbers" type="button" aria-pressed="true">Все 1-20</button>
+            <button class="choice" id="customNumbers" type="button" aria-pressed="false">Выбрать</button>
+          </div>
+        </div>
+
+        <div class="field hidden" id="numberPickerWrap">
+          <span class="label">Числа</span>
+          <div class="numbers" id="numbers"></div>
+        </div>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="toggle-row">
+            <button class="choice active" id="timedMode" type="button" aria-pressed="true">1 минута</button>
+            <button class="choice" id="freeMode" type="button" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="startBtn" type="button">Старт</button>
+          <button class="secondary" id="resetBtn" type="button">Сброс</button>
+        </div>
+      </section>
+
+      <section class="trainer" aria-label="Тренировка">
+        <div class="stats">
+          <div class="stat">
+            <span>Время</span>
+            <strong id="timeLeft">1:00</strong>
+          </div>
+          <div class="stat">
+            <span>Верно</span>
+            <strong id="correctCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Ошибки</span>
+            <strong id="wrongCount">0</strong>
+          </div>
+        </div>
+
+        <div class="task">
+          <div class="example" id="example">5 × 1</div>
+          <form class="answer-row" id="answerForm">
+            <input class="answer" id="answer" type="number" inputmode="numeric" autocomplete="off" aria-label="Ответ" disabled>
+            <button class="primary" type="submit">Ответить</button>
+          </form>
+          <div class="message" id="message">Нажмите “Старт”</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const tableOptions = [5, 8, 11, 17, 35];
+    const allMultipliers = Array.from({ length: 20 }, (_, index) => index + 1);
+
+    const state = {
+      selectedTables: new Set([5]),
+      mode: 'all',
+      timeMode: 'timed',
+      selected: new Set(allMultipliers),
+      currentTable: 5,
+      currentMultiplier: 1,
+      correct: 0,
+      wrong: 0,
+      secondsLeft: 60,
+      running: false,
+      timer: null,
+      lastQuestion: ''
+    };
+
+    const tablesEl = document.querySelector('#tables');
+    const numbersEl = document.querySelector('#numbers');
+    const numberPickerWrap = document.querySelector('#numberPickerWrap');
+    const allNumbersBtn = document.querySelector('#allNumbers');
+    const customNumbersBtn = document.querySelector('#customNumbers');
+    const timedModeBtn = document.querySelector('#timedMode');
+    const freeModeBtn = document.querySelector('#freeMode');
+    const startBtn = document.querySelector('#startBtn');
+    const resetBtn = document.querySelector('#resetBtn');
+    const answerForm = document.querySelector('#answerForm');
+    const answerInput = document.querySelector('#answer');
+    const exampleEl = document.querySelector('#example');
+    const messageEl = document.querySelector('#message');
+    const timeLeftEl = document.querySelector('#timeLeft');
+    const correctCountEl = document.querySelector('#correctCount');
+    const wrongCountEl = document.querySelector('#wrongCount');
+
+    function makeButton(text, active, onClick) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `choice${active ? ' active' : ''}`;
+      button.textContent = text;
+      button.setAttribute('aria-pressed', String(active));
+      button.addEventListener('click', onClick);
+      return button;
+    }
+
+    function renderTables() {
+      tablesEl.innerHTML = '';
+      tableOptions.forEach((table) => {
+        tablesEl.appendChild(makeButton(table, state.selectedTables.has(table), () => {
+          if (state.selectedTables.has(table) && state.selectedTables.size > 1) {
+            state.selectedTables.delete(table);
+          } else {
+            state.selectedTables.add(table);
+          }
+          renderTables();
+          if (!state.running) {
+            setNextQuestion();
+            showQuestion();
+          }
+        }));
+      });
+    }
+
+    function renderNumbers() {
+      numbersEl.innerHTML = '';
+      allMultipliers.forEach((number) => {
+        numbersEl.appendChild(makeButton(number, state.selected.has(number), () => {
+          if (state.selected.has(number) && state.selected.size > 1) {
+            state.selected.delete(number);
+          } else {
+            state.selected.add(number);
+          }
+          renderNumbers();
+          if (!state.running) {
+            setNextQuestion();
+            showQuestion();
+          }
+        }));
+      });
+    }
+
+    function setPressed(button, active) {
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
+
+    function setNumberMode(mode) {
+      state.mode = mode;
+      setPressed(allNumbersBtn, mode === 'all');
+      setPressed(customNumbersBtn, mode === 'custom');
+      numberPickerWrap.classList.toggle('hidden', mode !== 'custom');
+      if (mode === 'all') {
+        state.selected = new Set(allMultipliers);
+        renderNumbers();
+      }
+      setNextQuestion();
+      showQuestion();
+    }
+
+    function setTimeMode(mode) {
+      state.timeMode = mode;
+      setPressed(timedModeBtn, mode === 'timed');
+      setPressed(freeModeBtn, mode === 'free');
+      state.secondsLeft = mode === 'timed' ? 60 : null;
+      updateStats();
+    }
+
+    function getPool() {
+      return state.mode === 'all' ? allMultipliers : [...state.selected];
+    }
+
+    function setNextQuestion() {
+      const tables = [...state.selectedTables];
+      const multipliers = getPool();
+      let nextTable = tables[Math.floor(Math.random() * tables.length)];
+      let nextMultiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
+      let nextQuestion = `${nextTable}x${nextMultiplier}`;
+
+      if (tables.length * multipliers.length > 1) {
+        while (nextQuestion === state.lastQuestion) {
+          nextTable = tables[Math.floor(Math.random() * tables.length)];
+          nextMultiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
+          nextQuestion = `${nextTable}x${nextMultiplier}`;
+        }
+      }
+
+      state.currentTable = nextTable;
+      state.currentMultiplier = nextMultiplier;
+      state.lastQuestion = nextQuestion;
+    }
+
+    function showQuestion() {
+      exampleEl.textContent = `${state.currentTable} × ${state.currentMultiplier}`;
+    }
+
+    function formatTime(seconds) {
+      if (seconds === null) {
+        return '∞';
+      }
+      return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    }
+
+    function updateStats() {
+      timeLeftEl.textContent = formatTime(state.secondsLeft);
+      correctCountEl.textContent = state.correct;
+      wrongCountEl.textContent = state.wrong;
+    }
+
+    function setMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = `message ${type || ''}`.trim();
+    }
+
+    function start() {
+      stopTimer();
+      state.correct = 0;
+      state.wrong = 0;
+      state.running = true;
+      state.secondsLeft = state.timeMode === 'timed' ? 60 : null;
+      setNextQuestion();
+      answerInput.disabled = false;
+      answerInput.value = '';
+      answerInput.focus();
+      showQuestion();
+      updateStats();
+      setMessage('Решайте пример', '');
+
+      if (state.timeMode === 'timed') {
+        state.timer = window.setInterval(() => {
+          state.secondsLeft -= 1;
+          updateStats();
+          if (state.secondsLeft <= 0) {
+            finish();
+          }
+        }, 1000);
+      }
+    }
+
+    function finish() {
+      stopTimer();
+      state.running = false;
+      answerInput.disabled = true;
+      setMessage(`Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
+    }
+
+    function reset() {
+      stopTimer();
+      state.correct = 0;
+      state.wrong = 0;
+      state.running = false;
+      state.secondsLeft = state.timeMode === 'timed' ? 60 : null;
+      setNextQuestion();
+      answerInput.disabled = true;
+      answerInput.value = '';
+      showQuestion();
+      updateStats();
+      setMessage('Нажмите “Старт”', '');
+    }
+
+    function stopTimer() {
+      if (state.timer) {
+        window.clearInterval(state.timer);
+        state.timer = null;
+      }
+    }
+
+    answerForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!state.running) {
+        return;
+      }
+
+      const userAnswer = Number(answerInput.value);
+      const rightAnswer = state.currentTable * state.currentMultiplier;
+
+      if (userAnswer === rightAnswer) {
+        state.correct += 1;
+        setMessage('Верно', 'good');
+      } else {
+        state.wrong += 1;
+        setMessage(`Ошибка: ${state.currentTable} × ${state.currentMultiplier} = ${rightAnswer}`, 'bad');
+      }
+
+      setNextQuestion();
+      answerInput.value = '';
+      showQuestion();
+      updateStats();
+      answerInput.focus();
+    });
+
+    allNumbersBtn.addEventListener('click', () => setNumberMode('all'));
+    customNumbersBtn.addEventListener('click', () => setNumberMode('custom'));
+    timedModeBtn.addEventListener('click', () => setTimeMode('timed'));
+    freeModeBtn.addEventListener('click', () => setTimeMode('free'));
+    startBtn.addEventListener('click', start);
+    resetBtn.addEventListener('click', reset);
+
+    renderTables();
+    renderNumbers();
+    showQuestion();
+    updateStats();
+  </script>
+</body>
+</html>
