@@ -128,6 +128,19 @@
       gap: 8px;
     }
 
+    .time-choices {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .hint {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
     .numbers {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -160,6 +173,21 @@
       margin-top: 6px;
       font-size: 26px;
       line-height: 1;
+    }
+
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #e7edf3;
+    }
+
+    .progress span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.2s linear;
     }
 
     .task {
@@ -227,6 +255,7 @@
 
     .message {
       min-height: 28px;
+      text-align: center;
       font-size: 18px;
       font-weight: 800;
     }
@@ -283,8 +312,9 @@
         <h2>Настройки</h2>
 
         <div class="field">
-          <span class="label">Таблица</span>
+          <span class="label">Таблицы</span>
           <div class="choices" id="tables"></div>
+          <p class="hint" id="tableHint">Можно выбрать несколько таблиц</p>
         </div>
 
         <div class="field">
@@ -302,9 +332,11 @@
 
         <div class="field">
           <span class="label">Время</span>
-          <div class="toggle-row">
-            <button class="choice active" id="timedMode" type="button" aria-pressed="true">1 минута</button>
-            <button class="choice" id="freeMode" type="button" aria-pressed="false">Без лимита</button>
+          <div class="time-choices" id="timeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
           </div>
         </div>
 
@@ -329,12 +361,13 @@
             <strong id="wrongCount">0</strong>
           </div>
         </div>
+        <div class="progress" aria-label="Остаток времени"><span id="timeProgress"></span></div>
 
         <div class="task">
           <div class="example" id="example">5 × 1</div>
           <form class="answer-row" id="answerForm">
             <input class="answer" id="answer" type="number" inputmode="numeric" autocomplete="off" aria-label="Ответ" disabled>
-            <button class="primary" type="submit">Ответить</button>
+            <button class="primary" id="answerBtn" type="submit" disabled>Ответить</button>
           </form>
           <div class="message" id="message">Нажмите “Старт”</div>
         </div>
@@ -350,6 +383,7 @@
       selectedTables: new Set([5]),
       mode: 'all',
       timeMode: 'timed',
+      duration: 60,
       selected: new Set(allMultipliers),
       currentTable: 5,
       currentMultiplier: 1,
@@ -358,6 +392,7 @@
       secondsLeft: 60,
       running: false,
       timer: null,
+      nextTimer: null,
       lastQuestion: ''
     };
 
@@ -366,8 +401,7 @@
     const numberPickerWrap = document.querySelector('#numberPickerWrap');
     const allNumbersBtn = document.querySelector('#allNumbers');
     const customNumbersBtn = document.querySelector('#customNumbers');
-    const timedModeBtn = document.querySelector('#timedMode');
-    const freeModeBtn = document.querySelector('#freeMode');
+    const timeButtons = [...document.querySelectorAll('#timeChoices button')];
     const startBtn = document.querySelector('#startBtn');
     const resetBtn = document.querySelector('#resetBtn');
     const answerForm = document.querySelector('#answerForm');
@@ -377,6 +411,9 @@
     const timeLeftEl = document.querySelector('#timeLeft');
     const correctCountEl = document.querySelector('#correctCount');
     const wrongCountEl = document.querySelector('#wrongCount');
+    const tableHintEl = document.querySelector('#tableHint');
+    const timeProgressEl = document.querySelector('#timeProgress');
+    const answerBtn = document.querySelector('#answerBtn');
 
     function makeButton(text, active, onClick) {
       const button = document.createElement('button');
@@ -404,6 +441,7 @@
           }
         }));
       });
+      tableHintEl.textContent = `Выбрано: ${[...state.selectedTables].join(', ')}`;
     }
 
     function renderNumbers() {
@@ -442,11 +480,13 @@
       showQuestion();
     }
 
-    function setTimeMode(mode) {
-      state.timeMode = mode;
-      setPressed(timedModeBtn, mode === 'timed');
-      setPressed(freeModeBtn, mode === 'free');
-      state.secondsLeft = mode === 'timed' ? 60 : null;
+    function setTimeMode(seconds) {
+      state.duration = seconds;
+      state.timeMode = seconds === null ? 'free' : 'timed';
+      timeButtons.forEach((button) => {
+        setPressed(button, String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free'));
+      });
+      state.secondsLeft = seconds;
       updateStats();
     }
 
@@ -489,6 +529,7 @@
       timeLeftEl.textContent = formatTime(state.secondsLeft);
       correctCountEl.textContent = state.correct;
       wrongCountEl.textContent = state.wrong;
+      timeProgressEl.style.width = state.secondsLeft === null ? '100%' : `${(state.secondsLeft / state.duration) * 100}%`;
     }
 
     function setMessage(text, type) {
@@ -501,9 +542,10 @@
       state.correct = 0;
       state.wrong = 0;
       state.running = true;
-      state.secondsLeft = state.timeMode === 'timed' ? 60 : null;
+      state.secondsLeft = state.duration;
       setNextQuestion();
       answerInput.disabled = false;
+      answerBtn.disabled = false;
       answerInput.value = '';
       answerInput.focus();
       showQuestion();
@@ -525,6 +567,7 @@
       stopTimer();
       state.running = false;
       answerInput.disabled = true;
+      answerBtn.disabled = true;
       setMessage(`Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
     }
 
@@ -533,9 +576,10 @@
       state.correct = 0;
       state.wrong = 0;
       state.running = false;
-      state.secondsLeft = state.timeMode === 'timed' ? 60 : null;
+      state.secondsLeft = state.duration;
       setNextQuestion();
       answerInput.disabled = true;
+      answerBtn.disabled = true;
       answerInput.value = '';
       showQuestion();
       updateStats();
@@ -547,11 +591,29 @@
         window.clearInterval(state.timer);
         state.timer = null;
       }
+      if (state.nextTimer) {
+        window.clearTimeout(state.nextTimer);
+        state.nextTimer = null;
+      }
+    }
+
+    function nextQuestion() {
+      setNextQuestion();
+      answerInput.value = '';
+      answerInput.disabled = false;
+      answerBtn.disabled = false;
+      showQuestion();
+      answerInput.focus();
     }
 
     answerForm.addEventListener('submit', (event) => {
       event.preventDefault();
       if (!state.running) {
+        return;
+      }
+
+      if (answerInput.value.trim() === '') {
+        setMessage('Введите ответ', 'bad');
         return;
       }
 
@@ -561,22 +623,26 @@
       if (userAnswer === rightAnswer) {
         state.correct += 1;
         setMessage('Верно', 'good');
+        nextQuestion();
       } else {
         state.wrong += 1;
         setMessage(`Ошибка: ${state.currentTable} × ${state.currentMultiplier} = ${rightAnswer}`, 'bad');
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+        state.nextTimer = window.setTimeout(() => {
+          if (state.running) {
+            nextQuestion();
+          }
+        }, 900);
       }
-
-      setNextQuestion();
-      answerInput.value = '';
-      showQuestion();
       updateStats();
-      answerInput.focus();
     });
 
     allNumbersBtn.addEventListener('click', () => setNumberMode('all'));
     customNumbersBtn.addEventListener('click', () => setNumberMode('custom'));
-    timedModeBtn.addEventListener('click', () => setTimeMode('timed'));
-    freeModeBtn.addEventListener('click', () => setTimeMode('free'));
+    timeButtons.forEach((button) => {
+      button.addEventListener('click', () => setTimeMode(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds)));
+    });
     startBtn.addEventListener('click', start);
     resetBtn.addEventListener('click', reset);
 
