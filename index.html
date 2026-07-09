@@ -359,6 +359,46 @@
       gap: 10px;
     }
 
+    .timing-title {
+      margin-top: 22px;
+    }
+
+    .timing-chart {
+      display: grid;
+      gap: 8px;
+    }
+
+    .timing-row {
+      display: grid;
+      grid-template-columns: 68px 1fr 50px;
+      align-items: center;
+      gap: 10px;
+      min-height: 28px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .timing-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #e7edf3;
+    }
+
+    .timing-bar {
+      display: block;
+      height: 100%;
+      border-radius: 8px;
+      background: var(--accent);
+    }
+
+    .timing-empty {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
     @media (max-width: 760px) {
       main {
         width: min(100% - 20px, 520px);
@@ -510,6 +550,8 @@
         <div class="stat"><span>Picture bets: ответов</span><strong id="pictureAttempts">0</strong></div>
         <div class="stat"><span>Picture bets: среднее</span><strong id="pictureAverage">-</strong></div>
       </div>
+      <h2 class="timing-title">Скорость по примерам</h2>
+      <div class="timing-chart" id="multiplicationChart" aria-live="polite"></div>
     </section>
   </main>
 
@@ -573,6 +615,7 @@
     const multiplicationAverageEl = document.querySelector('#multiplicationAverage');
     const pictureAttemptsEl = document.querySelector('#pictureAttempts');
     const pictureAverageEl = document.querySelector('#pictureAverage');
+    const multiplicationChartEl = document.querySelector('#multiplicationChart');
 
     const pictureState = {
       duration: 60,
@@ -765,6 +808,40 @@
       multiplicationAverageEl.textContent = multiplication.attempts ? `${(multiplication.totalMs / multiplication.attempts / 1000).toFixed(1)} с` : '-';
       pictureAttemptsEl.textContent = picture.attempts;
       pictureAverageEl.textContent = picture.attempts ? `${(picture.totalMs / picture.attempts / 1000).toFixed(1)} с` : '-';
+      renderMultiplicationChart();
+    }
+
+    function renderMultiplicationChart() {
+      const entries = Object.entries(storedStats.multiplication.examples)
+        .map(([example, result]) => ({ example, average: result.totalMs / result.attempts }))
+        .sort((left, right) => right.average - left.average);
+
+      multiplicationChartEl.innerHTML = '';
+      if (entries.length === 0) {
+        multiplicationChartEl.innerHTML = '<p class="timing-empty">Решите примеры, чтобы увидеть скорость по каждому из них.</p>';
+        return;
+      }
+
+      const maximum = entries[0].average;
+      entries.forEach(({ example, average }) => {
+        const row = document.createElement('div');
+        row.className = 'timing-row';
+        row.setAttribute('aria-label', `${example}: ${(average / 1000).toFixed(1)} секунд`);
+
+        const label = document.createElement('span');
+        label.textContent = example;
+        const track = document.createElement('span');
+        track.className = 'timing-track';
+        const bar = document.createElement('span');
+        bar.className = 'timing-bar';
+        bar.style.width = `${Math.max(6, (average / maximum) * 100)}%`;
+        track.appendChild(bar);
+        const value = document.createElement('span');
+        value.textContent = `${(average / 1000).toFixed(1)} с`;
+
+        row.append(label, track, value);
+        multiplicationChartEl.appendChild(row);
+      });
     }
 
     function recordAttempt(mode, example, correct, startedAt) {
