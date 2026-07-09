@@ -313,6 +313,19 @@
         #f8fafc;
     }
 
+    .roulette-board.roof::before {
+      content: '';
+      position: absolute;
+      left: -3px;
+      right: -3px;
+      top: -42px;
+      height: 44px;
+      border: 3px solid #17212b;
+      border-bottom: 0;
+      clip-path: polygon(50% 0, 100% 40%, 100% 100%, 0 100%, 0 40%);
+      background: #f8fafc;
+    }
+
     .chip {
       position: absolute;
       width: 28px;
@@ -324,13 +337,6 @@
       transform: translate(-50%, -50%);
     }
 
-    .chip:nth-child(2n) {
-      background: #d85b52;
-    }
-
-    .chip:nth-child(3n) {
-      background: #358c83;
-    }
 
     .picture-task {
       display: grid;
@@ -341,6 +347,16 @@
       border-radius: 8px;
       background: #f8fafc;
       text-align: center;
+    }
+
+    .history {
+      margin-top: 16px;
+    }
+
+    .history-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
     }
 
     @media (max-width: 760px) {
@@ -360,6 +376,10 @@
 
       .stats {
         grid-template-columns: 1fr;
+      }
+
+      .history-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .answer-row {
@@ -446,7 +466,7 @@
     <section class="layout hidden" id="pictureTab" role="tabpanel" aria-label="Тренировка picture bets">
       <div class="panel">
         <h2>Picture bets</h2>
-        <p class="hint">Сложите выплаты всех фишек на поле. Ставка каждой фишки: 1.</p>
+        <p class="hint">Узнайте сумму по готовому рисунку. Ставка каждой фишки: 1.</p>
 
         <div class="field">
           <span class="label">Время</span>
@@ -481,6 +501,16 @@
         </div>
       </div>
     </section>
+
+    <section class="panel history" aria-label="Статистика устройства">
+      <h2>Статистика устройства</h2>
+      <div class="history-stats">
+        <div class="stat"><span>Умножение: ответов</span><strong id="multiplicationAttempts">0</strong></div>
+        <div class="stat"><span>Умножение: среднее</span><strong id="multiplicationAverage">-</strong></div>
+        <div class="stat"><span>Picture bets: ответов</span><strong id="pictureAttempts">0</strong></div>
+        <div class="stat"><span>Picture bets: среднее</span><strong id="pictureAverage">-</strong></div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -501,7 +531,8 @@
       running: false,
       timer: null,
       nextTimer: null,
-      lastQuestion: ''
+      lastQuestion: '',
+      questionStartedAt: null
     };
 
     const tablesEl = document.querySelector('#tables');
@@ -538,6 +569,10 @@
     const pictureWrongCount = document.querySelector('#pictureWrongCount');
     const pictureTimeProgress = document.querySelector('#pictureTimeProgress');
     const rouletteBoard = document.querySelector('#rouletteBoard');
+    const multiplicationAttemptsEl = document.querySelector('#multiplicationAttempts');
+    const multiplicationAverageEl = document.querySelector('#multiplicationAverage');
+    const pictureAttemptsEl = document.querySelector('#pictureAttempts');
+    const pictureAverageEl = document.querySelector('#pictureAverage');
 
     const pictureState = {
       duration: 60,
@@ -547,17 +582,62 @@
       answer: 0,
       running: false,
       timer: null,
-      nextTimer: null
+      nextTimer: null,
+      lastPattern: -1,
+      questionStartedAt: null
     };
 
-    const picturePositions = [
-      { type: 'straight', payout: 35, x: 16.7, y: 16.7 }, { type: 'straight', payout: 35, x: 50, y: 16.7 }, { type: 'straight', payout: 35, x: 83.3, y: 16.7 },
-      { type: 'straight', payout: 35, x: 16.7, y: 50 }, { type: 'straight', payout: 35, x: 50, y: 50 }, { type: 'straight', payout: 35, x: 83.3, y: 50 },
-      { type: 'straight', payout: 35, x: 16.7, y: 83.3 }, { type: 'straight', payout: 35, x: 50, y: 83.3 }, { type: 'straight', payout: 35, x: 83.3, y: 83.3 },
-      { type: 'split', payout: 17, x: 33.3, y: 16.7 }, { type: 'split', payout: 17, x: 66.7, y: 50 }, { type: 'split', payout: 17, x: 50, y: 33.3 }, { type: 'split', payout: 17, x: 83.3, y: 66.7 },
-      { type: 'street', payout: 11, x: 1, y: 16.7 }, { type: 'street', payout: 11, x: 1, y: 50 }, { type: 'street', payout: 11, x: 1, y: 83.3 },
-      { type: 'corner', payout: 8, x: 33.3, y: 33.3 }, { type: 'corner', payout: 8, x: 66.7, y: 66.7 }, { type: 'corner', payout: 8, x: 33.3, y: 66.7 },
-      { type: 'line', payout: 5, x: 1, y: 33.3 }, { type: 'line', payout: 5, x: 1, y: 66.7 }
+    const statsKey = 'roulette-trainer-stats-v1';
+
+    function emptyModeStats() {
+      return { attempts: 0, correct: 0, totalMs: 0, examples: {} };
+    }
+
+    function loadStoredStats() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(statsKey));
+        if (stored && stored.multiplication && stored.picture) {
+          return stored;
+        }
+      } catch (error) {
+        // Ignore damaged local cache and begin fresh.
+      }
+      return { multiplication: emptyModeStats(), picture: emptyModeStats() };
+    }
+
+    const storedStats = loadStoredStats();
+
+    const picturePatterns = [
+      { answer: 13, chips: [[1, 33], [34, 33]] },
+      { answer: 21, chips: [[1, 20], [1, 40], [1, 60]] },
+      { answer: 28, chips: [[1, 42], [34, 42]] },
+      { answer: 100, chips: [[34, 36], [45, 36], [56, 36], [34, 48], [45, 48], [56, 48], [45, 60]] },
+      { answer: 69, chips: [[50, 32], [50, 47], [50, 62]] },
+      { answer: 33, chips: [[78, 32], [78, 47], [78, 62]] },
+      { answer: 135, chips: [[34, 36], [50, 36], [66, 36], [34, 50], [50, 50], [66, 50], [50, 64]] },
+      { answer: 101, chips: [[34, 42], [50, 42], [66, 42], [34, 58], [66, 58]] },
+      { answer: 103, chips: [[50, 34], [34, 50], [50, 50], [66, 50], [50, 66]] },
+      { answer: 40, chips: [[1, 64], [50, 50]] },
+      { answer: 16, chips: [[1, 24], [1, 40], [1, 56]] },
+      { answer: 21, chips: [[1, 20], [1, 34], [1, 48]] },
+      { answer: 68, chips: [[50, 32], [34, 48], [50, 48], [50, 64]] },
+      { answer: 42, chips: [[50, 32], [66, 32], [50, 50]] },
+      { answer: 52, chips: [[50, 32], [50, 48]] },
+      { answer: 116, roof: true, chips: [[10, 17], [24, 17], [38, 12], [50, 7], [62, 12], [76, 17], [90, 17]] },
+      { answer: 165, roof: true, chips: [[10, 18], [26, 10], [40, 10], [54, 10], [10, 32], [26, 24], [40, 24], [54, 24]] },
+      { answer: 25, chips: [[50, 32], [50, 48]] },
+      { answer: 66, chips: [[34, 32], [66, 32], [34, 50], [66, 50]] },
+      { answer: 51, chips: [[42, 42], [58, 32], [58, 58]] },
+      { answer: 67, chips: [[34, 34], [66, 34], [50, 50], [66, 50]] },
+      { answer: 102, chips: [[50, 34], [34, 50], [50, 50], [66, 50], [50, 66]] },
+      { answer: 69, chips: [[50, 30], [50, 46], [50, 62]] },
+      { answer: 51, chips: [[34, 34], [50, 50], [34, 66]] },
+      { answer: 50, chips: [[50, 32], [34, 48], [34, 64]] },
+      { answer: 60, chips: [[50, 38], [34, 54], [50, 54]] },
+      { answer: 43, chips: [[34, 34], [50, 50]] },
+      { answer: 77, chips: [[50, 38], [34, 54], [50, 54], [66, 54]] },
+      { answer: 86, chips: [[50, 36], [50, 52], [66, 52], [50, 68]] },
+      { answer: 22, chips: [[1, 36], [50, 36]] }
     ];
 
     function makeButton(text, active, onClick) {
@@ -657,6 +737,7 @@
       state.currentTable = nextTable;
       state.currentMultiplier = nextMultiplier;
       state.lastQuestion = nextQuestion;
+      state.questionStartedAt = Date.now();
     }
 
     function showQuestion() {
@@ -675,6 +756,30 @@
       correctCountEl.textContent = state.correct;
       wrongCountEl.textContent = state.wrong;
       timeProgressEl.style.width = state.secondsLeft === null ? '100%' : `${(state.secondsLeft / state.duration) * 100}%`;
+    }
+
+    function renderStoredStats() {
+      const multiplication = storedStats.multiplication;
+      const picture = storedStats.picture;
+      multiplicationAttemptsEl.textContent = multiplication.attempts;
+      multiplicationAverageEl.textContent = multiplication.attempts ? `${(multiplication.totalMs / multiplication.attempts / 1000).toFixed(1)} с` : '-';
+      pictureAttemptsEl.textContent = picture.attempts;
+      pictureAverageEl.textContent = picture.attempts ? `${(picture.totalMs / picture.attempts / 1000).toFixed(1)} с` : '-';
+    }
+
+    function recordAttempt(mode, example, correct, startedAt) {
+      const elapsedMs = Math.max(0, Date.now() - startedAt);
+      const modeStats = storedStats[mode];
+      const exampleStats = modeStats.examples[example] || { attempts: 0, correct: 0, totalMs: 0 };
+      modeStats.attempts += 1;
+      modeStats.correct += correct ? 1 : 0;
+      modeStats.totalMs += elapsedMs;
+      exampleStats.attempts += 1;
+      exampleStats.correct += correct ? 1 : 0;
+      exampleStats.totalMs += elapsedMs;
+      modeStats.examples[example] = exampleStats;
+      localStorage.setItem(statsKey, JSON.stringify(storedStats));
+      renderStoredStats();
     }
 
     function setMessage(text, type) {
@@ -764,8 +869,10 @@
 
       const userAnswer = Number(answerInput.value);
       const rightAnswer = state.currentTable * state.currentMultiplier;
+      const isCorrect = userAnswer === rightAnswer;
+      recordAttempt('multiplication', `${state.currentTable} × ${state.currentMultiplier}`, isCorrect, state.questionStartedAt);
 
-      if (userAnswer === rightAnswer) {
+      if (isCorrect) {
         state.correct += 1;
         setMessage('Верно', 'good');
         nextQuestion();
@@ -805,17 +912,24 @@
     }
 
     function renderPicture() {
-      const shuffled = [...picturePositions].sort(() => Math.random() - 0.5);
-      const chipCount = 1 + Math.floor(Math.random() * 6);
-      const chips = shuffled.slice(0, chipCount);
-      pictureState.answer = chips.reduce((sum, chip) => sum + chip.payout, 0);
+      let patternIndex = Math.floor(Math.random() * picturePatterns.length);
+      if (picturePatterns.length > 1) {
+        while (patternIndex === pictureState.lastPattern) {
+          patternIndex = Math.floor(Math.random() * picturePatterns.length);
+        }
+      }
+      const pattern = picturePatterns[patternIndex];
+      pictureState.lastPattern = patternIndex;
+      pictureState.answer = pattern.answer;
+      pictureState.questionStartedAt = Date.now();
       rouletteBoard.innerHTML = '';
-      chips.forEach((chip) => {
+      rouletteBoard.classList.toggle('roof', Boolean(pattern.roof));
+      pattern.chips.forEach(([x, y]) => {
         const element = document.createElement('span');
         element.className = 'chip';
-        element.style.left = `${chip.x}%`;
-        element.style.top = `${chip.y}%`;
-        element.title = chip.type;
+        element.style.left = `${x}%`;
+        element.style.top = `${y}%`;
+        element.title = 'Фишка picture bet';
         rouletteBoard.appendChild(element);
       });
     }
@@ -906,7 +1020,10 @@
         return;
       }
 
-      if (Number(pictureAnswer.value) === pictureState.answer) {
+      const isCorrect = Number(pictureAnswer.value) === pictureState.answer;
+      recordAttempt('picture', `pattern-${pictureState.lastPattern}-${pictureState.answer}`, isCorrect, pictureState.questionStartedAt);
+
+      if (isCorrect) {
         pictureState.correct += 1;
         showPictureMessage('Верно', 'good');
         nextPicture();
@@ -943,6 +1060,7 @@
     renderNumbers();
     showQuestion();
     updateStats();
+    renderStoredStats();
     resetPicture();
   </script>
 </body>
