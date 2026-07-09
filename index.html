@@ -50,6 +50,30 @@
       letter-spacing: 0;
     }
 
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .tab {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 14px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
     .layout {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -278,6 +302,47 @@
       display: none;
     }
 
+    .roulette-board {
+      position: relative;
+      width: min(100%, 390px);
+      aspect-ratio: 1;
+      border: 3px solid #17212b;
+      background:
+        linear-gradient(to right, transparent 32.6%, #17212b 32.6%, #17212b 34%, transparent 34%, transparent 65.9%, #17212b 65.9%, #17212b 67.3%, transparent 67.3%),
+        linear-gradient(to bottom, transparent 32.6%, #17212b 32.6%, #17212b 34%, transparent 34%, transparent 65.9%, #17212b 65.9%, #17212b 67.3%, transparent 67.3%),
+        #f8fafc;
+    }
+
+    .chip {
+      position: absolute;
+      width: 28px;
+      aspect-ratio: 1;
+      border: 2px solid #1f2937;
+      border-radius: 50%;
+      background: #d6a72f;
+      box-shadow: inset 0 0 0 3px #fff3bd, 0 2px 5px rgba(15, 23, 42, 0.22);
+      transform: translate(-50%, -50%);
+    }
+
+    .chip:nth-child(2n) {
+      background: #d85b52;
+    }
+
+    .chip:nth-child(3n) {
+      background: #358c83;
+    }
+
+    .picture-task {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      padding: 24px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      text-align: center;
+    }
+
     @media (max-width: 760px) {
       main {
         width: min(100% - 20px, 520px);
@@ -306,8 +371,12 @@
 <body>
   <main>
     <h1>Тренажер умножения</h1>
+    <div class="tabs" role="tablist" aria-label="Режим тренировки">
+      <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
+      <button class="tab" id="pictureTabBtn" type="button" role="tab" aria-selected="false">Picture bets</button>
+    </div>
 
-    <div class="layout">
+    <div class="layout" id="multiplicationTab" role="tabpanel">
       <section class="panel" aria-label="Настройки тренировки">
         <h2>Настройки</h2>
 
@@ -373,6 +442,45 @@
         </div>
       </section>
     </div>
+
+    <section class="layout hidden" id="pictureTab" role="tabpanel" aria-label="Тренировка picture bets">
+      <div class="panel">
+        <h2>Picture bets</h2>
+        <p class="hint">Сложите выплаты всех фишек на поле. Ставка каждой фишки: 1.</p>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="time-choices" id="pictureTimeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="pictureStartBtn" type="button">Старт</button>
+          <button class="secondary" id="pictureResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Время</span><strong id="pictureTimeLeft">1:00</strong></div>
+          <div class="stat"><span>Верно</span><strong id="pictureCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="pictureWrongCount">0</strong></div>
+        </div>
+        <div class="progress" aria-label="Остаток времени"><span id="pictureTimeProgress"></span></div>
+        <div class="picture-task">
+          <div class="roulette-board" id="rouletteBoard" aria-label="Поле рулетки с фишками"></div>
+          <form class="answer-row" id="pictureAnswerForm">
+            <input class="answer" id="pictureAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
+            <button class="primary" id="pictureAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="pictureMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -414,6 +522,43 @@
     const tableHintEl = document.querySelector('#tableHint');
     const timeProgressEl = document.querySelector('#timeProgress');
     const answerBtn = document.querySelector('#answerBtn');
+    const multiplicationTab = document.querySelector('#multiplicationTab');
+    const pictureTab = document.querySelector('#pictureTab');
+    const multiplicationTabBtn = document.querySelector('#multiplicationTabBtn');
+    const pictureTabBtn = document.querySelector('#pictureTabBtn');
+    const pictureTimeButtons = [...document.querySelectorAll('#pictureTimeChoices button')];
+    const pictureStartBtn = document.querySelector('#pictureStartBtn');
+    const pictureResetBtn = document.querySelector('#pictureResetBtn');
+    const pictureAnswerForm = document.querySelector('#pictureAnswerForm');
+    const pictureAnswer = document.querySelector('#pictureAnswer');
+    const pictureAnswerBtn = document.querySelector('#pictureAnswerBtn');
+    const pictureMessage = document.querySelector('#pictureMessage');
+    const pictureTimeLeft = document.querySelector('#pictureTimeLeft');
+    const pictureCorrectCount = document.querySelector('#pictureCorrectCount');
+    const pictureWrongCount = document.querySelector('#pictureWrongCount');
+    const pictureTimeProgress = document.querySelector('#pictureTimeProgress');
+    const rouletteBoard = document.querySelector('#rouletteBoard');
+
+    const pictureState = {
+      duration: 60,
+      secondsLeft: 60,
+      correct: 0,
+      wrong: 0,
+      answer: 0,
+      running: false,
+      timer: null,
+      nextTimer: null
+    };
+
+    const picturePositions = [
+      { type: 'straight', payout: 35, x: 16.7, y: 16.7 }, { type: 'straight', payout: 35, x: 50, y: 16.7 }, { type: 'straight', payout: 35, x: 83.3, y: 16.7 },
+      { type: 'straight', payout: 35, x: 16.7, y: 50 }, { type: 'straight', payout: 35, x: 50, y: 50 }, { type: 'straight', payout: 35, x: 83.3, y: 50 },
+      { type: 'straight', payout: 35, x: 16.7, y: 83.3 }, { type: 'straight', payout: 35, x: 50, y: 83.3 }, { type: 'straight', payout: 35, x: 83.3, y: 83.3 },
+      { type: 'split', payout: 17, x: 33.3, y: 16.7 }, { type: 'split', payout: 17, x: 66.7, y: 50 }, { type: 'split', payout: 17, x: 50, y: 33.3 }, { type: 'split', payout: 17, x: 83.3, y: 66.7 },
+      { type: 'street', payout: 11, x: 1, y: 16.7 }, { type: 'street', payout: 11, x: 1, y: 50 }, { type: 'street', payout: 11, x: 1, y: 83.3 },
+      { type: 'corner', payout: 8, x: 33.3, y: 33.3 }, { type: 'corner', payout: 8, x: 66.7, y: 66.7 }, { type: 'corner', payout: 8, x: 33.3, y: 66.7 },
+      { type: 'line', payout: 5, x: 1, y: 33.3 }, { type: 'line', payout: 5, x: 1, y: 66.7 }
+    ];
 
     function makeButton(text, active, onClick) {
       const button = document.createElement('button');
@@ -638,18 +783,167 @@
       updateStats();
     });
 
+    function showPictureMessage(text, type) {
+      pictureMessage.textContent = text;
+      pictureMessage.className = `message ${type || ''}`.trim();
+    }
+
+    function updatePictureStats() {
+      pictureTimeLeft.textContent = formatTime(pictureState.secondsLeft);
+      pictureCorrectCount.textContent = pictureState.correct;
+      pictureWrongCount.textContent = pictureState.wrong;
+      pictureTimeProgress.style.width = pictureState.secondsLeft === null ? '100%' : `${(pictureState.secondsLeft / pictureState.duration) * 100}%`;
+    }
+
+    function setPictureTime(seconds) {
+      pictureState.duration = seconds;
+      pictureState.secondsLeft = seconds;
+      pictureTimeButtons.forEach((button) => {
+        setPressed(button, String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free'));
+      });
+      updatePictureStats();
+    }
+
+    function renderPicture() {
+      const shuffled = [...picturePositions].sort(() => Math.random() - 0.5);
+      const chipCount = 1 + Math.floor(Math.random() * 6);
+      const chips = shuffled.slice(0, chipCount);
+      pictureState.answer = chips.reduce((sum, chip) => sum + chip.payout, 0);
+      rouletteBoard.innerHTML = '';
+      chips.forEach((chip) => {
+        const element = document.createElement('span');
+        element.className = 'chip';
+        element.style.left = `${chip.x}%`;
+        element.style.top = `${chip.y}%`;
+        element.title = chip.type;
+        rouletteBoard.appendChild(element);
+      });
+    }
+
+    function stopPictureTimer() {
+      if (pictureState.timer) {
+        window.clearInterval(pictureState.timer);
+        pictureState.timer = null;
+      }
+      if (pictureState.nextTimer) {
+        window.clearTimeout(pictureState.nextTimer);
+        pictureState.nextTimer = null;
+      }
+    }
+
+    function nextPicture() {
+      renderPicture();
+      pictureAnswer.value = '';
+      pictureAnswer.disabled = false;
+      pictureAnswerBtn.disabled = false;
+      pictureAnswer.focus();
+    }
+
+    function finishPicture() {
+      stopPictureTimer();
+      pictureState.running = false;
+      pictureAnswer.disabled = true;
+      pictureAnswerBtn.disabled = true;
+      showPictureMessage(`Готово: ${pictureState.correct} верно, ${pictureState.wrong} ошибок`, 'good');
+    }
+
+    function startPicture() {
+      stopPictureTimer();
+      pictureState.correct = 0;
+      pictureState.wrong = 0;
+      pictureState.secondsLeft = pictureState.duration;
+      pictureState.running = true;
+      nextPicture();
+      updatePictureStats();
+      showPictureMessage('Сложите выплаты фишек', '');
+
+      if (pictureState.secondsLeft !== null) {
+        pictureState.timer = window.setInterval(() => {
+          pictureState.secondsLeft -= 1;
+          updatePictureStats();
+          if (pictureState.secondsLeft <= 0) {
+            finishPicture();
+          }
+        }, 1000);
+      }
+    }
+
+    function resetPicture() {
+      stopPictureTimer();
+      pictureState.correct = 0;
+      pictureState.wrong = 0;
+      pictureState.secondsLeft = pictureState.duration;
+      pictureState.running = false;
+      renderPicture();
+      pictureAnswer.value = '';
+      pictureAnswer.disabled = true;
+      pictureAnswerBtn.disabled = true;
+      updatePictureStats();
+      showPictureMessage('Нажмите «Старт»', '');
+    }
+
+    function selectTab(tab) {
+      const pictureActive = tab === 'picture';
+      stopTimer();
+      stopPictureTimer();
+      state.running = false;
+      pictureState.running = false;
+      multiplicationTab.classList.toggle('hidden', pictureActive);
+      pictureTab.classList.toggle('hidden', !pictureActive);
+      multiplicationTabBtn.classList.toggle('active', !pictureActive);
+      pictureTabBtn.classList.toggle('active', pictureActive);
+      multiplicationTabBtn.setAttribute('aria-selected', String(!pictureActive));
+      pictureTabBtn.setAttribute('aria-selected', String(pictureActive));
+    }
+
+    pictureAnswerForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!pictureState.running) {
+        return;
+      }
+      if (pictureAnswer.value.trim() === '') {
+        showPictureMessage('Введите сумму', 'bad');
+        return;
+      }
+
+      if (Number(pictureAnswer.value) === pictureState.answer) {
+        pictureState.correct += 1;
+        showPictureMessage('Верно', 'good');
+        nextPicture();
+      } else {
+        pictureState.wrong += 1;
+        showPictureMessage(`Ошибка: правильная сумма ${pictureState.answer}`, 'bad');
+        pictureAnswer.disabled = true;
+        pictureAnswerBtn.disabled = true;
+        pictureState.nextTimer = window.setTimeout(() => {
+          if (pictureState.running) {
+            nextPicture();
+          }
+        }, 900);
+      }
+      updatePictureStats();
+    });
+
     allNumbersBtn.addEventListener('click', () => setNumberMode('all'));
     customNumbersBtn.addEventListener('click', () => setNumberMode('custom'));
     timeButtons.forEach((button) => {
       button.addEventListener('click', () => setTimeMode(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds)));
     });
+    pictureTimeButtons.forEach((button) => {
+      button.addEventListener('click', () => setPictureTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds)));
+    });
     startBtn.addEventListener('click', start);
     resetBtn.addEventListener('click', reset);
+    pictureStartBtn.addEventListener('click', startPicture);
+    pictureResetBtn.addEventListener('click', resetPicture);
+    multiplicationTabBtn.addEventListener('click', () => selectTab('multiplication'));
+    pictureTabBtn.addEventListener('click', () => selectTab('picture'));
 
     renderTables();
     renderNumbers();
     showQuestion();
     updateStats();
+    resetPicture();
   </script>
 </body>
 </html>
