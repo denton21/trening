@@ -1,0 +1,166 @@
+/* Subtle feedback — short, soft, never blocking */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes example-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes message-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-good {
+  0% {
+    box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.28);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(21, 128, 61, 0);
+  }
+}
+
+@keyframes pulse-bad {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes stat-bump {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes tab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flash-good {
+  0% {
+    background: #ecfdf5;
+    border-color: #86efac;
+  }
+  100% {
+    background: #fff;
+    border-color: var(--line);
+  }
+}
+
+@keyframes flash-bad {
+  0% {
+    background: #fef2f2;
+    border-color: #fca5a5;
+  }
+  100% {
+    background: #fff;
+    border-color: var(--line);
+  }
+}
+
+.example.is-enter {
+  animation: example-in var(--dur-slow) var(--ease-out);
+}
+
+.message.is-pop {
+  animation: message-pop var(--dur) var(--ease-out);
+}
+
+.answer.flash-good {
+  animation: flash-good 480ms var(--ease-soft);
+}
+
+.answer.flash-bad {
+  animation: pulse-bad 320ms var(--ease-out), flash-bad 520ms var(--ease-soft);
+}
+
+.stat strong.is-bump {
+  display: inline-block;
+  animation: stat-bump 280ms var(--ease-out);
+}
+
+.task.is-correct,
+.picture-task.is-correct {
+  animation: pulse-good 480ms var(--ease-soft);
+}
+
+.layout.tab-enter {
+  animation: tab-panel-in var(--dur-slow) var(--ease-out);
+}
+
+.chip {
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

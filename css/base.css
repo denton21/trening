@@ -1,0 +1,141 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f4ec;
+  --panel: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --line: #d9e0ea;
+  --accent: #0f766e;
+  --accent-dark: #115e59;
+  --bad: #b91c1c;
+  --good: #15803d;
+  --focus: #f59e0b;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 320ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+main {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0;
+}
+
+h1 {
+  margin: 0 0 18px;
+  font-size: clamp(28px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  letter-spacing: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.panel,
+.trainer {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.panel {
+  padding: 18px;
+}
+
+.trainer {
+  min-height: 520px;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.history {
+  margin-top: 16px;
+}
+
+.history-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.timing-title {
+  margin-top: 22px;
+}
+
+@media (max-width: 760px) {
+  main {
+    width: min(100% - 20px, 520px);
+    padding: 16px 0;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer {
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .history-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .answer-row {
+    flex-direction: column;
+  }
+}
