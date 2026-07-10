@@ -52,6 +52,7 @@
 
     .tabs {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin: 0 0 18px;
     }
@@ -355,7 +356,7 @@
 
     .history-stats {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -434,6 +435,8 @@
     <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
       <button class="tab" id="pictureTabBtn" type="button" role="tab" aria-selected="false">Picture bets</button>
+      <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
+      <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
     </div>
 
     <div class="layout" id="multiplicationTab" role="tabpanel">
@@ -542,6 +545,75 @@
       </div>
     </section>
 
+    <section class="layout hidden" id="blackjackTab" role="tabpanel" aria-label="Тренировка выплат Blackjack">
+      <div class="panel">
+        <h2>Blackjack 3:2</h2>
+        <p class="hint">Назовите выплату без возврата ставки. Например: 5 → 7.5.</p>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="time-choices" id="blackjackTimeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="blackjackStartBtn" type="button">Старт</button>
+          <button class="secondary" id="blackjackResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Время</span><strong id="blackjackTimeLeft">1:00</strong></div>
+          <div class="stat"><span>Верно</span><strong id="blackjackCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="blackjackWrongCount">0</strong></div>
+        </div>
+        <div class="progress" aria-label="Остаток времени"><span id="blackjackTimeProgress"></span></div>
+        <div class="task">
+          <div class="example" id="blackjackExample">5</div>
+          <form class="answer-row" id="blackjackAnswerForm">
+            <input class="answer" id="blackjackAnswer" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата Blackjack" disabled>
+            <button class="primary" id="blackjackAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="blackjackMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden" id="countingTab" role="tabpanel" aria-label="Тренировка счёта">
+      <div class="panel">
+        <h2>Счёт выплат</h2>
+        <p class="hint">Сложите несколько выплат рулетки.</p>
+        <div class="field">
+          <span class="label">Сложность</span>
+          <div class="time-choices" id="countingLevelChoices">
+            <button class="choice active" type="button" data-level="easy" aria-pressed="true">Лёгкий</button>
+            <button class="choice" type="button" data-level="medium" aria-pressed="false">Средний</button>
+            <button class="choice" type="button" data-level="hard" aria-pressed="false">Высокий</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="countingStartBtn" type="button">Старт</button>
+          <button class="secondary" id="countingResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="task">
+          <div class="example" id="countingExample">5 + 16</div>
+          <form class="answer-row" id="countingAnswerForm">
+            <input class="answer" id="countingAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
+            <button class="primary" id="countingAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="countingMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel history" aria-label="Статистика устройства">
       <h2>Статистика устройства</h2>
       <div class="history-stats">
@@ -549,9 +621,13 @@
         <div class="stat"><span>Умножение: среднее</span><strong id="multiplicationAverage">-</strong></div>
         <div class="stat"><span>Picture bets: ответов</span><strong id="pictureAttempts">0</strong></div>
         <div class="stat"><span>Picture bets: среднее</span><strong id="pictureAverage">-</strong></div>
+        <div class="stat"><span>Blackjack: ответов</span><strong id="blackjackAttempts">0</strong></div>
+        <div class="stat"><span>Blackjack: среднее</span><strong id="blackjackAverage">-</strong></div>
       </div>
       <h2 class="timing-title">Скорость по примерам</h2>
       <div class="timing-chart" id="multiplicationChart" aria-live="polite"></div>
+      <h2 class="timing-title">Скорость выплат Blackjack</h2>
+      <div class="timing-chart" id="blackjackChart" aria-live="polite"></div>
     </section>
   </main>
 
@@ -597,8 +673,12 @@
     const answerBtn = document.querySelector('#answerBtn');
     const multiplicationTab = document.querySelector('#multiplicationTab');
     const pictureTab = document.querySelector('#pictureTab');
+    const blackjackTab = document.querySelector('#blackjackTab');
+    const countingTab = document.querySelector('#countingTab');
     const multiplicationTabBtn = document.querySelector('#multiplicationTabBtn');
     const pictureTabBtn = document.querySelector('#pictureTabBtn');
+    const blackjackTabBtn = document.querySelector('#blackjackTabBtn');
+    const countingTabBtn = document.querySelector('#countingTabBtn');
     const pictureTimeButtons = [...document.querySelectorAll('#pictureTimeChoices button')];
     const pictureStartBtn = document.querySelector('#pictureStartBtn');
     const pictureResetBtn = document.querySelector('#pictureResetBtn');
@@ -616,6 +696,29 @@
     const pictureAttemptsEl = document.querySelector('#pictureAttempts');
     const pictureAverageEl = document.querySelector('#pictureAverage');
     const multiplicationChartEl = document.querySelector('#multiplicationChart');
+    const blackjackAttemptsEl = document.querySelector('#blackjackAttempts');
+    const blackjackAverageEl = document.querySelector('#blackjackAverage');
+    const blackjackChartEl = document.querySelector('#blackjackChart');
+    const blackjackTimeButtons = [...document.querySelectorAll('#blackjackTimeChoices button')];
+    const blackjackStartBtn = document.querySelector('#blackjackStartBtn');
+    const blackjackResetBtn = document.querySelector('#blackjackResetBtn');
+    const blackjackAnswerForm = document.querySelector('#blackjackAnswerForm');
+    const blackjackAnswer = document.querySelector('#blackjackAnswer');
+    const blackjackAnswerBtn = document.querySelector('#blackjackAnswerBtn');
+    const blackjackExample = document.querySelector('#blackjackExample');
+    const blackjackMessage = document.querySelector('#blackjackMessage');
+    const blackjackTimeLeft = document.querySelector('#blackjackTimeLeft');
+    const blackjackCorrectCount = document.querySelector('#blackjackCorrectCount');
+    const blackjackWrongCount = document.querySelector('#blackjackWrongCount');
+    const blackjackTimeProgress = document.querySelector('#blackjackTimeProgress');
+    const countingLevelButtons = [...document.querySelectorAll('#countingLevelChoices button')];
+    const countingStartBtn = document.querySelector('#countingStartBtn');
+    const countingResetBtn = document.querySelector('#countingResetBtn');
+    const countingAnswerForm = document.querySelector('#countingAnswerForm');
+    const countingAnswer = document.querySelector('#countingAnswer');
+    const countingAnswerBtn = document.querySelector('#countingAnswerBtn');
+    const countingExample = document.querySelector('#countingExample');
+    const countingMessage = document.querySelector('#countingMessage');
 
     const pictureState = {
       duration: 60,
@@ -630,6 +733,26 @@
       questionStartedAt: null
     };
 
+    const blackjackState = {
+      duration: 60,
+      secondsLeft: 60,
+      currentBet: 5,
+      correct: 0,
+      wrong: 0,
+      running: false,
+      timer: null,
+      nextTimer: null,
+      lastBet: null,
+      questionStartedAt: null
+    };
+
+    const countingState = {
+      level: 'easy',
+      answer: 0,
+      running: false,
+      nextTimer: null
+    };
+
     const statsKey = 'roulette-trainer-stats-v1';
 
     function emptyModeStats() {
@@ -640,12 +763,12 @@
       try {
         const stored = JSON.parse(localStorage.getItem(statsKey));
         if (stored && stored.multiplication && stored.picture) {
-          return stored;
+          return { ...stored, blackjack: stored.blackjack || emptyModeStats() };
         }
       } catch (error) {
         // Ignore damaged local cache and begin fresh.
       }
-      return { multiplication: emptyModeStats(), picture: emptyModeStats() };
+      return { multiplication: emptyModeStats(), picture: emptyModeStats(), blackjack: emptyModeStats() };
     }
 
     const storedStats = loadStoredStats();
@@ -682,6 +805,8 @@
       { answer: 86, chips: [[50, 36], [50, 52], [66, 52], [50, 68]] },
       { answer: 22, chips: [[1, 36], [50, 36]] }
     ];
+
+    const blackjackBets = Array.from({ length: 40 }, (_, index) => (index + 1) * 5);
 
     function makeButton(text, active, onClick) {
       const button = document.createElement('button');
@@ -808,17 +933,29 @@
       multiplicationAverageEl.textContent = multiplication.attempts ? `${(multiplication.totalMs / multiplication.attempts / 1000).toFixed(1)} с` : '-';
       pictureAttemptsEl.textContent = picture.attempts;
       pictureAverageEl.textContent = picture.attempts ? `${(picture.totalMs / picture.attempts / 1000).toFixed(1)} с` : '-';
+      const blackjack = storedStats.blackjack;
+      blackjackAttemptsEl.textContent = blackjack.attempts;
+      blackjackAverageEl.textContent = blackjack.attempts ? `${(blackjack.totalMs / blackjack.attempts / 1000).toFixed(1)} с` : '-';
       renderMultiplicationChart();
+      renderBlackjackChart();
     }
 
     function renderMultiplicationChart() {
-      const entries = Object.entries(storedStats.multiplication.examples)
+      renderTimingChart('multiplication', multiplicationChartEl, 'Решите примеры, чтобы увидеть скорость по каждому из них.');
+    }
+
+    function renderBlackjackChart() {
+      renderTimingChart('blackjack', blackjackChartEl, 'Решите выплаты, чтобы увидеть скорость по каждой ставке.');
+    }
+
+    function renderTimingChart(mode, chartElement, emptyText) {
+      const entries = Object.entries(storedStats[mode].examples)
         .map(([example, result]) => ({ example, average: result.totalMs / result.attempts }))
         .sort((left, right) => right.average - left.average);
 
-      multiplicationChartEl.innerHTML = '';
+      chartElement.innerHTML = '';
       if (entries.length === 0) {
-        multiplicationChartEl.innerHTML = '<p class="timing-empty">Решите примеры, чтобы увидеть скорость по каждому из них.</p>';
+        chartElement.innerHTML = `<p class="timing-empty">${emptyText}</p>`;
         return;
       }
 
@@ -840,7 +977,7 @@
         value.textContent = `${(average / 1000).toFixed(1)} с`;
 
         row.append(label, track, value);
-        multiplicationChartEl.appendChild(row);
+        chartElement.appendChild(row);
       });
     }
 
@@ -1073,18 +1210,234 @@
       showPictureMessage('Нажмите «Старт»', '');
     }
 
+    function updateBlackjackStats() {
+      blackjackTimeLeft.textContent = formatTime(blackjackState.secondsLeft);
+      blackjackCorrectCount.textContent = blackjackState.correct;
+      blackjackWrongCount.textContent = blackjackState.wrong;
+      blackjackTimeProgress.style.width = blackjackState.secondsLeft === null ? '100%' : `${(blackjackState.secondsLeft / blackjackState.duration) * 100}%`;
+    }
+
+    function setBlackjackTime(seconds) {
+      blackjackState.duration = seconds;
+      blackjackState.secondsLeft = seconds;
+      blackjackTimeButtons.forEach((button) => {
+        setPressed(button, String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free'));
+      });
+      updateBlackjackStats();
+    }
+
+    function setNextBlackjackQuestion() {
+      let bet = blackjackBets[Math.floor(Math.random() * blackjackBets.length)];
+      while (bet === blackjackState.lastBet) {
+        bet = blackjackBets[Math.floor(Math.random() * blackjackBets.length)];
+      }
+      blackjackState.currentBet = bet;
+      blackjackState.lastBet = bet;
+      blackjackState.questionStartedAt = Date.now();
+      blackjackExample.textContent = bet;
+    }
+
+    function showBlackjackMessage(text, type) {
+      blackjackMessage.textContent = text;
+      blackjackMessage.className = `message ${type || ''}`.trim();
+    }
+
+    function stopBlackjackTimer() {
+      if (blackjackState.timer) {
+        window.clearInterval(blackjackState.timer);
+        blackjackState.timer = null;
+      }
+      if (blackjackState.nextTimer) {
+        window.clearTimeout(blackjackState.nextTimer);
+        blackjackState.nextTimer = null;
+      }
+    }
+
+    function nextBlackjackQuestion() {
+      setNextBlackjackQuestion();
+      blackjackAnswer.value = '';
+      blackjackAnswer.disabled = false;
+      blackjackAnswerBtn.disabled = false;
+      blackjackAnswer.focus();
+    }
+
+    function finishBlackjack() {
+      stopBlackjackTimer();
+      blackjackState.running = false;
+      blackjackAnswer.disabled = true;
+      blackjackAnswerBtn.disabled = true;
+      showBlackjackMessage(`Готово: ${blackjackState.correct} верно, ${blackjackState.wrong} ошибок`, 'good');
+    }
+
+    function startBlackjack() {
+      stopBlackjackTimer();
+      blackjackState.correct = 0;
+      blackjackState.wrong = 0;
+      blackjackState.secondsLeft = blackjackState.duration;
+      blackjackState.running = true;
+      nextBlackjackQuestion();
+      updateBlackjackStats();
+      showBlackjackMessage('Умножьте ставку на 1.5', '');
+
+      if (blackjackState.secondsLeft !== null) {
+        blackjackState.timer = window.setInterval(() => {
+          blackjackState.secondsLeft -= 1;
+          updateBlackjackStats();
+          if (blackjackState.secondsLeft <= 0) {
+            finishBlackjack();
+          }
+        }, 1000);
+      }
+    }
+
+    function resetBlackjack() {
+      stopBlackjackTimer();
+      blackjackState.correct = 0;
+      blackjackState.wrong = 0;
+      blackjackState.secondsLeft = blackjackState.duration;
+      blackjackState.running = false;
+      setNextBlackjackQuestion();
+      blackjackAnswer.value = '';
+      blackjackAnswer.disabled = true;
+      blackjackAnswerBtn.disabled = true;
+      updateBlackjackStats();
+      showBlackjackMessage('Нажмите «Старт»', '');
+    }
+
+    blackjackAnswerForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!blackjackState.running) {
+        return;
+      }
+      if (blackjackAnswer.value.trim() === '') {
+        showBlackjackMessage('Введите выплату', 'bad');
+        return;
+      }
+
+      const expected = blackjackState.currentBet * 1.5;
+      const isCorrect = Math.abs(Number(blackjackAnswer.value.replace(',', '.')) - expected) < 0.001;
+      recordAttempt('blackjack', `${blackjackState.currentBet} → ${expected}`, isCorrect, blackjackState.questionStartedAt);
+
+      if (isCorrect) {
+        blackjackState.correct += 1;
+        showBlackjackMessage('Верно', 'good');
+        nextBlackjackQuestion();
+      } else {
+        blackjackState.wrong += 1;
+        showBlackjackMessage(`Ошибка: ${blackjackState.currentBet} → ${expected}`, 'bad');
+        blackjackAnswer.disabled = true;
+        blackjackAnswerBtn.disabled = true;
+        blackjackState.nextTimer = window.setTimeout(() => {
+          if (blackjackState.running) {
+            nextBlackjackQuestion();
+          }
+        }, 900);
+      }
+      updateBlackjackStats();
+    });
+
+    function setCountingLevel(level) {
+      countingState.level = level;
+      countingLevelButtons.forEach((button) => setPressed(button, button.dataset.level === level));
+      if (!countingState.running) {
+        setNextCountingQuestion();
+      }
+    }
+
+    function setNextCountingQuestion() {
+      const itemCount = countingState.level === 'easy' ? 2 + Math.floor(Math.random() * 2) : countingState.level === 'medium' ? 4 : 5;
+      const values = Array.from({ length: itemCount }, () => {
+        const table = tableOptions[Math.floor(Math.random() * tableOptions.length)];
+        const multiplier = allMultipliers[Math.floor(Math.random() * allMultipliers.length)];
+        return table * multiplier;
+      });
+      countingState.answer = values.reduce((sum, value) => sum + value, 0);
+      countingExample.textContent = values.join(' + ');
+    }
+
+    function showCountingMessage(text, type) {
+      countingMessage.textContent = text;
+      countingMessage.className = `message ${type || ''}`.trim();
+    }
+
+    function stopCountingTimer() {
+      if (countingState.nextTimer) {
+        window.clearTimeout(countingState.nextTimer);
+        countingState.nextTimer = null;
+      }
+    }
+
+    function nextCountingQuestion() {
+      setNextCountingQuestion();
+      countingAnswer.value = '';
+      countingAnswer.disabled = false;
+      countingAnswerBtn.disabled = false;
+      countingAnswer.focus();
+    }
+
+    function startCounting() {
+      stopCountingTimer();
+      countingState.running = true;
+      nextCountingQuestion();
+      showCountingMessage('Сложите выплаты', '');
+    }
+
+    function resetCounting() {
+      stopCountingTimer();
+      countingState.running = false;
+      setNextCountingQuestion();
+      countingAnswer.value = '';
+      countingAnswer.disabled = true;
+      countingAnswerBtn.disabled = true;
+      showCountingMessage('Нажмите «Старт»', '');
+    }
+
+    countingAnswerForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!countingState.running) {
+        return;
+      }
+      if (countingAnswer.value.trim() === '') {
+        showCountingMessage('Введите сумму', 'bad');
+        return;
+      }
+
+      if (Number(countingAnswer.value) === countingState.answer) {
+        showCountingMessage('Верно', 'good');
+        nextCountingQuestion();
+      } else {
+        showCountingMessage(`Ошибка: правильная сумма ${countingState.answer}`, 'bad');
+        countingAnswer.disabled = true;
+        countingAnswerBtn.disabled = true;
+        countingState.nextTimer = window.setTimeout(() => {
+          if (countingState.running) {
+            nextCountingQuestion();
+          }
+        }, 900);
+      }
+    });
+
     function selectTab(tab) {
-      const pictureActive = tab === 'picture';
       stopTimer();
       stopPictureTimer();
+      stopBlackjackTimer();
+      stopCountingTimer();
       state.running = false;
       pictureState.running = false;
-      multiplicationTab.classList.toggle('hidden', pictureActive);
-      pictureTab.classList.toggle('hidden', !pictureActive);
-      multiplicationTabBtn.classList.toggle('active', !pictureActive);
-      pictureTabBtn.classList.toggle('active', pictureActive);
-      multiplicationTabBtn.setAttribute('aria-selected', String(!pictureActive));
-      pictureTabBtn.setAttribute('aria-selected', String(pictureActive));
+      blackjackState.running = false;
+      countingState.running = false;
+      const tabs = [
+        ['multiplication', multiplicationTab, multiplicationTabBtn],
+        ['picture', pictureTab, pictureTabBtn],
+        ['blackjack', blackjackTab, blackjackTabBtn],
+        ['counting', countingTab, countingTabBtn]
+      ];
+      tabs.forEach(([name, panel, button]) => {
+        const active = name === tab;
+        panel.classList.toggle('hidden', !active);
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', String(active));
+      });
     }
 
     pictureAnswerForm.addEventListener('submit', (event) => {
@@ -1126,12 +1479,24 @@
     pictureTimeButtons.forEach((button) => {
       button.addEventListener('click', () => setPictureTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds)));
     });
+    blackjackTimeButtons.forEach((button) => {
+      button.addEventListener('click', () => setBlackjackTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds)));
+    });
+    countingLevelButtons.forEach((button) => {
+      button.addEventListener('click', () => setCountingLevel(button.dataset.level));
+    });
     startBtn.addEventListener('click', start);
     resetBtn.addEventListener('click', reset);
     pictureStartBtn.addEventListener('click', startPicture);
     pictureResetBtn.addEventListener('click', resetPicture);
+    blackjackStartBtn.addEventListener('click', startBlackjack);
+    blackjackResetBtn.addEventListener('click', resetBlackjack);
+    countingStartBtn.addEventListener('click', startCounting);
+    countingResetBtn.addEventListener('click', resetCounting);
     multiplicationTabBtn.addEventListener('click', () => selectTab('multiplication'));
     pictureTabBtn.addEventListener('click', () => selectTab('picture'));
+    blackjackTabBtn.addEventListener('click', () => selectTab('blackjack'));
+    countingTabBtn.addEventListener('click', () => selectTab('counting'));
 
     renderTables();
     renderNumbers();
@@ -1139,6 +1504,8 @@
     updateStats();
     renderStoredStats();
     resetPicture();
+    resetBlackjack();
+    resetCounting();
   </script>
 </body>
 </html>
