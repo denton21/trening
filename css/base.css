@@ -108,6 +108,10 @@ h2 {
   gap: 10px;
 }
 
+.history-reset-actions {
+  margin-top: 14px;
+}
+
 .timing-title {
   margin-top: 22px;
 }

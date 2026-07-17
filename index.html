@@ -17,6 +17,7 @@
       <button class="tab" id="pictureTabBtn" type="button" role="tab" aria-selected="false">Picture bets</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
+      <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
     </div>
 
     <div class="layout" id="multiplicationTab" role="tabpanel">
@@ -89,7 +90,7 @@
     <section class="layout hidden" id="pictureTab" role="tabpanel" aria-label="Тренировка picture bets">
       <div class="panel">
         <h2>Picture bets</h2>
-        <p class="hint">Узнайте сумму по готовому рисунку. Ставка каждой фишки: 1.</p>
+        <p class="hint">Выигрышная комбинация одного числа (или 0). Каждая фишка = 1. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5.</p>
 
         <div class="field">
           <span class="label">Время</span>
@@ -171,7 +172,7 @@
     <section class="layout hidden" id="countingTab" role="tabpanel" aria-label="Тренировка счёта">
       <div class="panel">
         <h2>Счёт выплат</h2>
-        <p class="hint">Сложите несколько выплат рулетки.</p>
+        <p class="hint">На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).</p>
         <div class="field">
           <span class="label">Сложность</span>
           <div class="time-choices" id="countingLevelChoices">
@@ -187,13 +188,100 @@
       </div>
 
       <div class="trainer">
-        <div class="task">
-          <div class="example" id="countingExample">5 + 16</div>
+        <div class="stats">
+          <div class="stat"><span>Верно</span><strong id="countingCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="countingWrongCount">0</strong></div>
+          <div class="stat"><span>Последнее</span><strong id="countingLastTime">—</strong></div>
+        </div>
+        <div class="picture-task counting-task" id="countingTask">
+          <div class="counting-win" id="countingWinLabel">Выпало: —</div>
+          <div class="roulette-board counting-board" id="countingBoard" aria-label="Поле рулетки с выигрышной комбинацией">
+            <div class="board-zero" id="countingZero" aria-hidden="true">0</div>
+            <div class="board-grid counting-grid" id="countingGrid" aria-hidden="true"></div>
+            <div class="board-chips" id="countingChips"></div>
+          </div>
           <form class="answer-row" id="countingAnswerForm">
             <input class="answer" id="countingAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
             <button class="primary" id="countingAnswerBtn" type="submit" disabled>Ответить</button>
           </form>
+          <div class="actions counting-retry-actions hidden" id="countingRetryActions">
+            <button class="secondary" id="countingRetryBtn" type="button">Пересчитать</button>
+            <button class="primary" id="countingSkipBtn" type="button">Пропустить</button>
+          </div>
           <div class="message" id="countingMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden" id="payoutsTab" role="tabpanel" aria-label="Тренировка выплат">
+      <div class="panel">
+        <h2>Выплаты</h2>
+        <p class="hint" id="payoutsHint">
+          <strong>Через кэш:</strong> кэш = N ÷ цвет, фишки цвета = выплата − кэш. Выплата ≤ 1000.
+          Примеры: на 5 — 240 через 500 → 140; на 2 — 780 через 500 → 530.
+        </p>
+
+        <div class="field">
+          <span class="label">Цвет</span>
+          <div class="time-choices" id="payoutsColorChoices">
+            <button class="choice active" type="button" data-color="1" aria-pressed="true">на 1</button>
+            <button class="choice" type="button" data-color="2" aria-pressed="false">на 2</button>
+            <button class="choice" type="button" data-color="5" aria-pressed="false">на 5</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Режим</span>
+          <div class="toggle-row" id="payoutsModeChoices">
+            <button class="choice active" type="button" data-mode="cash" aria-pressed="true">Через кэш</button>
+            <button class="choice" type="button" data-mode="chips" aria-pressed="false">Через фишки</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="time-choices" id="payoutsTimeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="payoutsStartBtn" type="button">Старт</button>
+          <button class="secondary" id="payoutsResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Время</span><strong id="payoutsTimeLeft">1:00</strong></div>
+          <div class="stat"><span>Верно</span><strong id="payoutsCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="payoutsWrongCount">0</strong></div>
+        </div>
+        <div class="progress" aria-label="Остаток времени"><span id="payoutsTimeProgress"></span></div>
+        <div class="task" id="payoutsTask">
+          <div class="payouts-meta" id="payoutsMeta">цвет ×1 · через кэш</div>
+          <div class="example" id="payoutsExample">—</div>
+          <div class="payouts-detail" id="payoutsDetail">Нажмите «Старт»</div>
+          <form class="answer-row payouts-answer-row" id="payoutsAnswerForm">
+            <div class="payouts-inputs" id="payoutsCashInputs">
+              <input class="answer" id="payoutsAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Остаток фишек цвета" disabled>
+            </div>
+            <div class="payouts-inputs hidden" id="payoutsChipsInputs">
+              <label class="payouts-field">
+                <span>Фишки</span>
+                <input class="answer" id="payoutsChipsAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Число фишек цвета" disabled>
+              </label>
+              <label class="payouts-field">
+                <span>Кэш</span>
+                <input class="answer" id="payoutsCashAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма кэша" disabled>
+              </label>
+            </div>
+            <button class="primary" id="payoutsAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="payoutsMessage">Нажмите «Старт»</div>
         </div>
       </div>
     </section>
@@ -207,11 +295,20 @@
         <div class="stat"><span>Picture bets: среднее</span><strong id="pictureAverage">-</strong></div>
         <div class="stat"><span>Blackjack: ответов</span><strong id="blackjackAttempts">0</strong></div>
         <div class="stat"><span>Blackjack: среднее</span><strong id="blackjackAverage">-</strong></div>
+        <div class="stat"><span>Выплаты: ответов</span><strong id="payoutsAttempts">0</strong></div>
+        <div class="stat"><span>Выплаты: среднее</span><strong id="payoutsAverage">-</strong></div>
+      </div>
+      <div class="actions history-reset-actions">
+        <button class="secondary" id="resetMultiplicationStatsBtn" type="button">Сброс умножения</button>
+        <button class="secondary" id="resetBlackjackStatsBtn" type="button">Сброс blackjack</button>
+        <button class="secondary" id="resetPayoutsStatsBtn" type="button">Сброс выплат</button>
       </div>
       <h2 class="timing-title">Скорость по примерам</h2>
       <div class="timing-chart" id="multiplicationChart" aria-live="polite"></div>
       <h2 class="timing-title">Скорость выплат Blackjack</h2>
       <div class="timing-chart" id="blackjackChart" aria-live="polite"></div>
+      <h2 class="timing-title">Скорость выплат (кэш / фишки)</h2>
+      <div class="timing-chart" id="payoutsChart" aria-live="polite"></div>
     </section>
   </main>
 
@@ -223,6 +320,7 @@
   <script src="js/modes/picture.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
+  <script src="js/modes/payouts.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

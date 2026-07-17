@@ -12,7 +12,11 @@ window.Trainer = window.Trainer || {};
     try {
       const stored = JSON.parse(localStorage.getItem(statsKey));
       if (stored && stored.multiplication && stored.picture) {
-        return { ...stored, blackjack: stored.blackjack || emptyModeStats() };
+        return {
+          ...stored,
+          blackjack: stored.blackjack || emptyModeStats(),
+          payouts: stored.payouts || emptyModeStats()
+        };
       }
     } catch {
       // Ignore damaged local cache and begin fresh.
@@ -20,7 +24,8 @@ window.Trainer = window.Trainer || {};
     return {
       multiplication: emptyModeStats(),
       picture: emptyModeStats(),
-      blackjack: emptyModeStats()
+      blackjack: emptyModeStats(),
+      payouts: emptyModeStats()
     };
   }
 
@@ -69,6 +74,7 @@ window.Trainer = window.Trainer || {};
     const multiplication = storedStats.multiplication;
     const picture = storedStats.picture;
     const blackjack = storedStats.blackjack;
+    const payouts = storedStats.payouts || emptyModeStats();
 
     $('#multiplicationAttempts').textContent = multiplication.attempts;
     $('#multiplicationAverage').textContent = multiplication.attempts
@@ -82,6 +88,16 @@ window.Trainer = window.Trainer || {};
     $('#blackjackAverage').textContent = blackjack.attempts
       ? `${(blackjack.totalMs / blackjack.attempts / 1000).toFixed(1)} с`
       : '-';
+    const payoutsAttempts = $('#payoutsAttempts');
+    const payoutsAverage = $('#payoutsAverage');
+    if (payoutsAttempts) {
+      payoutsAttempts.textContent = payouts.attempts;
+    }
+    if (payoutsAverage) {
+      payoutsAverage.textContent = payouts.attempts
+        ? `${(payouts.totalMs / payouts.attempts / 1000).toFixed(1)} с`
+        : '-';
+    }
 
     renderTimingChart(
       'multiplication',
@@ -93,10 +109,21 @@ window.Trainer = window.Trainer || {};
       $('#blackjackChart'),
       'Решите выплаты, чтобы увидеть скорость по каждой ставке.'
     );
+    const payoutsChart = $('#payoutsChart');
+    if (payoutsChart) {
+      renderTimingChart(
+        'payouts',
+        payoutsChart,
+        'Решите выплаты, чтобы увидеть скорость по заданиям.'
+      );
+    }
   };
 
   Trainer.recordAttempt = function recordAttempt(mode, example, correct, startedAt) {
     const elapsedMs = Math.max(0, Date.now() - startedAt);
+    if (!storedStats[mode]) {
+      storedStats[mode] = emptyModeStats();
+    }
     const modeStats = storedStats[mode];
     const exampleStats = modeStats.examples[example] || { attempts: 0, correct: 0, totalMs: 0 };
 
@@ -110,5 +137,43 @@ window.Trainer = window.Trainer || {};
 
     localStorage.setItem(statsKey, JSON.stringify(storedStats));
     Trainer.renderStoredStats();
+  };
+
+  Trainer.clearModeStats = function clearModeStats(mode) {
+    if (!storedStats[mode]) {
+      return false;
+    }
+    storedStats[mode] = emptyModeStats();
+    localStorage.setItem(statsKey, JSON.stringify(storedStats));
+    Trainer.renderStoredStats();
+    return true;
+  };
+
+  Trainer.initStatsControls = function initStatsControls() {
+    const labels = {
+      multiplication: 'умножения',
+      blackjack: 'blackjack',
+      payouts: 'выплат'
+    };
+
+    const bindings = [
+      ['#resetMultiplicationStatsBtn', 'multiplication'],
+      ['#resetBlackjackStatsBtn', 'blackjack'],
+      ['#resetPayoutsStatsBtn', 'payouts']
+    ];
+
+    bindings.forEach(([selector, mode]) => {
+      const button = $(selector);
+      if (!button) {
+        return;
+      }
+      button.addEventListener('click', () => {
+        const label = labels[mode] || mode;
+        if (!window.confirm(`Сбросить статистику ${label}?`)) {
+          return;
+        }
+        Trainer.clearModeStats(mode);
+      });
+    });
   };
 })();

@@ -12,7 +12,7 @@ window.Trainer = window.Trainer || {};
     setProgress,
     showMessage,
     recordAttempt,
-    picturePatterns
+    generatePicturePattern
   } = Trainer;
 
   const state = {
@@ -24,8 +24,9 @@ window.Trainer = window.Trainer || {};
     running: false,
     timer: null,
     nextTimer: null,
-    lastPattern: -1,
-    questionStartedAt: null
+    lastSignature: '',
+    questionStartedAt: null,
+    patternLabel: ''
   };
 
   const els = {
@@ -43,6 +44,13 @@ window.Trainer = window.Trainer || {};
     chips: $('#rouletteChips'),
     task: $('#pictureTab .picture-task')
   };
+
+  function signatureOf(pattern) {
+    return pattern.chips
+      .map(([x, y]) => `${x},${y}`)
+      .sort()
+      .join('|');
+  }
 
   function updateStats() {
     els.timeLeft.textContent = formatTime(state.secondsLeft);
@@ -62,17 +70,23 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function renderPicture() {
-    let patternIndex = Math.floor(Math.random() * picturePatterns.length);
-    if (picturePatterns.length > 1) {
-      while (patternIndex === state.lastPattern) {
-        patternIndex = Math.floor(Math.random() * picturePatterns.length);
-      }
+  function nextPattern() {
+    let pattern = generatePicturePattern();
+    let guard = 0;
+    while (signatureOf(pattern) === state.lastSignature && guard < 20) {
+      pattern = generatePicturePattern();
+      guard += 1;
     }
+    return pattern;
+  }
 
-    const pattern = picturePatterns[patternIndex];
-    state.lastPattern = patternIndex;
+  function renderPicture() {
+    const pattern = nextPattern();
+    state.lastSignature = signatureOf(pattern);
     state.answer = pattern.answer;
+    state.patternLabel = pattern.meta.isZero
+      ? `0/${pattern.answer}`
+      : `c${pattern.meta.col}r${pattern.meta.row}/${pattern.answer}`;
     state.questionStartedAt = Date.now();
 
     els.chips.innerHTML = '';
@@ -176,12 +190,7 @@ window.Trainer = window.Trainer || {};
       }
 
       const isCorrect = Number(els.answer.value) === state.answer;
-      recordAttempt(
-        'picture',
-        `pattern-${state.lastPattern}-${state.answer}`,
-        isCorrect,
-        state.questionStartedAt
-      );
+      recordAttempt('picture', state.patternLabel, isCorrect, state.questionStartedAt);
 
       flashAnswer(els.answer, isCorrect);
       flashTask(els.task, isCorrect);

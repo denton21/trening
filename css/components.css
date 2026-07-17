@@ -177,17 +177,69 @@
   will-change: transform, opacity;
 }
 
-/* Длинные суммы в режиме «Счёт» */
-#countingExample {
-  font-size: clamp(28px, 5.5vw, 52px);
-  line-height: 1.15;
-  word-break: break-word;
-}
+
 
 .answer-row {
   display: flex;
   width: min(420px, 100%);
   gap: 10px;
+}
+
+.payouts-meta {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.payouts-detail {
+  min-height: 32px;
+  font-size: clamp(22px, 4.5vw, 32px);
+  font-weight: 800;
+  color: var(--accent-dark, #0f766e);
+}
+
+.payouts-answer-row {
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(520px, 100%);
+}
+
+.payouts-inputs {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 0;
+  width: min(420px, 100%);
+}
+
+.payouts-inputs.hidden {
+  display: none;
+}
+
+.payouts-field {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: left;
+}
+
+.payouts-field span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.payouts-field .answer {
+  width: 100%;
+}
+
+.payouts-answer-row > .primary {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  min-height: 52px;
 }
 
 .answer {
