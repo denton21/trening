@@ -293,7 +293,7 @@
         <p class="hint">
           Создай комнату или введи код друга. Одинаковые примеры у обоих.
           Кто ответил верно первым — у соперника 10 секунд. Не успел — проиграл.
-          Оба успели — следующий пример. Без своего сервера (PeerJS).
+          Оба успели — следующий пример. Нужен интернет (связь через облако, ПК и телефон в разных сетях ок).
         </p>
 
         <div id="duelLobby">
@@ -311,7 +311,7 @@
           <div class="field" style="margin-top: 14px">
             <span class="label">Или войти по коду</span>
             <div class="answer-row">
-              <input class="answer" id="duelJoinCode" type="text" maxlength="6" placeholder="Код" autocomplete="off" aria-label="Код комнаты" style="text-transform: uppercase">
+              <input class="answer" id="duelJoinCode" type="text" maxlength="8" placeholder="Код" autocomplete="off" aria-label="Код комнаты" style="text-transform: uppercase">
               <button class="primary" id="duelJoinBtn" type="button">Войти</button>
             </div>
           </div>
@@ -384,7 +384,7 @@
     </section>
   </main>
 
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>

@@ -14,8 +14,16 @@ window.Trainer = window.Trainer || {};
     payoutOf
   } = Trainer;
 
+  /**
+   * Связь через публичный MQTT (не P2P) — работает ПК ↔ телефон
+   * даже в разных сетях. Сообщения только в теме комнаты.
+   */
+  const MQTT_URLS = [
+    'wss://broker.emqx.io:8084/mqtt',
+    'wss://broker.hivemq.com:8884/mqtt'
+  ];
+  const TOPIC_PREFIX = 'roulette-trainer/v1/duel/';
   const PRESSURE_SEC = 10;
-  const PEER_PREFIX = 'rt-duel-';
   const MODE_LABELS = {
     multiplication: 'Умнож.',
     blackjack: 'BJ',
@@ -27,8 +35,10 @@ window.Trainer = window.Trainer || {};
     mode: 'multiplication',
     role: null,
     roomCode: null,
-    peer: null,
-    conn: null,
+    playerId: null,
+    opponentId: null,
+    client: null,
+    topic: null,
     phase: 'lobby',
     question: null,
     round: 0,
@@ -37,7 +47,9 @@ window.Trainer = window.Trainer || {};
     pressureEndsAt: null,
     pressureTimer: null,
     tickTimer: null,
-    finished: false
+    waitTimer: null,
+    finished: false,
+    brokerIndex: 0
   };
 
   const els = {
@@ -86,23 +98,28 @@ window.Trainer = window.Trainer || {};
     return copy;
   }
 
+  function makePlayerId() {
+    return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
   function makeRoomCode() {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < 5; i += 1) {
       code += alphabet[randInt(0, alphabet.length - 1)];
     }
     return code;
   }
 
-  function peerIdFromCode(code) {
-    return `${PEER_PREFIX}${String(code).trim().toUpperCase()}`;
+  function normalizeCode(raw) {
+    return String(raw || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
   }
 
-  function send(msg) {
-    if (state.conn && state.conn.open) {
-      state.conn.send(msg);
-    }
+  function ensureMqtt() {
+    return typeof window.mqtt !== 'undefined' && typeof window.mqtt.connect === 'function';
   }
 
   function clearPressureTimers() {
@@ -121,24 +138,27 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function destroyPeer() {
+  function clearWaitTimer() {
+    if (state.waitTimer) {
+      window.clearInterval(state.waitTimer);
+      state.waitTimer = null;
+    }
+  }
+
+  function disconnectClient() {
+    clearWaitTimer();
     clearPressureTimers();
     try {
-      if (state.conn) {
-        state.conn.close();
+      if (state.client) {
+        state.client.end(true);
       }
     } catch {
       // ignore
     }
-    try {
-      if (state.peer) {
-        state.peer.destroy();
-      }
-    } catch {
-      // ignore
-    }
-    state.conn = null;
-    state.peer = null;
+    state.client = null;
+    state.topic = null;
+    state.opponentId = null;
+    state.playerId = null;
     state.role = null;
     state.roomCode = null;
     state.question = null;
@@ -149,8 +169,20 @@ window.Trainer = window.Trainer || {};
     state.phase = 'lobby';
   }
 
+  function publish(msg) {
+    if (!state.client || !state.topic || !state.client.connected) {
+      return;
+    }
+    const payload = JSON.stringify({
+      ...msg,
+      from: state.playerId,
+      ts: Date.now()
+    });
+    state.client.publish(state.topic, payload, { qos: 1 });
+  }
+
   function showLobby() {
-    destroyPeer();
+    disconnectClient();
     els.lobby.classList.remove('hidden');
     els.waiting.classList.add('hidden');
     els.game.classList.add('hidden');
@@ -167,7 +199,7 @@ window.Trainer = window.Trainer || {};
     els.waiting.classList.remove('hidden');
     els.game.classList.add('hidden');
     els.roomCode.textContent = code;
-    els.waitingHint.textContent = 'Ждём второго игрока… Нужен интернет у обоих.';
+    els.waitingHint.textContent = 'Ждём второго игрока… Интернет нужен у обоих.';
   }
 
   function showGame() {
@@ -179,7 +211,7 @@ window.Trainer = window.Trainer || {};
     state.finished = false;
   }
 
-  /* ——— Генерация вопросов (хост) ——— */
+  /* ——— Вопросы ——— */
 
   function buildNumberGrid(winNumber) {
     if (winNumber === 0) {
@@ -236,23 +268,13 @@ window.Trainer = window.Trainer || {};
       count: randInt(1, 4)
     }));
     const answer = chips.reduce((sum, chip) => sum + chip.count * payoutOf(chip.type), 0);
-    return {
-      mode: 'counting',
-      answer,
-      winNumber,
-      grid,
-      chips
-    };
+    return { mode: 'counting', answer, winNumber, grid, chips };
   }
 
   function makeQuestion(mode) {
     if (mode === 'blackjack') {
       const bet = randInt(1, 40) * 5;
-      return {
-        mode: 'blackjack',
-        display: String(bet),
-        answer: bet * 1.5
-      };
+      return { mode: 'blackjack', display: String(bet), answer: bet * 1.5 };
     }
     if (mode === 'counting') {
       return makeCountingQuestion();
@@ -260,14 +282,8 @@ window.Trainer = window.Trainer || {};
     const tables = [5, 8, 11, 17, 35];
     const table = tables[randInt(0, tables.length - 1)];
     const mult = randInt(1, 20);
-    return {
-      mode: 'multiplication',
-      display: `${table} × ${mult}`,
-      answer: table * mult
-    };
+    return { mode: 'multiplication', display: `${table} × ${mult}`, answer: table * mult };
   }
-
-  /* ——— UI вопроса ——— */
 
   function cellColorClass(number) {
     if (number === 0) return '';
@@ -320,11 +336,8 @@ window.Trainer = window.Trainer || {};
     } else {
       els.boardWrap.classList.add('hidden');
       els.example.classList.remove('hidden');
-      if (animate) {
-        animateExample(els.example, q.display);
-      } else {
-        els.example.textContent = q.display;
-      }
+      if (animate) animateExample(els.example, q.display);
+      else els.example.textContent = q.display;
       showMessage(
         els.message,
         q.mode === 'blackjack' ? 'Выплата BJ 3:2 (×1.5)' : 'Ответьте на пример',
@@ -332,7 +345,6 @@ window.Trainer = window.Trainer || {};
       );
       els.status.textContent = 'Одинаковый пример · кто быстрее';
     }
-
     els.answer.focus();
   }
 
@@ -340,7 +352,23 @@ window.Trainer = window.Trainer || {};
     state.round += 1;
     const q = makeQuestion(state.mode);
     renderQuestion(q, true);
-    send({ type: 'question', round: state.round, question: q, mode: state.mode });
+    publish({ type: 'question', round: state.round, question: q, mode: state.mode });
+  }
+
+  function acceptGuest(guestId) {
+    if (state.opponentId && state.opponentId !== guestId) {
+      publish({ type: 'room_full', to: guestId });
+      return;
+    }
+    if (state.phase === 'playing' || state.phase === 'finished') {
+      return;
+    }
+    state.opponentId = guestId;
+    clearWaitTimer();
+    showGame();
+    state.round = 0;
+    publish({ type: 'welcome', mode: state.mode, to: guestId });
+    startRoundFromHost();
   }
 
   function startPressureAsFirst() {
@@ -348,18 +376,16 @@ window.Trainer = window.Trainer || {};
     els.status.textContent = `Ты решил! У соперника ${PRESSURE_SEC} сек`;
     showMessage(els.message, 'Ждём соперника…', 'good');
     els.timer.classList.add('is-danger');
-
     state.tickTimer = window.setInterval(() => {
       const left = Math.max(0, Math.ceil((state.pressureEndsAt - Date.now()) / 1000));
       els.timer.textContent = `${left}с`;
     }, 200);
     els.timer.textContent = `${PRESSURE_SEC}с`;
-
     state.pressureTimer = window.setTimeout(() => {
       if (state.finished) return;
       if (state.meSolved && !state.peerSolved) {
         finishMatch(true);
-        send({ type: 'end', youWin: false });
+        publish({ type: 'end', youWin: false });
       }
     }, PRESSURE_SEC * 1000);
   }
@@ -372,18 +398,15 @@ window.Trainer = window.Trainer || {};
     els.answer.disabled = false;
     els.answerBtn.disabled = false;
     els.answer.focus();
-
     state.tickTimer = window.setInterval(() => {
       const left = Math.max(0, Math.ceil((state.pressureEndsAt - Date.now()) / 1000));
       els.timer.textContent = `${left}с`;
     }, 200);
     els.timer.textContent = `${PRESSURE_SEC}с`;
-
     state.pressureTimer = window.setTimeout(() => {
       if (state.finished) return;
       if (state.peerSolved && !state.meSolved) {
         finishMatch(false);
-        // Хост/соперник тоже зафиксирует победу у себя по своему таймеру
       }
     }, PRESSURE_SEC * 1000);
   }
@@ -394,10 +417,9 @@ window.Trainer = window.Trainer || {};
     showMessage(els.message, 'Оба успели!', 'good');
     els.answer.disabled = true;
     els.answerBtn.disabled = true;
-
     if (state.role === 'host') {
       window.setTimeout(() => {
-        if (!state.finished && state.conn) {
+        if (!state.finished && state.client) {
           startRoundFromHost();
         }
       }, 700);
@@ -414,7 +436,6 @@ window.Trainer = window.Trainer || {};
     els.endActions.classList.remove('hidden');
     els.timer.textContent = '—';
     els.timer.classList.remove('is-danger');
-
     if (iWon) {
       els.status.textContent = 'Победа!';
       showMessage(els.message, 'Соперник не успел. Ты выиграл!', 'good');
@@ -434,47 +455,65 @@ window.Trainer = window.Trainer || {};
 
   function onLocalCorrect() {
     if (state.finished || !state.question || state.meSolved) return;
-
     state.meSolved = true;
     flashAnswer(els.answer, true);
     flashTask(els.task, true);
-    send({ type: 'solved', round: state.round });
-
+    publish({ type: 'solved', round: state.round });
     if (state.peerSolved) {
-      // Соперник уже решил — оба успели
       bothSolvedNext();
     } else {
-      // Мы первые
       els.answer.disabled = true;
       els.answerBtn.disabled = true;
       startPressureAsFirst();
     }
   }
 
-  function onMessage(data) {
-    if (!data || !data.type) {
+  function onRemoteMessage(data) {
+    if (!data || !data.type || data.from === state.playerId) {
       return;
     }
-    if (state.finished && data.type !== 'end') {
+    // Личные сообщения другому
+    if (data.to && data.to !== state.playerId) {
       return;
     }
 
     switch (data.type) {
-      case 'hello':
-        // Хост уже стартует на conn.open
+      case 'host_ready':
+        if (state.role === 'guest' && state.phase === 'connecting') {
+          publish({ type: 'join' });
+        }
+        break;
+
+      case 'join':
+        if (state.role === 'host' && (state.phase === 'waiting' || state.phase === 'connecting')) {
+          acceptGuest(data.from);
+        }
         break;
 
       case 'welcome':
-        if (data.mode) {
-          state.mode = data.mode;
-          els.modeLabel.textContent = MODE_LABELS[state.mode] || state.mode;
+        if (state.role === 'guest') {
+          clearWaitTimer();
+          state.opponentId = data.from;
+          if (data.mode) state.mode = data.mode;
+          showGame();
+          els.status.textContent = 'Подключено · ждём пример';
+          showMessage(els.message, 'Сейчас придёт первый пример', 'good');
+        }
+        break;
+
+      case 'room_full':
+        if (state.role === 'guest') {
+          showMessage(els.lobbyMessage, 'Комната уже занята', 'bad');
+          showLobby();
         }
         break;
 
       case 'question':
         if (state.finished) break;
+        clearWaitTimer();
         state.mode = data.mode || state.mode;
         state.round = data.round || state.round + 1;
+        if (data.from) state.opponentId = data.from;
         showGame();
         renderQuestion(data.question, true);
         break;
@@ -494,9 +533,9 @@ window.Trainer = window.Trainer || {};
         finishMatch(Boolean(data.youWin));
         break;
 
-      case 'peer_left':
-        if (!state.finished) {
-          showMessage(els.message, 'Соперник отключился', 'bad');
+      case 'leave':
+        if (!state.finished && state.phase !== 'lobby') {
+          showMessage(els.message, 'Соперник вышел', 'bad');
           els.answer.disabled = true;
           els.answerBtn.disabled = true;
           els.endActions.classList.remove('hidden');
@@ -509,125 +548,131 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function wireConnection(conn) {
-    state.conn = conn;
-    conn.on('data', (data) => onMessage(data));
-    conn.on('close', () => {
-      if (!state.finished && state.phase !== 'lobby') {
-        showMessage(els.message, 'Связь потеряна', 'bad');
-        showMessage(els.lobbyMessage, 'Связь потеряна. Создай комнату заново.', 'bad');
-        els.answer.disabled = true;
-        els.answerBtn.disabled = true;
-        els.endActions.classList.remove('hidden');
-        clearPressureTimers();
-      }
-    });
-    conn.on('error', () => {
-      showMessage(els.lobbyMessage, 'Ошибка связи', 'bad');
-    });
-  }
-
-  function ensurePeerJs() {
-    return typeof window.Peer === 'function';
-  }
-
-  function createRoom() {
-    if (!ensurePeerJs()) {
-      showMessage(els.lobbyMessage, 'PeerJS не загрузился. Нужен интернет.', 'bad');
+  function connectMqtt(onConnected) {
+    if (!ensureMqtt()) {
+      showMessage(els.lobbyMessage, 'Библиотека MQTT не загрузилась. Нужен интернет, обнови страницу.', 'bad');
       return;
     }
 
-    destroyPeer();
-    const code = makeRoomCode();
-    state.role = 'host';
-    state.roomCode = code;
-    state.phase = 'waiting';
-
-    const peer = new window.Peer(peerIdFromCode(code), {
-      debug: 0
+    const url = MQTT_URLS[state.brokerIndex % MQTT_URLS.length];
+    const client = window.mqtt.connect(url, {
+      clientId: `rt_${makePlayerId()}`,
+      clean: true,
+      reconnectPeriod: 2000,
+      connectTimeout: 12000,
+      protocolVersion: 4
     });
-    state.peer = peer;
-    showWaiting(code);
-    showMessage(els.lobbyMessage, '', '');
+    state.client = client;
 
-    peer.on('open', () => {
-      els.waitingHint.textContent = `Комната ${code} открыта. Ждём друга…`;
-    });
-
-    peer.on('connection', (conn) => {
-      if (state.conn && state.conn.open) {
-        conn.close();
-        return;
-      }
-      wireConnection(conn);
-      conn.on('open', () => {
-        send({ type: 'welcome', mode: state.mode });
-        // Один старт матча, когда гость на связи
-        if (state.role === 'host' && state.round === 0 && !state.finished) {
-          showGame();
-          startRoundFromHost();
+    client.on('connect', () => {
+      client.subscribe(state.topic, { qos: 1 }, (err) => {
+        if (err) {
+          showMessage(els.lobbyMessage, 'Не удалось войти в комнату', 'bad');
+          return;
         }
+        onConnected();
       });
     });
 
-    peer.on('error', (err) => {
-      const msg = String(err && err.type ? err.type : err);
-      if (msg === 'unavailable-id') {
-        showMessage(els.lobbyMessage, 'Код занят, жми ещё раз «Создать»', 'bad');
-        showLobby();
+    client.on('message', (_topic, buffer) => {
+      let data;
+      try {
+        data = JSON.parse(String(buffer));
+      } catch {
         return;
       }
-      showMessage(els.lobbyMessage, `Ошибка: ${msg}`, 'bad');
-      els.waitingHint.textContent = `Ошибка PeerJS: ${msg}. Проверь интернет.`;
+      onRemoteMessage(data);
+    });
+
+    client.on('error', () => {
+      // mqtt.js сам ретраит; покажем статус
+      if (state.phase === 'waiting') {
+        els.waitingHint.textContent = 'Проблема связи, переподключаемся…';
+      }
+    });
+
+    client.on('offline', () => {
+      if (state.phase === 'waiting') {
+        els.waitingHint.textContent = 'Офлайн… проверяем интернет';
+      } else if (state.phase === 'connecting') {
+        showMessage(els.lobbyMessage, 'Офлайн… проверяем интернет', 'bad');
+      }
+    });
+
+    client.on('reconnect', () => {
+      if (state.phase === 'waiting') {
+        els.waitingHint.textContent = 'Переподключение…';
+      }
+    });
+  }
+
+  function createRoom() {
+    disconnectClient();
+    const code = makeRoomCode();
+    state.role = 'host';
+    state.roomCode = code;
+    state.playerId = makePlayerId();
+    state.topic = TOPIC_PREFIX + code;
+    state.phase = 'waiting';
+    state.opponentId = null;
+    state.round = 0;
+
+    showWaiting(code);
+    showMessage(els.lobbyMessage, '', '');
+    els.waitingHint.textContent = 'Подключаемся к серверу…';
+
+    connectMqtt(() => {
+      els.waitingHint.textContent = `Комната ${code} готова. Ждём друга…`;
+      publish({ type: 'host_ready', mode: state.mode });
+      // Периодически маякуем, если гость зашёл раньше
+      clearWaitTimer();
+      state.waitTimer = window.setInterval(() => {
+        if (state.phase === 'waiting' && state.client && state.client.connected) {
+          publish({ type: 'host_ready', mode: state.mode });
+        }
+      }, 2500);
     });
   }
 
   function joinRoom() {
-    if (!ensurePeerJs()) {
-      showMessage(els.lobbyMessage, 'PeerJS не загрузился. Нужен интернет.', 'bad');
-      return;
-    }
-
-    const code = String(els.joinCode.value || '')
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '');
+    const code = normalizeCode(els.joinCode.value);
     if (code.length < 4) {
-      showMessage(els.lobbyMessage, 'Введи код из 4 символов', 'bad');
+      showMessage(els.lobbyMessage, 'Введи код комнаты (5 символов)', 'bad');
       return;
     }
 
-    destroyPeer();
+    disconnectClient();
     state.role = 'guest';
     state.roomCode = code;
+    state.playerId = makePlayerId();
+    state.topic = TOPIC_PREFIX + code;
     state.phase = 'connecting';
+    state.round = 0;
+
     showMessage(els.lobbyMessage, 'Подключаемся…', '');
 
-    const peer = new window.Peer({ debug: 0 });
-    state.peer = peer;
-
-    peer.on('open', () => {
-      const conn = peer.connect(peerIdFromCode(code), { reliable: true });
-      wireConnection(conn);
-      conn.on('open', () => {
-        send({ type: 'hello' });
-        showMessage(els.lobbyMessage, 'На связи! Ждём пример…', 'good');
-        showGame();
-        els.status.textContent = 'Подключено · ждём хоста';
-        showMessage(els.message, 'Сейчас придёт первый пример', '');
-        els.answer.disabled = true;
-        els.answerBtn.disabled = true;
-      });
-      conn.on('error', () => {
-        showMessage(els.lobbyMessage, 'Не удалось войти. Проверь код.', 'bad');
-        showLobby();
-      });
-    });
-
-    peer.on('error', (err) => {
-      const msg = String(err && err.type ? err.type : err);
-      showMessage(els.lobbyMessage, `Ошибка: ${msg}. Комната не найдена?`, 'bad');
-      showLobby();
+    connectMqtt(() => {
+      showMessage(els.lobbyMessage, 'На связи, ищем комнату…', '');
+      publish({ type: 'join' });
+      clearWaitTimer();
+      let tries = 0;
+      state.waitTimer = window.setInterval(() => {
+        if (state.phase !== 'connecting') {
+          clearWaitTimer();
+          return;
+        }
+        tries += 1;
+        publish({ type: 'join' });
+        showMessage(els.lobbyMessage, `Ищем комнату… (${tries})`, '');
+        if (tries >= 20) {
+          clearWaitTimer();
+          showMessage(
+            els.lobbyMessage,
+            'Не нашли комнату. Проверь код и что на компе комната ещё открыта.',
+            'bad'
+          );
+        }
+      }, 2000);
     });
   }
 
@@ -651,8 +696,15 @@ window.Trainer = window.Trainer || {};
     }
   }
 
+  function leaveToLobby() {
+    if (state.client && state.client.connected) {
+      publish({ type: 'leave' });
+    }
+    showLobby();
+  }
+
   Trainer.stopDuel = function stopDuel() {
-    // Комнату не рвём при переключении вкладки — только «Отмена» / «В лобби».
+    // Комнату при смене вкладки не рвём
   };
 
   Trainer.initDuel = function initDuel() {
@@ -673,8 +725,8 @@ window.Trainer = window.Trainer || {};
         joinRoom();
       }
     });
-    els.cancelBtn.addEventListener('click', showLobby);
-    els.backBtn.addEventListener('click', showLobby);
+    els.cancelBtn.addEventListener('click', leaveToLobby);
+    els.backBtn.addEventListener('click', leaveToLobby);
     els.copyCodeBtn.addEventListener('click', async () => {
       const code = state.roomCode || els.roomCode.textContent;
       try {
