@@ -15,12 +15,8 @@ window.Trainer = window.Trainer || {};
     recordAttempt
   } = Trainer;
 
-  /** Стек = 20 фишек. «Примерно N–M стеков» → диапазон по числу фишек. */
-  const STACK_REQUESTS = [
-    { label: '1–2 стека', minChips: 20, maxChips: 40 },
-    { label: '2–3 стека', minChips: 40, maxChips: 60 },
-    { label: '3–4 стека', minChips: 60, maxChips: 80 }
-  ];
+  /** Стек = 20 фишек. */
+  const STACK_SIZE = 20;
 
   /**
    * Через кэш:
@@ -34,6 +30,19 @@ window.Trainer = window.Trainer || {};
    * Выплата ≤ 1000 — иначе «камаз» фишек гостю.
    */
   const MAX_PAYOUT = 1000;
+
+  /**
+   * Через фишки:
+   *   выплата = число фишек (не доллары)
+   *   гость просит N стеков → отдаём chips = N×20
+   *   остаток = выплата − chips
+   *   кэш ($) = остаток × цвет
+   *
+   * ×5: 300, 5 стеков (100) → ост. 200 → 200×5 = 1000$
+   *     (или 200÷2×10, или «добавить 0» к половине)
+   * ×2: 300, 100 фишек → ост. 200 → 200×2 = 400$
+   * ×1: остаток × 1 = кэш
+   */
 
   function throughBillsForColor(color) {
     // Только купюры, где N/цвет оставляет место под выплату ≤ 1000
@@ -136,47 +145,78 @@ window.Trainer = window.Trainer || {};
     };
   }
 
+  function stackLabel(stacks) {
+    if (stacks === 1) {
+      return '1 стек';
+    }
+    if (stacks >= 2 && stacks <= 4) {
+      return `${stacks} стека`;
+    }
+    return `${stacks} стеков`;
+  }
+
+  /**
+   * Выплата в фишках; гость берёт stacks стеков;
+   * кэш = (выплата − chips) × color.
+   */
   function generateChipsQuestion(color) {
-    // Сумма выплаты тоже держим разумной (≤ 1000)
-    const pool =
-      color === 5
-        ? [STACK_REQUESTS[0], STACK_REQUESTS[1]]
-        : [STACK_REQUESTS[0], STACK_REQUESTS[0], STACK_REQUESTS[1]];
+    // Выплата: 160…500 фишек, кратно 20 (чтобы удобно со стеками)
+    let payout;
+    let stacks;
+    let chips;
+    let remaining;
+    let cash;
+    let attempts = 0;
 
-    let request = pick(pool);
-    let chips = randomInt(request.minChips, request.maxChips);
-    let colorMoney = chips * color;
+    do {
+      attempts += 1;
+      // Чем выше цвет, тем меньше фишек в выплате (кэш не раздувать)
+      const maxPayoutChips = color === 5 ? 400 : color === 2 ? 500 : 500;
+      const minPayoutChips = color === 5 ? 160 : 140;
+      const units = randomInt(minPayoutChips / STACK_SIZE, maxPayoutChips / STACK_SIZE);
+      payout = units * STACK_SIZE;
 
-    const cashChoices = [0, 10, 20, 25, 40, 50, 75, 100, 150, 200, 250, 300, 400, 500];
-
-    let cash = pick(cashChoices.filter((c) => colorMoney + c <= MAX_PAYOUT));
-    if (cash === undefined) {
-      // Уменьшаем стеки, если цвет ×5 и 3–4 стека не влезают
-      request = STACK_REQUESTS[0];
-      chips = randomInt(request.minChips, request.maxChips);
-      colorMoney = chips * color;
-      cash = pick(cashChoices.filter((c) => colorMoney + c <= MAX_PAYOUT)) ?? 0;
-    }
-
-    if (cash > colorMoney * 3 && cash > 0) {
-      const smaller = cashChoices.filter((c) => c <= colorMoney * 2 && colorMoney + c <= MAX_PAYOUT);
-      if (smaller.length) {
-        cash = pick(smaller);
+      // Гость просит 1…5 стеков, но меньше выплаты (остаток ≥ 1 стек)
+      const maxStacks = Math.min(5, units - 1);
+      const minStacks = 1;
+      if (maxStacks < minStacks) {
+        continue;
       }
-    }
+      stacks = randomInt(minStacks, maxStacks);
+      chips = stacks * STACK_SIZE;
+      remaining = payout - chips;
+      cash = remaining * color;
+    } while ((cash <= 0 || remaining < STACK_SIZE) && attempts < 40);
 
-    const payout = colorMoney + cash;
+    if (cash <= 0 || remaining < STACK_SIZE) {
+      // Фоллбек — примеры из постановки
+      if (color === 5) {
+        payout = 300;
+        stacks = 5;
+      } else if (color === 2) {
+        payout = 300;
+        stacks = 5;
+      } else {
+        payout = 240;
+        stacks = 2;
+      }
+      chips = stacks * STACK_SIZE;
+      remaining = payout - chips;
+      cash = remaining * color;
+    }
 
     return {
       mode: 'chips',
       color,
       payout,
-      requestLabel: request.label,
-      minChips: request.minChips,
-      maxChips: request.maxChips,
+      stacks,
+      chips,
+      remaining,
+      cash,
+      requestLabel: stackLabel(stacks),
       sampleChips: chips,
       sampleCash: cash,
-      exampleKey: `фишки ${payout} ${request.label} (×${color})`
+      exampleKey: `фишки ${payout} ${stackLabel(stacks)} (×${color})`
     };
   }
 
@@ -184,13 +224,11 @@ window.Trainer = window.Trainer || {};
     if (!Number.isInteger(chips) || !Number.isInteger(cash)) {
       return false;
     }
-    if (chips < question.minChips || chips > question.maxChips) {
+    if (chips < 0 || cash < 0) {
       return false;
     }
-    if (cash < 0) {
-      return false;
-    }
-    return chips * question.color + cash === question.payout;
+    // Отдаём ровно запрошенные фишки; кэш = остаток × цвет
+    return chips === question.chips && cash === question.cash;
   }
 
   const state = {
@@ -254,10 +292,17 @@ window.Trainer = window.Trainer || {};
           `<strong>Через кэш (×${state.color}):</strong> кэш = N ÷ ${div}, цвет = выплата − кэш. Выплата ≤ 1000. ` +
           `Пример: ${ex.payout} через ${ex.through} → ${ex.through}÷${div}=${exCash}, цвет <strong>${exLeft}</strong>.`;
       } else {
+        const ex =
+          state.color === 5
+            ? { payout: 300, stacks: 5, chips: 100, cash: 1000 }
+            : state.color === 2
+              ? { payout: 300, stacks: 5, chips: 100, cash: 400 }
+              : { payout: 240, stacks: 2, chips: 40, cash: 200 };
         els.hint.innerHTML =
-          '<strong>Через фишки:</strong> гость просит примерно стеки цвета (стек = 20 фишек). ' +
-          '1–2 стека = 20–40 фишек, 2–3 = 40–60, 3–4 = 60–80. ' +
-          `Введите число фишек (в диапазоне) и кэш так, чтобы фишки×${state.color} + кэш = выплата.`;
+          `<strong>Через фишки (×${state.color}):</strong> выплата — число фишек. ` +
+          `Стек = 20. Отдаём запрошенные фишки, остаток × ${state.color} = кэш ($). ` +
+          `Пример: ${ex.payout}, ${ex.stacks} стек(ов) → ${ex.chips} фишек, ` +
+          `остаток ${ex.payout - ex.chips} × ${state.color} = <strong>${ex.cash}$</strong>.`;
       }
     }
   }
@@ -331,7 +376,7 @@ window.Trainer = window.Trainer || {};
     if (q.mode === 'cash') {
       els.detail.textContent = `через ${q.through}`;
     } else {
-      els.detail.textContent = `примерно ${q.requestLabel} · цвет ×${q.color}`;
+      els.detail.textContent = `просит ${q.requestLabel} (${q.chips} фишек) · цвет ×${q.color}`;
     }
   }
 
@@ -361,7 +406,9 @@ window.Trainer = window.Trainer || {};
     updateStats();
     showMessage(
       els.message,
-      state.mode === 'cash' ? 'Сколько фишек цвета останется?' : 'Фишки цвета + кэш',
+      state.mode === 'cash'
+        ? 'Сколько фишек цвета останется?'
+        : 'Сколько фишек отдать и сколько $ кэша?',
       ''
     );
 
@@ -497,7 +544,9 @@ window.Trainer = window.Trainer || {};
     } else {
       state.wrong += 1;
       bumpStat(els.wrongCount);
-      const hint = `${q.minChips}–${q.maxChips} фишек ×${q.color} + кэш = ${q.payout} (напр. ${q.sampleChips} + ${q.sampleCash})`;
+      const hint =
+        `${q.chips} фишек + (${q.payout}−${q.chips})×${q.color}=${q.cash}$ ` +
+        `(остаток ${q.remaining} × ${q.color})`;
       showMessage(els.message, `Ошибка: ${hint}`, 'bad');
       setInputsEnabled(false);
       state.nextTimer = window.setTimeout(() => {
