@@ -363,3 +363,40 @@
   font-size: 14px;
   font-weight: 700;
 }
+
+.duel-code {
+  margin: 8px 0 16px;
+  padding: 16px;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  text-align: center;
+  font-size: clamp(36px, 8vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--accent-dark, #0f766e);
+  background: #f0fdfa;
+  user-select: all;
+}
+
+.duel-board-wrap {
+  width: min(100%, 360px);
+  margin: 0 auto;
+}
+
+.duel-board-wrap.hidden {
+  display: none;
+}
+
+#duelTimer.is-danger {
+  color: var(--bad);
+  animation: duel-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes duel-pulse {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0.75; transform: scale(1.06); }
+}
+
+#duelEndActions.hidden {
+  display: none;
+}

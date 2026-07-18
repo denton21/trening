@@ -18,6 +18,7 @@
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
+      <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
     </div>
 
     <div class="layout" id="multiplicationTab" role="tabpanel">
@@ -286,6 +287,77 @@
       </div>
     </section>
 
+    <section class="layout hidden" id="duelTab" role="tabpanel" aria-label="Дуэль 1 на 1">
+      <div class="panel">
+        <h2>Дуэль</h2>
+        <p class="hint">
+          Создай комнату или введи код друга. Одинаковые примеры у обоих.
+          Кто ответил верно первым — у соперника 10 секунд. Не успел — проиграл.
+          Оба успели — следующий пример. Без своего сервера (PeerJS).
+        </p>
+
+        <div id="duelLobby">
+          <div class="field">
+            <span class="label">Режим (для создателя)</span>
+            <div class="time-choices" id="duelModeChoices">
+              <button class="choice active" type="button" data-mode="multiplication" aria-pressed="true">Умножение</button>
+              <button class="choice" type="button" data-mode="blackjack" aria-pressed="false">Blackjack</button>
+              <button class="choice" type="button" data-mode="counting" aria-pressed="false">Счёт</button>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="duelCreateBtn" type="button">Создать комнату</button>
+          </div>
+          <div class="field" style="margin-top: 14px">
+            <span class="label">Или войти по коду</span>
+            <div class="answer-row">
+              <input class="answer" id="duelJoinCode" type="text" maxlength="6" placeholder="Код" autocomplete="off" aria-label="Код комнаты" style="text-transform: uppercase">
+              <button class="primary" id="duelJoinBtn" type="button">Войти</button>
+            </div>
+          </div>
+          <div class="message" id="duelLobbyMessage"></div>
+        </div>
+
+        <div id="duelWaiting" class="hidden">
+          <p class="hint">Код комнаты — скажи другу:</p>
+          <div class="duel-code" id="duelRoomCode">————</div>
+          <p class="hint" id="duelWaitingHint">Ждём второго игрока… Нужен интернет у обоих.</p>
+          <div class="actions">
+            <button class="secondary" id="duelCopyCodeBtn" type="button">Копировать код</button>
+            <button class="secondary" id="duelCancelBtn" type="button">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="trainer hidden" id="duelGame">
+        <div class="stats">
+          <div class="stat"><span>Режим</span><strong id="duelModeLabel">—</strong></div>
+          <div class="stat"><span>Раунд</span><strong id="duelRound">1</strong></div>
+          <div class="stat"><span>Таймер</span><strong id="duelTimer">—</strong></div>
+        </div>
+        <div class="task" id="duelTask">
+          <div class="payouts-meta" id="duelStatus">Ожидание…</div>
+          <div class="example" id="duelExample">—</div>
+          <div class="duel-board-wrap hidden" id="duelBoardWrap">
+            <div class="counting-win" id="duelWinLabel">Выпало: —</div>
+            <div class="roulette-board counting-board" id="duelBoard" aria-label="Поле для счёта">
+              <div class="board-zero" id="duelZero" aria-hidden="true">0</div>
+              <div class="board-grid counting-grid" id="duelGrid" aria-hidden="true"></div>
+              <div class="board-chips" id="duelChips"></div>
+            </div>
+          </div>
+          <form class="answer-row" id="duelAnswerForm">
+            <input class="answer" id="duelAnswer" type="text" inputmode="decimal" autocomplete="off" aria-label="Ответ" disabled>
+            <button class="primary" id="duelAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="duelMessage">—</div>
+          <div class="actions hidden" id="duelEndActions">
+            <button class="primary" id="duelBackBtn" type="button">В лобби</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel history" aria-label="Статистика устройства">
       <h2>Статистика устройства</h2>
       <div class="history-stats">
@@ -312,6 +384,7 @@
     </section>
   </main>
 
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>
@@ -321,6 +394,7 @@
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
   <script src="js/modes/payouts.js"></script>
+  <script src="js/modes/duel.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

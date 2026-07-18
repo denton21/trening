@@ -28,6 +28,11 @@ window.Trainer = window.Trainer || {};
       panel: $('#payoutsTab'),
       button: $('#payoutsTabBtn'),
       stop: () => Trainer.stopPayouts()
+    },
+    duel: {
+      panel: $('#duelTab'),
+      button: $('#duelTabBtn'),
+      stop: () => Trainer.stopDuel()
     }
   };
 
@@ -58,6 +63,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initBlackjack();
   Trainer.initCounting();
   Trainer.initPayouts();
+  Trainer.initDuel();
   initTabs();
   Trainer.renderStoredStats();
   if (Trainer.initStatsControls) {
