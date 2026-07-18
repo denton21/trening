@@ -15,13 +15,16 @@ window.Trainer = window.Trainer || {};
     recordAttempt
   } = Trainer;
 
-  /** Стек = 20 фишек. Гость просит примерно диапазон стеков, остальное — кэшем. */
+  /**
+   * Стек ≈ 20 фишек. «Примерно N–M стеков» — мягкий диапазон
+   * (не ровно 20/40: 18 фишек для «1–2 стека» нормально).
+   */
   const STACK_SIZE = 20;
   const STACK_REQUESTS = [
-    { label: '1–2 стека', minChips: 20, maxChips: 40 },
-    { label: '2–3 стека', minChips: 40, maxChips: 60 },
-    { label: '3–4 стека', minChips: 60, maxChips: 80 },
-    { label: '4–5 стеков', minChips: 80, maxChips: 100 }
+    { label: '1–2 стека', minChips: 12, maxChips: 45 },
+    { label: '2–3 стека', minChips: 30, maxChips: 70 },
+    { label: '3–4 стека', minChips: 50, maxChips: 90 },
+    { label: '4–5 стеков', minChips: 70, maxChips: 110 }
   ];
 
   /**
@@ -156,9 +159,9 @@ window.Trainer = window.Trainer || {};
   function generateChipsQuestion(color) {
     // Чем выше цвет, тем меньше выплата в фишках (кэш иначе огромный)
     const maxPayoutChips = color === 5 ? 380 : color === 2 ? 480 : 520;
-    const minPayoutChips = color === 5 ? 97 : 83;
+    const minPayoutChips = color === 5 ? 90 : 70;
 
-    // Не берём слишком крупные стеки, если выплата маленькая
+    // На ×5 крупные просьбы реже — кэш раздувается
     const pool =
       color === 5
         ? [STACK_REQUESTS[0], STACK_REQUESTS[1], STACK_REQUESTS[2]]
@@ -173,17 +176,18 @@ window.Trainer = window.Trainer || {};
     do {
       attempts += 1;
       request = pick(pool);
-      // Любое целое число фишек — не «всегда ×10»
+      // Любое целое — не «всегда ×10»
       payout = randomInt(minPayoutChips, maxPayoutChips);
-      // Остаток после maxChips должен быть ≥ ~половина стека, чтобы был смысл в кэше
-      if (payout - request.maxChips < 15) {
+      // После maxChips остаток ≥ 10, чтобы был смысл в кэше
+      if (payout - request.maxChips < 10) {
         continue;
       }
-      sampleChips = randomInt(request.minChips, request.maxChips);
+      // sample — любое число «примерно в стеках», не обязательно ×10
+      sampleChips = randomInt(request.minChips, Math.min(request.maxChips, payout - 10));
       sampleCash = (payout - sampleChips) * color;
-    } while ((sampleCash <= 0 || payout <= request.maxChips) && attempts < 50);
+    } while ((sampleCash <= 0 || payout <= request.minChips) && attempts < 50);
 
-    if (sampleCash <= 0 || payout <= request.maxChips) {
+    if (sampleCash <= 0 || payout <= request.minChips) {
       request = STACK_REQUESTS[1];
       payout = color === 5 ? 287 : color === 2 ? 313 : 241;
       sampleChips = 50;
@@ -196,7 +200,7 @@ window.Trainer = window.Trainer || {};
       payout,
       requestLabel: request.label,
       minChips: request.minChips,
-      maxChips: request.maxChips,
+      maxChips: Math.min(request.maxChips, payout - 1),
       sampleChips,
       sampleCash,
       exampleKey: `фишки ${payout} ~${request.label} (×${color})`
@@ -211,14 +215,48 @@ window.Trainer = window.Trainer || {};
     if (!Number.isInteger(chips) || !Number.isInteger(cash)) {
       return false;
     }
+    if (chips <= 0 || chips >= question.payout) {
+      return false;
+    }
     if (chips < question.minChips || chips > question.maxChips) {
       return false;
     }
     if (cash < 0) {
       return false;
     }
-    // Любое число фишек в диапазоне стеков; кэш = остаток × цвет
+    // кэш = остаток × цвет  (×2: остаток×2; ×5: остаток×5)
     return cash === chipsCashFor(question.payout, chips, question.color);
+  }
+
+  /** Понятная подсказка: что не так с ответом. */
+  function chipsErrorHint(question, chips, cash) {
+    const expected = Number.isInteger(chips)
+      ? chipsCashFor(question.payout, chips, question.color)
+      : null;
+
+    if (!Number.isInteger(chips) || !Number.isInteger(cash)) {
+      return 'нужны целые числа';
+    }
+    if (chips <= 0 || chips >= question.payout) {
+      return `фишки от 1 до ${question.payout - 1}`;
+    }
+    if (chips < question.minChips || chips > question.maxChips) {
+      // Формула могла быть верной — явно говорим про диапазон
+      const formulaOk = cash === expected;
+      return (
+        `фишки примерно ${question.minChips}–${question.maxChips} (${question.requestLabel}), ты: ${chips}` +
+        (formulaOk ? ` — кэш ${cash}$ по формуле верный, но возьми фишки в диапазоне` : '')
+      );
+    }
+    if (cash !== expected) {
+      return (
+        `при ${chips} фишках: (${question.payout}−${chips})×${question.color}=${expected}$, а не ${cash}`
+      );
+    }
+    return (
+      `${question.minChips}–${question.maxChips} фишек, кэш=(выплата−фишки)×${question.color} ` +
+      `(напр. ${question.sampleChips} → ${question.sampleCash}$)`
+    );
   }
 
   const state = {
@@ -368,7 +406,7 @@ window.Trainer = window.Trainer || {};
       els.detail.textContent = `через ${q.through}`;
     } else {
       els.detail.textContent =
-        `примерно ${q.requestLabel} (${q.minChips}–${q.maxChips} фишек), остальное кэшем · ×${q.color}`;
+        `примерно ${q.requestLabel} (~${q.minChips}–${q.maxChips} фиш.), остальное кэшем · ×${q.color}`;
     }
   }
 
@@ -536,16 +574,13 @@ window.Trainer = window.Trainer || {};
     } else {
       state.wrong += 1;
       bumpStat(els.wrongCount);
-      const hint =
-        `${q.minChips}–${q.maxChips} фишек, кэш = (выплата − фишки)×${q.color} ` +
-        `(напр. ${q.sampleChips} → ${q.sampleCash}$)`;
-      showMessage(els.message, `Ошибка: ${hint}`, 'bad');
+      showMessage(els.message, `Ошибка: ${chipsErrorHint(q, chips, cash)}`, 'bad');
       setInputsEnabled(false);
       state.nextTimer = window.setTimeout(() => {
         if (state.running) {
           nextQuestion();
         }
-      }, 1400);
+      }, 1800);
     }
     updateStats();
   }
