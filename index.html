@@ -287,13 +287,13 @@
       </div>
     </section>
 
-    <section class="layout hidden" id="duelTab" role="tabpanel" aria-label="Дуэль 1 на 1">
+    <section class="layout hidden" id="duelTab" role="tabpanel" aria-label="Дуэль">
       <div class="panel">
         <h2>Дуэль</h2>
         <p class="hint">
-          Создай комнату или введи код друга. Одинаковые примеры у обоих.
-          Кто ответил верно первым — у соперника 10 секунд. Не успел — проиграл.
-          Оба успели — следующий пример. Нужен интернет (связь через облако, ПК и телефон в разных сетях ок).
+          Создай комнату — она появится в списке у всех. Зайти может сколько угодно человек.
+          Хост жмёт «Старт». У каждого 3 жизни. Кто первый решил верно — у остальных таймер
+          (4 сек умножение/BJ, 10 сек счёт). Не успел — −1 жизнь. 0 жизней — вылет, но текущий пример можно дорешать.
         </p>
 
         <div id="duelLobby">
@@ -305,26 +305,38 @@
               <button class="choice" type="button" data-mode="counting" aria-pressed="false">Счёт</button>
             </div>
           </div>
+          <div class="field hidden" id="duelLevelField">
+            <span class="label">Сложность счёта</span>
+            <div class="time-choices" id="duelLevelChoices">
+              <button class="choice active" type="button" data-level="easy" aria-pressed="true">Лёгкий</button>
+              <button class="choice" type="button" data-level="medium" aria-pressed="false">Средний</button>
+              <button class="choice" type="button" data-level="hard" aria-pressed="false">Высокий</button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Твоё имя</span>
+            <input class="answer" id="duelPlayerName" type="text" maxlength="16" placeholder="Игрок" autocomplete="nickname" aria-label="Имя">
+          </div>
           <div class="actions">
             <button class="primary" id="duelCreateBtn" type="button">Создать комнату</button>
+            <button class="secondary" id="duelRefreshLobbyBtn" type="button">Обновить список</button>
           </div>
-          <div class="field" style="margin-top: 14px">
-            <span class="label">Или войти по коду</span>
-            <div class="answer-row">
-              <input class="answer" id="duelJoinCode" type="text" maxlength="8" placeholder="Код" autocomplete="off" aria-label="Код комнаты" style="text-transform: uppercase">
-              <button class="primary" id="duelJoinBtn" type="button">Войти</button>
+          <div class="field" style="margin-top: 16px">
+            <span class="label">Открытые комнаты</span>
+            <div class="duel-room-list" id="duelRoomList" aria-live="polite">
+              <p class="timing-empty" id="duelRoomListEmpty">Пока пусто — создай комнату или подожди.</p>
             </div>
           </div>
           <div class="message" id="duelLobbyMessage"></div>
         </div>
 
         <div id="duelWaiting" class="hidden">
-          <p class="hint">Код комнаты — скажи другу:</p>
-          <div class="duel-code" id="duelRoomCode">————</div>
-          <p class="hint" id="duelWaitingHint">Ждём второго игрока… Нужен интернет у обоих.</p>
+          <div class="duel-code" id="duelRoomTitle">Комната —</div>
+          <p class="hint" id="duelWaitingHint">Ждём игроков… Хост запускает игру.</p>
+          <div class="duel-players" id="duelWaitingPlayers"></div>
           <div class="actions">
-            <button class="secondary" id="duelCopyCodeBtn" type="button">Копировать код</button>
-            <button class="secondary" id="duelCancelBtn" type="button">Отмена</button>
+            <button class="primary hidden" id="duelStartBtn" type="button">Старт</button>
+            <button class="secondary" id="duelCancelBtn" type="button">Выйти</button>
           </div>
         </div>
       </div>
@@ -333,10 +345,12 @@
         <div class="stats">
           <div class="stat"><span>Режим</span><strong id="duelModeLabel">—</strong></div>
           <div class="stat"><span>Раунд</span><strong id="duelRound">1</strong></div>
-          <div class="stat"><span>Таймер</span><strong id="duelTimer">—</strong></div>
+          <div class="stat"><span>Жизни</span><strong id="duelLives">♥♥♥</strong></div>
         </div>
+        <div class="duel-players duel-players-game" id="duelGamePlayers"></div>
         <div class="task" id="duelTask">
           <div class="payouts-meta" id="duelStatus">Ожидание…</div>
+          <div class="stat duel-timer-stat"><span>Таймер</span><strong id="duelTimer">—</strong></div>
           <div class="example" id="duelExample">—</div>
           <div class="duel-board-wrap hidden" id="duelBoardWrap">
             <div class="counting-win" id="duelWinLabel">Выпало: —</div>

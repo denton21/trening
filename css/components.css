@@ -370,12 +370,89 @@
   border: 2px dashed var(--accent);
   border-radius: 12px;
   text-align: center;
-  font-size: clamp(36px, 8vw, 56px);
+  font-size: clamp(28px, 6vw, 44px);
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.06em;
   color: var(--accent-dark, #0f766e);
   background: #f0fdfa;
-  user-select: all;
+}
+
+.duel-room-list {
+  display: grid;
+  gap: 8px;
+}
+
+.duel-room-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdff;
+  text-align: left;
+}
+
+.duel-room-card strong {
+  display: block;
+  font-size: 18px;
+}
+
+.duel-room-card span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.duel-room-card button {
+  min-height: 40px;
+}
+
+.duel-players {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.duel-players-game {
+  margin-bottom: 12px;
+}
+
+.duel-player-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.duel-player-row.is-me {
+  border-color: var(--accent);
+  background: #f0fdfa;
+}
+
+.duel-player-row.is-out {
+  opacity: 0.55;
+}
+
+.duel-player-row.is-solved {
+  box-shadow: inset 3px 0 0 var(--good);
+}
+
+.duel-hearts {
+  letter-spacing: 2px;
+  color: #e11d48;
+  font-size: 16px;
+}
+
+.duel-timer-stat {
+  min-width: 100px;
 }
 
 .duel-board-wrap {
@@ -397,6 +474,7 @@
   to { opacity: 0.75; transform: scale(1.06); }
 }
 
-#duelEndActions.hidden {
+#duelEndActions.hidden,
+#duelStartBtn.hidden {
   display: none;
 }
