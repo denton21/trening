@@ -9,11 +9,6 @@ window.Trainer = window.Trainer || {};
       button: $('#multiplicationTabBtn'),
       stop: () => Trainer.stopMultiplication()
     },
-    picture: {
-      panel: $('#pictureTab'),
-      button: $('#pictureTabBtn'),
-      stop: () => Trainer.stopPicture()
-    },
     blackjack: {
       panel: $('#blackjackTab'),
       button: $('#blackjackTabBtn'),
@@ -59,7 +54,6 @@ window.Trainer = window.Trainer || {};
   }
 
   Trainer.initMultiplication();
-  Trainer.initPicture();
   Trainer.initBlackjack();
   Trainer.initCounting();
   Trainer.initPayouts();

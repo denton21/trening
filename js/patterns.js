@@ -168,25 +168,3 @@ Trainer.pickWinningSlots = function pickWinningSlots(options = {}) {
   };
 };
 
-/**
- * Паттерн для picture bets: по одной фишке на слот, ответ = сумма выплат.
- */
-Trainer.generatePicturePattern = function generatePicturePattern() {
-  const pick = Trainer.pickWinningSlots({
-    minSlots: 2,
-    maxSlots: 8,
-    zeroChance: 0.1,
-    preferStraight: true
-  });
-
-  return {
-    answer: pick.answer,
-    chips: pick.slots.map((slot) => [slot.x, slot.y]),
-    meta: {
-      isZero: pick.isZero,
-      col: pick.col,
-      row: pick.row,
-      types: pick.slots.map((s) => s.type)
-    }
-  };
-};

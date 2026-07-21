@@ -14,7 +14,6 @@
     <h1>Тренажёр рулетки</h1>
     <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
-      <button class="tab" id="pictureTabBtn" type="button" role="tab" aria-selected="false">Picture bets</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
@@ -87,49 +86,6 @@
         </div>
       </section>
     </div>
-
-    <section class="layout hidden" id="pictureTab" role="tabpanel" aria-label="Тренировка picture bets">
-      <div class="panel">
-        <h2>Picture bets</h2>
-        <p class="hint">Выигрышная комбинация одного числа (или 0). Каждая фишка = 1. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5.</p>
-
-        <div class="field">
-          <span class="label">Время</span>
-          <div class="time-choices" id="pictureTimeChoices">
-            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
-            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
-            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
-            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="primary" id="pictureStartBtn" type="button">Старт</button>
-          <button class="secondary" id="pictureResetBtn" type="button">Сброс</button>
-        </div>
-      </div>
-
-      <div class="trainer">
-        <div class="stats">
-          <div class="stat"><span>Время</span><strong id="pictureTimeLeft">1:00</strong></div>
-          <div class="stat"><span>Верно</span><strong id="pictureCorrectCount">0</strong></div>
-          <div class="stat"><span>Ошибки</span><strong id="pictureWrongCount">0</strong></div>
-        </div>
-        <div class="progress" aria-label="Остаток времени"><span id="pictureTimeProgress"></span></div>
-        <div class="picture-task">
-          <div class="roulette-board" id="rouletteBoard" aria-label="Поле рулетки с фишками">
-            <div class="board-zero" aria-hidden="true">0</div>
-            <div class="board-grid" aria-hidden="true"></div>
-            <div class="board-chips" id="rouletteChips"></div>
-          </div>
-          <form class="answer-row" id="pictureAnswerForm">
-            <input class="answer" id="pictureAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
-            <button class="primary" id="pictureAnswerBtn" type="submit" disabled>Ответить</button>
-          </form>
-          <div class="message" id="pictureMessage">Нажмите «Старт»</div>
-        </div>
-      </div>
-    </section>
 
     <section class="layout hidden" id="blackjackTab" role="tabpanel" aria-label="Тренировка выплат Blackjack">
       <div class="panel">
@@ -380,8 +336,6 @@
       <div class="history-stats">
         <div class="stat"><span>Умножение: ответов</span><strong id="multiplicationAttempts">0</strong></div>
         <div class="stat"><span>Умножение: среднее</span><strong id="multiplicationAverage">-</strong></div>
-        <div class="stat"><span>Picture bets: ответов</span><strong id="pictureAttempts">0</strong></div>
-        <div class="stat"><span>Picture bets: среднее</span><strong id="pictureAverage">-</strong></div>
         <div class="stat"><span>Blackjack: ответов</span><strong id="blackjackAttempts">0</strong></div>
         <div class="stat"><span>Blackjack: среднее</span><strong id="blackjackAverage">-</strong></div>
         <div class="stat"><span>Выплаты: ответов</span><strong id="payoutsAttempts">0</strong></div>
@@ -407,7 +361,6 @@
   <script src="js/stats.js"></script>
   <script src="js/patterns.js"></script>
   <script src="js/modes/multiplication.js"></script>
-  <script src="js/modes/picture.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
   <script src="js/modes/payouts.js"></script>

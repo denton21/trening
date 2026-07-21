@@ -11,9 +11,9 @@ window.Trainer = window.Trainer || {};
   function loadStoredStats() {
     try {
       const stored = JSON.parse(localStorage.getItem(statsKey));
-      if (stored && stored.multiplication && stored.picture) {
+      if (stored && stored.multiplication) {
         return {
-          ...stored,
+          multiplication: stored.multiplication || emptyModeStats(),
           blackjack: stored.blackjack || emptyModeStats(),
           payouts: stored.payouts || emptyModeStats()
         };
@@ -23,7 +23,6 @@ window.Trainer = window.Trainer || {};
     }
     return {
       multiplication: emptyModeStats(),
-      picture: emptyModeStats(),
       blackjack: emptyModeStats(),
       payouts: emptyModeStats()
     };
@@ -72,17 +71,12 @@ window.Trainer = window.Trainer || {};
 
   Trainer.renderStoredStats = function renderStoredStats() {
     const multiplication = storedStats.multiplication;
-    const picture = storedStats.picture;
     const blackjack = storedStats.blackjack;
     const payouts = storedStats.payouts || emptyModeStats();
 
     $('#multiplicationAttempts').textContent = multiplication.attempts;
     $('#multiplicationAverage').textContent = multiplication.attempts
       ? `${(multiplication.totalMs / multiplication.attempts / 1000).toFixed(1)} с`
-      : '-';
-    $('#pictureAttempts').textContent = picture.attempts;
-    $('#pictureAverage').textContent = picture.attempts
-      ? `${(picture.totalMs / picture.attempts / 1000).toFixed(1)} с`
       : '-';
     $('#blackjackAttempts').textContent = blackjack.attempts;
     $('#blackjackAverage').textContent = blackjack.attempts
