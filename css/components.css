@@ -69,7 +69,7 @@
   min-height: 42px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--input-bg);
   color: var(--text);
   font: inherit;
   font-weight: 700;
@@ -134,7 +134,7 @@
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfdff;
+  background: color-mix(in srgb, var(--panel) 88%, var(--accent));
   transition: border-color var(--dur) var(--ease-soft), background var(--dur) var(--ease-soft);
 }
 
@@ -156,7 +156,7 @@
   height: 8px;
   overflow: hidden;
   border-radius: 8px;
-  background: #e7edf3;
+  background: var(--track);
 }
 
 .progress span {
@@ -175,7 +175,7 @@
   padding: 28px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafc;
+  background: color-mix(in srgb, var(--panel) 92%, var(--muted));
   text-align: center;
 }
 
@@ -268,6 +268,8 @@
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
   font: inherit;
   font-size: 24px;
   font-weight: 700;
@@ -315,13 +317,88 @@
 
 .secondary {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--input-bg);
   color: var(--text);
 }
 
 .secondary:hover {
-  border-color: #b7c4d3;
-  background: #f8fafc;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.theme-toggle {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+/* Session summary */
+.session-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 12, 20, 0.55);
+  backdrop-filter: blur(4px);
+  animation: fade-up var(--dur) var(--ease-out);
+}
+
+.session-overlay.hidden {
+  display: none !important;
+}
+
+.session-card {
+  width: min(420px, 100%);
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  animation: tab-panel-enter var(--dur-tab) var(--ease-strict) both;
+}
+
+.session-card h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+}
+
+.session-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.session-summary-worst {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+}
+
+.session-summary-worst span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.session-summary-worst strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.session-card .actions {
+  justify-content: flex-end;
 }
 
 .actions {
@@ -365,7 +442,7 @@
   height: 12px;
   overflow: hidden;
   border-radius: 8px;
-  background: #e7edf3;
+  background: var(--track);
 }
 
 .timing-bar {
@@ -448,13 +525,13 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--input-bg);
   font-weight: 700;
 }
 
 .duel-player-row.is-me {
   border-color: var(--accent);
-  background: #f0fdfa;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
 }
 
 .duel-player-row.is-out {

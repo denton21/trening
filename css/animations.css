@@ -128,22 +128,22 @@
 
 @keyframes flash-good {
   0% {
-    background: #ecfdf5;
-    border-color: #86efac;
+    background: color-mix(in srgb, var(--good) 22%, var(--input-bg));
+    border-color: var(--good);
   }
   100% {
-    background: #fff;
+    background: var(--input-bg);
     border-color: var(--line);
   }
 }
 
 @keyframes flash-bad {
   0% {
-    background: #fef2f2;
-    border-color: #fca5a5;
+    background: color-mix(in srgb, var(--bad) 18%, var(--input-bg));
+    border-color: var(--bad);
   }
   100% {
-    background: #fff;
+    background: var(--input-bg);
     border-color: var(--line);
   }
 }

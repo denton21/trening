@@ -12,15 +12,17 @@ window.Trainer = window.Trainer || {};
     flashTask,
     setProgress,
     showMessage,
-    recordAttempt
+    recordAttempt,
+    getSettings,
+    saveSettings,
+    pushSessionAttempt,
+    showSessionSummary
   } = Trainer;
 
-  /**
-   * Стек ≈ 20 фишек. «Примерно N–M стеков» — мягкий диапазон
-   * (не ровно 20/40: 18 фишек для «1–2 стека» нормально).
-   */
+  /** Стек = 20 фишек. */
   const STACK_SIZE = 20;
-  const STACK_REQUESTS = [
+  const EXACT_STACKS = [1, 2, 3, 4, 5];
+  const APPROX_REQUESTS = [
     { label: '1–2 стека', minChips: 12, maxChips: 45 },
     { label: '2–3 стека', minChips: 30, maxChips: 70 },
     { label: '3–4 стека', minChips: 50, maxChips: 90 },
@@ -31,25 +33,9 @@ window.Trainer = window.Trainer || {};
    * Через кэш:
    *   кэш = «через N» ÷ цвет
    *   фишки цвета = выплата − кэш
-   *
-   * ×2:  780 через 500 → 500/2=250 → цвет 530
-   * ×5:  240 через 500 → 500/5=100 → цвет 140
-   * ×1:  340 через 100 → 100/1=100 → цвет 240
-   *
    * Выплата ≤ 1000 — иначе «камаз» фишек гостю.
    */
   const MAX_PAYOUT = 1000;
-
-  /**
-   * Через фишки:
-   *   выплата = число фишек (любое, не «всегда ×10»)
-   *   гость просит примерно N–M стеков → chips в [min, max]
-   *   остаток = выплата − chips
-   *   кэш ($) = остаток × цвет
-   *
-   * ×5: 287, ~2–3 стека, отдал 50 → ост. 237 → 237×5 = 1185$
-   * ×2: 313, ~4–5 стеков, отдал 90 → ост. 223 → 223×2 = 446$
-   */
 
   function throughBillsForColor(color) {
     // Только купюры, где N/цвет оставляет место под выплату ≤ 1000
@@ -152,43 +138,80 @@ window.Trainer = window.Trainer || {};
     };
   }
 
+  function stackWord(n) {
+    if (n === 1) return '1 стек';
+    if (n >= 2 && n <= 4) return `${n} стека`;
+    return `${n} стеков`;
+  }
+
   /**
-   * Выплата в фишках (реалистичные числа, не только кратные 10);
-   * гость просит примерно диапазон стеков; кэш = (выплата − chips) × color.
+   * Выплата в фишках; ~50% точные стеки, ~50% «примерно».
+   * кэш = (выплата − chips) × color.
    */
   function generateChipsQuestion(color) {
-    // Чем выше цвет, тем меньше выплата в фишках (кэш иначе огромный)
     const maxPayoutChips = color === 5 ? 380 : color === 2 ? 480 : 520;
     const minPayoutChips = color === 5 ? 90 : 70;
+    const exact = Math.random() < 0.5;
+    let attempts = 0;
 
-    // На ×5 крупные просьбы реже — кэш раздувается
+    if (exact) {
+      let stacks;
+      let chips;
+      let payout;
+      let cash;
+      do {
+        attempts += 1;
+        const maxStacks = color === 5 ? 4 : 5;
+        stacks = pick(EXACT_STACKS.filter((n) => n <= maxStacks));
+        chips = stacks * STACK_SIZE;
+        payout = randomInt(Math.max(minPayoutChips, chips + 20), maxPayoutChips);
+        cash = (payout - chips) * color;
+      } while ((cash <= 0 || payout <= chips) && attempts < 40);
+
+      if (cash <= 0 || payout <= chips) {
+        stacks = 3;
+        chips = 60;
+        payout = color === 5 ? 187 : 241;
+        cash = (payout - chips) * color;
+      }
+
+      return {
+        mode: 'chips',
+        color,
+        payout,
+        requestStyle: 'exact',
+        requestLabel: stackWord(stacks),
+        stacks,
+        minChips: chips,
+        maxChips: chips,
+        sampleChips: chips,
+        sampleCash: cash,
+        exampleKey: `фишки ${payout} ${stackWord(stacks)} (×${color})`
+      };
+    }
+
     const pool =
-      color === 5
-        ? [STACK_REQUESTS[0], STACK_REQUESTS[1], STACK_REQUESTS[2]]
-        : STACK_REQUESTS;
+      color === 5 ? [APPROX_REQUESTS[0], APPROX_REQUESTS[1], APPROX_REQUESTS[2]] : APPROX_REQUESTS;
 
     let request = pick(pool);
     let payout;
     let sampleChips;
     let sampleCash;
-    let attempts = 0;
+    attempts = 0;
 
     do {
       attempts += 1;
       request = pick(pool);
-      // Любое целое — не «всегда ×10»
       payout = randomInt(minPayoutChips, maxPayoutChips);
-      // После maxChips остаток ≥ 10, чтобы был смысл в кэше
       if (payout - request.maxChips < 10) {
         continue;
       }
-      // sample — любое число «примерно в стеках», не обязательно ×10
       sampleChips = randomInt(request.minChips, Math.min(request.maxChips, payout - 10));
       sampleCash = (payout - sampleChips) * color;
     } while ((sampleCash <= 0 || payout <= request.minChips) && attempts < 50);
 
     if (sampleCash <= 0 || payout <= request.minChips) {
-      request = STACK_REQUESTS[1];
+      request = APPROX_REQUESTS[1];
       payout = color === 5 ? 287 : color === 2 ? 313 : 241;
       sampleChips = 50;
       sampleCash = (payout - sampleChips) * color;
@@ -198,6 +221,7 @@ window.Trainer = window.Trainer || {};
       mode: 'chips',
       color,
       payout,
+      requestStyle: 'approx',
       requestLabel: request.label,
       minChips: request.minChips,
       maxChips: Math.min(request.maxChips, payout - 1),
@@ -224,11 +248,9 @@ window.Trainer = window.Trainer || {};
     if (cash < 0) {
       return false;
     }
-    // кэш = остаток × цвет  (×2: остаток×2; ×5: остаток×5)
     return cash === chipsCashFor(question.payout, chips, question.color);
   }
 
-  /** Понятная подсказка: что не так с ответом. */
   function chipsErrorHint(question, chips, cash) {
     const expected = Number.isInteger(chips)
       ? chipsCashFor(question.payout, chips, question.color)
@@ -241,11 +263,16 @@ window.Trainer = window.Trainer || {};
       return `фишки от 1 до ${question.payout - 1}`;
     }
     if (chips < question.minChips || chips > question.maxChips) {
-      // Формула могла быть верной — явно говорим про диапазон
       const formulaOk = cash === expected;
+      if (question.requestStyle === 'exact') {
+        return (
+          `нужно ровно ${question.minChips} фишек (${question.requestLabel}), ты: ${chips}` +
+          (formulaOk ? ` — кэш ${cash}$ верный, но число фишек другое` : '')
+        );
+      }
       return (
         `фишки примерно ${question.minChips}–${question.maxChips} (${question.requestLabel}), ты: ${chips}` +
-        (formulaOk ? ` — кэш ${cash}$ по формуле верный, но возьми фишки в диапазоне` : '')
+        (formulaOk ? ` — кэш ${cash}$ верный, но возьми фишки в диапазоне` : '')
       );
     }
     if (cash !== expected) {
@@ -254,8 +281,8 @@ window.Trainer = window.Trainer || {};
       );
     }
     return (
-      `${question.minChips}–${question.maxChips} фишек, кэш=(выплата−фишки)×${question.color} ` +
-      `(напр. ${question.sampleChips} → ${question.sampleCash}$)`
+      `${question.minChips}${question.minChips === question.maxChips ? '' : `–${question.maxChips}`} фишек, ` +
+      `кэш=(выплата−фишки)×${question.color} (напр. ${question.sampleChips} → ${question.sampleCash}$)`
     );
   }
 
@@ -271,7 +298,8 @@ window.Trainer = window.Trainer || {};
     nextTimer: null,
     question: null,
     lastKey: null,
-    questionStartedAt: null
+    questionStartedAt: null,
+    sessionLog: []
   };
 
   const els = {
@@ -327,13 +355,35 @@ window.Trainer = window.Trainer || {};
               ? { payout: 313, chips: 90, cash: 446 }
               : { payout: 241, chips: 50, cash: 191 };
         els.hint.innerHTML =
-          `<strong>Через фишки (×${state.color}):</strong> выплата — число фишек (любое). ` +
-          `Гость просит примерно стеки (стек = 20), остальное — кэшем. ` +
-          `Фишки в диапазоне, кэш = (выплата − фишки) × ${state.color}. ` +
-          `Пример: ${ex.payout}, ~2–3 стека, отдал ${ex.chips} → ` +
+          `<strong>Через фишки (×${state.color}):</strong> выплата — число фишек. ` +
+          `Иногда «5 стеков» (ровно 100), иногда «примерно 2–3 стека». ` +
+          `Кэш = (выплата − фишки) × ${state.color}. ` +
+          `Пример: ${ex.payout}, ~2–3 стека, ${ex.chips} → ` +
           `(${ex.payout}−${ex.chips})×${state.color} = <strong>${ex.cash}$</strong>.`;
       }
     }
+  }
+
+  function persistSettings() {
+    if (saveSettings) {
+      saveSettings({
+        payouts: { color: state.color, mode: state.mode, duration: state.duration }
+      });
+    }
+  }
+
+  function presentSummary(correct, wrong, log) {
+    const entries = log || state.sessionLog;
+    if (!entries.length || !showSessionSummary) {
+      return;
+    }
+    showSessionSummary({
+      title: 'Итог: выплаты',
+      correct: correct != null ? correct : state.correct,
+      wrong: wrong != null ? wrong : state.wrong,
+      log: entries.slice()
+    });
+    state.sessionLog = [];
   }
 
   function updateStats() {
@@ -404,6 +454,9 @@ window.Trainer = window.Trainer || {};
 
     if (q.mode === 'cash') {
       els.detail.textContent = `через ${q.through}`;
+    } else if (q.requestStyle === 'exact') {
+      els.detail.textContent =
+        `просит ${q.requestLabel} (ровно ${q.minChips} фиш.), остальное кэшем · ×${q.color}`;
     } else {
       els.detail.textContent =
         `примерно ${q.requestLabel} (~${q.minChips}–${q.maxChips} фиш.), остальное кэшем · ×${q.color}`;
@@ -423,12 +476,14 @@ window.Trainer = window.Trainer || {};
     state.running = false;
     setInputsEnabled(false);
     showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
+    presentSummary();
   }
 
   function start() {
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
+    state.sessionLog = [];
     state.secondsLeft = state.duration;
     state.running = true;
     updateModeUi();
@@ -454,6 +509,9 @@ window.Trainer = window.Trainer || {};
   }
 
   function reset() {
+    const prevCorrect = state.correct;
+    const prevWrong = state.wrong;
+    const prevLog = state.sessionLog.slice();
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
@@ -468,6 +526,7 @@ window.Trainer = window.Trainer || {};
     els.detail.textContent = 'Нажмите «Старт»';
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
+    presentSummary(prevCorrect, prevWrong, prevLog);
   }
 
   function setColor(color) {
@@ -476,6 +535,7 @@ window.Trainer = window.Trainer || {};
       setPressed(button, Number(button.dataset.color) === color);
     });
     updateModeUi();
+    persistSettings();
     if (state.running) {
       nextQuestion();
     }
@@ -488,6 +548,7 @@ window.Trainer = window.Trainer || {};
     });
     updateModeUi();
     clearInputs();
+    persistSettings();
     if (state.running) {
       nextQuestion();
     } else {
@@ -506,6 +567,7 @@ window.Trainer = window.Trainer || {};
       );
     });
     updateStats();
+    persistSettings();
   }
 
   function submitCash() {
@@ -519,6 +581,7 @@ window.Trainer = window.Trainer || {};
     const value = Number(els.answer.value);
     const isCorrect = value === q.colorLeft;
     recordAttempt('payouts', q.exampleKey, isCorrect, state.questionStartedAt);
+    pushSessionAttempt(state.sessionLog, q.exampleKey, isCorrect, state.questionStartedAt);
     flashAnswer(els.answer, isCorrect);
     flashTask(els.task, isCorrect);
 
@@ -562,6 +625,7 @@ window.Trainer = window.Trainer || {};
     const isCorrect = isValidChipsAnswer(q, chips, cash);
 
     recordAttempt('payouts', q.exampleKey, isCorrect, state.questionStartedAt);
+    pushSessionAttempt(state.sessionLog, q.exampleKey, isCorrect, state.questionStartedAt);
     flashAnswer(els.chipsAnswer, isCorrect);
     flashAnswer(els.cashAnswer, isCorrect);
     flashTask(els.task, isCorrect);
@@ -591,6 +655,33 @@ window.Trainer = window.Trainer || {};
   };
 
   Trainer.initPayouts = function initPayouts() {
+    if (getSettings) {
+      const saved = getSettings().payouts || {};
+      if (saved.color === 1 || saved.color === 2 || saved.color === 5) {
+        state.color = saved.color;
+      }
+      if (saved.mode === 'cash' || saved.mode === 'chips') {
+        state.mode = saved.mode;
+      }
+      if (saved.duration === null || typeof saved.duration === 'number') {
+        state.duration = saved.duration;
+        state.secondsLeft = saved.duration;
+      }
+      els.colorButtons.forEach((button) => {
+        setPressed(button, Number(button.dataset.color) === state.color);
+      });
+      els.modeButtons.forEach((button) => {
+        setPressed(button, button.dataset.mode === state.mode);
+      });
+      els.timeButtons.forEach((button) => {
+        setPressed(
+          button,
+          String(state.duration) === button.dataset.seconds ||
+            (state.duration === null && button.dataset.seconds === 'free')
+        );
+      });
+    }
+
     els.colorButtons.forEach((button) => {
       button.addEventListener('click', () => setColor(Number(button.dataset.color)));
     });

@@ -12,7 +12,11 @@ window.Trainer = window.Trainer || {};
     flashTask,
     setProgress,
     showMessage,
-    recordAttempt
+    recordAttempt,
+    getSettings,
+    saveSettings,
+    pushSessionAttempt,
+    showSessionSummary
   } = Trainer;
 
   const blackjackBets = Array.from({ length: 40 }, (_, index) => (index + 1) * 5);
@@ -27,7 +31,8 @@ window.Trainer = window.Trainer || {};
     timer: null,
     nextTimer: null,
     lastBet: null,
-    questionStartedAt: null
+    questionStartedAt: null,
+    sessionLog: []
   };
 
   const els = {
@@ -45,6 +50,12 @@ window.Trainer = window.Trainer || {};
     timeProgress: $('#blackjackTimeProgress'),
     task: $('#blackjackTab .task')
   };
+
+  function persistSettings() {
+    if (saveSettings) {
+      saveSettings({ blackjack: { duration: state.duration } });
+    }
+  }
 
   function updateStats() {
     els.timeLeft.textContent = formatTime(state.secondsLeft);
@@ -87,18 +98,34 @@ window.Trainer = window.Trainer || {};
     els.answer.focus();
   }
 
+  function presentSummary(correct, wrong, log) {
+    const entries = log || state.sessionLog;
+    if (!entries.length || !showSessionSummary) {
+      return;
+    }
+    showSessionSummary({
+      title: 'Итог: Blackjack',
+      correct: correct != null ? correct : state.correct,
+      wrong: wrong != null ? wrong : state.wrong,
+      log: entries.slice()
+    });
+    state.sessionLog = [];
+  }
+
   function finish() {
     stopTimer();
     state.running = false;
     els.answer.disabled = true;
     els.answerBtn.disabled = true;
     showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
+    presentSummary();
   }
 
   function start() {
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
+    state.sessionLog = [];
     state.secondsLeft = state.duration;
     state.running = true;
     nextQuestion();
@@ -123,6 +150,9 @@ window.Trainer = window.Trainer || {};
   }
 
   function reset() {
+    const prevCorrect = state.correct;
+    const prevWrong = state.wrong;
+    const prevLog = state.sessionLog.slice();
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
@@ -134,6 +164,7 @@ window.Trainer = window.Trainer || {};
     els.answerBtn.disabled = true;
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
+    presentSummary(prevCorrect, prevWrong, prevLog);
   }
 
   function setTime(seconds) {
@@ -146,6 +177,25 @@ window.Trainer = window.Trainer || {};
       );
     });
     updateStats();
+    persistSettings();
+  }
+
+  function loadSavedSettings() {
+    if (!getSettings) {
+      return;
+    }
+    const saved = getSettings().blackjack || {};
+    if (saved.duration === null || typeof saved.duration === 'number') {
+      state.duration = saved.duration;
+      state.secondsLeft = saved.duration;
+    }
+    els.timeButtons.forEach((button) => {
+      setPressed(
+        button,
+        String(state.duration) === button.dataset.seconds ||
+          (state.duration === null && button.dataset.seconds === 'free')
+      );
+    });
   }
 
   Trainer.stopBlackjack = function stopBlackjack() {
@@ -154,6 +204,8 @@ window.Trainer = window.Trainer || {};
   };
 
   Trainer.initBlackjack = function initBlackjack() {
+    loadSavedSettings();
+
     els.timeButtons.forEach((button) => {
       button.addEventListener('click', () =>
         setTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds))
@@ -175,7 +227,9 @@ window.Trainer = window.Trainer || {};
 
       const expected = state.currentBet * 1.5;
       const isCorrect = Math.abs(Number(els.answer.value.replace(',', '.')) - expected) < 0.001;
-      recordAttempt('blackjack', `${state.currentBet} → ${expected}`, isCorrect, state.questionStartedAt);
+      const label = `${state.currentBet} → ${expected}`;
+      recordAttempt('blackjack', label, isCorrect, state.questionStartedAt);
+      pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
 
       flashAnswer(els.answer, isCorrect);
       flashTask(els.task, isCorrect);
@@ -188,7 +242,7 @@ window.Trainer = window.Trainer || {};
       } else {
         state.wrong += 1;
         bumpStat(els.wrongCount);
-        showMessage(els.message, `Ошибка: ${state.currentBet} → ${expected}`, 'bad');
+        showMessage(els.message, `Ошибка: ${label}`, 'bad');
         els.answer.disabled = true;
         els.answerBtn.disabled = true;
         state.nextTimer = window.setTimeout(() => {

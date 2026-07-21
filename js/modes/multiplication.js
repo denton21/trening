@@ -15,7 +15,11 @@ window.Trainer = window.Trainer || {};
     flashTask,
     setProgress,
     showMessage,
-    recordAttempt
+    recordAttempt,
+    getSettings,
+    saveSettings,
+    pushSessionAttempt,
+    showSessionSummary
   } = Trainer;
 
   const state = {
@@ -33,7 +37,8 @@ window.Trainer = window.Trainer || {};
     timer: null,
     nextTimer: null,
     lastQuestion: '',
-    questionStartedAt: null
+    questionStartedAt: null,
+    sessionLog: []
   };
 
   const els = {
@@ -57,6 +62,20 @@ window.Trainer = window.Trainer || {};
     timeProgress: $('#timeProgress'),
     task: $('#multiplicationTab .task')
   };
+
+  function persistSettings() {
+    if (!saveSettings) {
+      return;
+    }
+    saveSettings({
+      multiplication: {
+        tables: [...state.selectedTables],
+        mode: state.mode,
+        multipliers: state.mode === 'custom' ? [...state.selected] : null,
+        duration: state.duration
+      }
+    });
+  }
 
   function getPool() {
     return state.mode === 'all' ? allMultipliers : [...state.selected];
@@ -123,18 +142,34 @@ window.Trainer = window.Trainer || {};
     els.answerInput.focus();
   }
 
+  function presentSummary(correct, wrong, log) {
+    const entries = log || state.sessionLog;
+    if (!entries.length || !showSessionSummary) {
+      return;
+    }
+    showSessionSummary({
+      title: 'Итог: умножение',
+      correct: correct != null ? correct : state.correct,
+      wrong: wrong != null ? wrong : state.wrong,
+      log: entries.slice()
+    });
+    state.sessionLog = [];
+  }
+
   function finish() {
     stopTimer();
     state.running = false;
     els.answerInput.disabled = true;
     els.answerBtn.disabled = true;
     showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
+    presentSummary();
   }
 
   function start() {
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
+    state.sessionLog = [];
     state.running = true;
     state.secondsLeft = state.duration;
     setNextQuestion();
@@ -158,18 +193,22 @@ window.Trainer = window.Trainer || {};
   }
 
   function reset() {
+    const prevCorrect = state.correct;
+    const prevWrong = state.wrong;
+    const prevLog = state.sessionLog.slice();
     stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
     state.running = false;
     state.secondsLeft = state.duration;
     state.questionStartedAt = null;
+    state.correct = 0;
+    state.wrong = 0;
     els.answerInput.disabled = true;
     els.answerBtn.disabled = true;
     els.answerInput.value = '';
     showIdleExample();
     updateStats();
     showMessage(els.message, 'Нажмите “Старт”', '');
+    presentSummary(prevCorrect, prevWrong, prevLog);
   }
 
   function renderTables() {
@@ -183,6 +222,7 @@ window.Trainer = window.Trainer || {};
             state.selectedTables.add(table);
           }
           renderTables();
+          persistSettings();
         })
       );
     });
@@ -200,6 +240,7 @@ window.Trainer = window.Trainer || {};
             state.selected.add(number);
           }
           renderNumbers();
+          persistSettings();
         })
       );
     });
@@ -217,6 +258,7 @@ window.Trainer = window.Trainer || {};
     if (!state.running) {
       showIdleExample();
     }
+    persistSettings();
   }
 
   function setTimeMode(seconds) {
@@ -230,6 +272,44 @@ window.Trainer = window.Trainer || {};
     });
     state.secondsLeft = seconds;
     updateStats();
+    persistSettings();
+  }
+
+  function loadSavedSettings() {
+    if (!getSettings) {
+      return;
+    }
+    const saved = getSettings().multiplication || {};
+    if (Array.isArray(saved.tables) && saved.tables.length) {
+      state.selectedTables = new Set(saved.tables.filter((t) => tableOptions.includes(t)));
+      if (!state.selectedTables.size) {
+        state.selectedTables = new Set([5]);
+      }
+    }
+    if (saved.mode === 'custom' || saved.mode === 'all') {
+      state.mode = saved.mode;
+    }
+    if (state.mode === 'custom' && Array.isArray(saved.multipliers) && saved.multipliers.length) {
+      state.selected = new Set(saved.multipliers.filter((n) => n >= 1 && n <= 20));
+      if (!state.selected.size) {
+        state.selected = new Set(allMultipliers);
+      }
+    }
+    if (saved.duration === null || typeof saved.duration === 'number') {
+      state.duration = saved.duration;
+      state.timeMode = saved.duration === null ? 'free' : 'timed';
+      state.secondsLeft = saved.duration;
+    }
+    setPressed(els.allNumbersBtn, state.mode === 'all');
+    setPressed(els.customNumbersBtn, state.mode === 'custom');
+    els.numberPickerWrap.classList.toggle('hidden', state.mode !== 'custom');
+    els.timeButtons.forEach((button) => {
+      setPressed(
+        button,
+        String(state.duration) === button.dataset.seconds ||
+          (state.duration === null && button.dataset.seconds === 'free')
+      );
+    });
   }
 
   Trainer.stopMultiplication = function stopMultiplication() {
@@ -238,6 +318,8 @@ window.Trainer = window.Trainer || {};
   };
 
   Trainer.initMultiplication = function initMultiplication() {
+    loadSavedSettings();
+
     els.allNumbersBtn.addEventListener('click', () => setNumberMode('all'));
     els.customNumbersBtn.addEventListener('click', () => setNumberMode('custom'));
     els.timeButtons.forEach((button) => {
@@ -262,12 +344,9 @@ window.Trainer = window.Trainer || {};
       const userAnswer = Number(els.answerInput.value);
       const rightAnswer = state.currentTable * state.currentMultiplier;
       const isCorrect = userAnswer === rightAnswer;
-      recordAttempt(
-        'multiplication',
-        `${state.currentTable} × ${state.currentMultiplier}`,
-        isCorrect,
-        state.questionStartedAt
-      );
+      const label = `${state.currentTable} × ${state.currentMultiplier}`;
+      recordAttempt('multiplication', label, isCorrect, state.questionStartedAt);
+      pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
 
       flashAnswer(els.answerInput, isCorrect);
       flashTask(els.task, isCorrect);
@@ -280,11 +359,7 @@ window.Trainer = window.Trainer || {};
       } else {
         state.wrong += 1;
         bumpStat(els.wrongCount);
-        showMessage(
-          els.message,
-          `Ошибка: ${state.currentTable} × ${state.currentMultiplier} = ${rightAnswer}`,
-          'bad'
-        );
+        showMessage(els.message, `Ошибка: ${label} = ${rightAnswer}`, 'bad');
         els.answerInput.disabled = true;
         els.answerBtn.disabled = true;
         state.nextTimer = window.setTimeout(() => {

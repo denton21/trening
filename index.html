@@ -2,16 +2,35 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Тренажёр для дилера: умножение, blackjack, счёт, выплаты, дуэль">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Рулетка">
   <title>Тренажёр рулетки</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
+  <script>
+    try {
+      var t = JSON.parse(localStorage.getItem('roulette-trainer-settings-v1') || '{}').theme;
+      if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <main>
-    <h1>Тренажёр рулетки</h1>
+    <div class="top-bar">
+      <h1>Тренажёр рулетки</h1>
+      <div class="top-actions">
+        <button class="secondary theme-toggle" id="themeToggleBtn" type="button" aria-pressed="false" title="Тема">Тёмная</button>
+      </div>
+    </div>
     <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
@@ -177,8 +196,8 @@
           <strong>Через кэш:</strong> кэш = N ÷ цвет, фишки цвета = выплата − кэш. Выплата ≤ 1000.
           Примеры: на 5 — 240 через 500 → 140; на 2 — 780 через 500 → 530.
           <br>
-          <strong>Через фишки:</strong> выплата — любое число фишек; гость просит примерно
-          2–3 стека (и т.п.), остальное кэшем: кэш = (выплата − фишки) × цвет.
+          <strong>Через фишки:</strong> иногда «5 стеков» ровно, иногда «примерно 2–3 стека»;
+          кэш = (выплата − фишки) × цвет.
         </p>
 
         <div class="field">
@@ -355,8 +374,19 @@
     </section>
   </main>
 
+  <div class="session-overlay hidden" id="sessionSummary" role="dialog" aria-modal="true" aria-labelledby="sessionSummaryTitle" aria-hidden="true">
+    <div class="session-card">
+      <h2 id="sessionSummaryTitle">Итог сессии</h2>
+      <div id="sessionSummaryBody"></div>
+      <div class="actions">
+        <button class="primary" id="sessionSummaryClose" type="button">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/settings.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>
   <script src="js/patterns.js"></script>

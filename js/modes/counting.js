@@ -11,7 +11,11 @@ window.Trainer = window.Trainer || {};
     showMessage,
     winningSlotsForZero,
     winningSlotsForCell,
-    payoutOf
+    payoutOf,
+    getSettings,
+    saveSettings,
+    pushSessionAttempt,
+    showSessionSummary
   } = Trainer;
 
   const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -31,7 +35,9 @@ window.Trainer = window.Trainer || {};
     correct: 0,
     wrong: 0,
     lastMs: null,
-    awaitingRetry: false
+    awaitingRetry: false,
+    sessionLog: [],
+    currentLabel: '—'
   };
 
   const els = {
@@ -217,11 +223,32 @@ window.Trainer = window.Trainer || {};
     state.answer = layout.answer;
     state.questionStartedAt = Date.now();
     state.awaitingRetry = false;
+    state.currentLabel = `счёт · ${layout.winNumber} · ${layout.chips.length} слот.`;
     setRetryVisible(false);
 
     els.winLabel.textContent = `Выпало: ${layout.winNumber}`;
     renderGrid(layout.grid, layout.winNumber);
     renderChips(layout.chips);
+  }
+
+  function persistSettings() {
+    if (saveSettings) {
+      saveSettings({ counting: { level: state.level } });
+    }
+  }
+
+  function presentSummary(correct, wrong, log) {
+    const entries = log || state.sessionLog;
+    if (!entries.length || !showSessionSummary) {
+      return;
+    }
+    showSessionSummary({
+      title: 'Итог: счёт',
+      correct: correct != null ? correct : state.correct,
+      wrong: wrong != null ? wrong : state.wrong,
+      log: entries.slice()
+    });
+    state.sessionLog = [];
   }
 
   function showIdleBoard() {
@@ -263,11 +290,15 @@ window.Trainer = window.Trainer || {};
     state.correct = 0;
     state.wrong = 0;
     state.lastMs = null;
+    state.sessionLog = [];
     updateStats();
     nextQuestion();
   }
 
   function reset() {
+    const prevCorrect = state.correct;
+    const prevWrong = state.wrong;
+    const prevLog = state.sessionLog.slice();
     stopTimer();
     state.running = false;
     state.awaitingRetry = false;
@@ -279,11 +310,13 @@ window.Trainer = window.Trainer || {};
     disableAnswer();
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
+    presentSummary(prevCorrect, prevWrong, prevLog);
   }
 
   function setLevel(level) {
     state.level = level;
     els.levelButtons.forEach((button) => setPressed(button, button.dataset.level === level));
+    persistSettings();
     if (!state.running) {
       showIdleBoard();
       els.answer.value = '';
@@ -334,6 +367,7 @@ window.Trainer = window.Trainer || {};
       const elapsed = Math.max(0, Date.now() - state.questionStartedAt);
       state.correct += 1;
       state.lastMs = elapsed;
+      pushSessionAttempt(state.sessionLog, state.currentLabel, true, state.questionStartedAt);
       bumpStat(els.correctCount);
       bumpStat(els.lastTime);
       updateStats();
@@ -346,6 +380,7 @@ window.Trainer = window.Trainer || {};
       }, 900);
     } else {
       state.wrong += 1;
+      pushSessionAttempt(state.sessionLog, state.currentLabel, false, state.questionStartedAt);
       bumpStat(els.wrongCount);
       updateStats();
       state.awaitingRetry = true;
@@ -362,6 +397,14 @@ window.Trainer = window.Trainer || {};
   };
 
   Trainer.initCounting = function initCounting() {
+    if (getSettings) {
+      const saved = getSettings().counting || {};
+      if (saved.level && LEVEL[saved.level]) {
+        state.level = saved.level;
+      }
+      els.levelButtons.forEach((button) => setPressed(button, button.dataset.level === state.level));
+    }
+
     els.levelButtons.forEach((button) => {
       button.addEventListener('click', () => setLevel(button.dataset.level));
     });

@@ -192,6 +192,9 @@ window.Trainer = window.Trainer || {};
     } catch {
       // ignore
     }
+    if (Trainer.saveSettings) {
+      Trainer.saveSettings({ duel: { playerName: name, mode: state.mode, level: state.level } });
+    }
     return name;
   }
 
@@ -1169,8 +1172,21 @@ window.Trainer = window.Trainer || {};
     if (!els.createBtn) return;
 
     try {
-      const saved = localStorage.getItem('duel-player-name');
-      if (saved && els.playerName) els.playerName.value = saved;
+      const legacy = localStorage.getItem('duel-player-name');
+      const saved = Trainer.getSettings ? Trainer.getSettings().duel || {} : {};
+      const name = saved.playerName || legacy || '';
+      if (name && els.playerName) {
+        els.playerName.value = name;
+        state.playerName = name;
+      }
+      if (saved.mode && MODE_LABELS[saved.mode]) {
+        state.mode = saved.mode;
+      }
+      if (saved.level && LEVEL_LABELS[saved.level]) {
+        state.level = saved.level;
+      }
+      els.modeButtons.forEach((b) => setPressed(b, b.dataset.mode === state.mode));
+      els.levelButtons.forEach((b) => setPressed(b, b.dataset.level === state.level));
     } catch {
       // ignore
     }
@@ -1180,6 +1196,9 @@ window.Trainer = window.Trainer || {};
         state.mode = button.dataset.mode;
         els.modeButtons.forEach((b) => setPressed(b, b.dataset.mode === state.mode));
         updateLobbyModeUi();
+        if (Trainer.saveSettings) {
+          Trainer.saveSettings({ duel: { mode: state.mode, level: state.level, playerName: state.playerName } });
+        }
       });
     });
 
@@ -1187,6 +1206,9 @@ window.Trainer = window.Trainer || {};
       button.addEventListener('click', () => {
         state.level = button.dataset.level;
         els.levelButtons.forEach((b) => setPressed(b, b.dataset.level === state.level));
+        if (Trainer.saveSettings) {
+          Trainer.saveSettings({ duel: { mode: state.mode, level: state.level, playerName: state.playerName } });
+        }
       });
     });
 

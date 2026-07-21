@@ -162,6 +162,13 @@ window.Trainer = window.Trainer || {};
     window.requestAnimationFrame(() => moveIndicator(tabs[activeTab].button));
   }
 
+  if (Trainer.initTheme) {
+    Trainer.initTheme();
+  }
+  if (Trainer.initSessionSummary) {
+    Trainer.initSessionSummary();
+  }
+
   Trainer.initMultiplication();
   Trainer.initBlackjack();
   Trainer.initCounting();
@@ -171,5 +178,13 @@ window.Trainer = window.Trainer || {};
   Trainer.renderStoredStats();
   if (Trainer.initStatsControls) {
     Trainer.initStatsControls();
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {
+        // offline registration failed — app still works online
+      });
+    });
   }
 })();
