@@ -114,7 +114,10 @@ window.Trainer = window.Trainer || {};
         ],
         winCol: null,
         winRow: null,
-        isZero: true
+        isZero: true,
+        // 0 рядом с 1–2–3 — полоса zero нужна
+        showZero: true,
+        firstStreet: 0
       };
     }
 
@@ -143,16 +146,31 @@ window.Trainer = window.Trainer || {};
       });
     });
 
-    return { numbers, winCol, winRow, isZero: false };
+    // Полоса 0 только если верхний ряд поля — 1–2–3
+    const showZero = firstStreet === 0;
+
+    return {
+      numbers,
+      winCol,
+      winRow,
+      isZero: false,
+      showZero,
+      firstStreet
+    };
   }
 
   function pickLayout(level) {
     const cfg = LEVEL[level] || LEVEL.easy;
     const winNumber = Math.random() < 0.08 ? 0 : randInt(1, 36);
     const grid = buildNumberGrid(winNumber);
+    // При 1/2/3 (верхний ряд 1–2–3, winRow 0) — сплиты/трио/first four с 0
+    const includeZeroEdge = grid.showZero && !grid.isZero && grid.winRow === 0;
     const available = grid.isZero
       ? winningSlotsForZero()
-      : winningSlotsForCell(grid.winCol, grid.winRow);
+      : winningSlotsForCell(grid.winCol, grid.winRow, {
+          withZero: grid.showZero,
+          includeZeroEdge
+        });
 
     const slotCount = Math.min(
       available.length,
@@ -190,6 +208,7 @@ window.Trainer = window.Trainer || {};
   }
 
   function renderGrid(grid, winNumber) {
+    els.board.classList.toggle('no-zero', !grid.showZero);
     els.grid.innerHTML = '';
     grid.numbers.forEach((row) => {
       row.forEach((number) => {
@@ -203,6 +222,7 @@ window.Trainer = window.Trainer || {};
       });
     });
     els.zero.classList.toggle('is-win', winNumber === 0);
+    els.zero.setAttribute('aria-hidden', grid.showZero ? 'false' : 'true');
   }
 
   function renderChips(chips) {
@@ -259,7 +279,9 @@ window.Trainer = window.Trainer || {};
     els.winLabel.textContent = 'Выпало: —';
     els.grid.innerHTML = '';
     els.chips.innerHTML = '';
+    els.board.classList.remove('no-zero');
     els.zero.classList.remove('is-win');
+    els.zero.setAttribute('aria-hidden', 'true');
   }
 
   function enableAnswer(focus = true) {

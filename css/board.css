@@ -170,6 +170,19 @@
   background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
 }
 
+/* Zero далеко от выпавшего числа — прячем полосу, сетка на всю высоту */
+.roulette-board.no-zero {
+  --zero-h: 0%;
+}
+
+.roulette-board.no-zero .board-zero {
+  display: none;
+}
+
+.roulette-board.no-zero::after {
+  display: none;
+}
+
 .counting-task {
   gap: 14px;
 }

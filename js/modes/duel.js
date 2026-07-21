@@ -92,6 +92,7 @@ window.Trainer = window.Trainer || {};
     status: $('#duelStatus'),
     example: $('#duelExample'),
     boardWrap: $('#duelBoardWrap'),
+    board: $('#duelBoard'),
     winLabel: $('#duelWinLabel'),
     zero: $('#duelZero'),
     grid: $('#duelGrid'),
@@ -329,7 +330,12 @@ window.Trainer = window.Trainer || {};
 
   function buildNumberGrid(winNumber) {
     if (winNumber === 0) {
-      return { numbers: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], isZero: true };
+      return {
+        numbers: [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        isZero: true,
+        showZero: true,
+        firstStreet: 0
+      };
     }
     const streetIndex = Math.floor((winNumber - 1) / 3);
     let firstStreet = streetIndex - 1;
@@ -349,16 +355,27 @@ window.Trainer = window.Trainer || {};
         }
       });
     });
-    return { numbers, winCol, winRow, isZero: false };
+    return {
+      numbers,
+      winCol,
+      winRow,
+      isZero: false,
+      showZero: firstStreet === 0,
+      firstStreet
+    };
   }
 
   function makeCountingQuestion() {
     const cfg = COUNTING_LEVEL[state.level] || COUNTING_LEVEL.easy;
     const winNumber = Math.random() < 0.1 ? 0 : randInt(1, 36);
     const grid = buildNumberGrid(winNumber);
+    const includeZeroEdge = grid.showZero && !grid.isZero && grid.winRow === 0;
     const available = grid.isZero
       ? winningSlotsForZero()
-      : winningSlotsForCell(grid.winCol, grid.winRow);
+      : winningSlotsForCell(grid.winCol, grid.winRow, {
+          withZero: grid.showZero,
+          includeZeroEdge
+        });
     const slotCount = Math.min(
       available.length,
       randInt(cfg.minSlots, Math.min(cfg.maxSlots, available.length))
@@ -408,6 +425,8 @@ window.Trainer = window.Trainer || {};
     els.boardWrap.classList.remove('hidden');
     els.example.classList.add('hidden');
     els.winLabel.textContent = `Выпало: ${q.winNumber}`;
+    const showZero = q.grid.showZero !== false;
+    els.board.classList.toggle('no-zero', !showZero);
     els.grid.innerHTML = '';
     q.grid.numbers.forEach((row) => {
       row.forEach((number) => {
@@ -419,6 +438,7 @@ window.Trainer = window.Trainer || {};
       });
     });
     els.zero.classList.toggle('is-win', q.winNumber === 0);
+    els.zero.setAttribute('aria-hidden', showZero ? 'false' : 'true');
     els.chips.innerHTML = '';
     q.chips.forEach((chip, index) => {
       const el = document.createElement('span');
