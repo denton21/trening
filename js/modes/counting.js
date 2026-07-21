@@ -207,6 +207,15 @@ window.Trainer = window.Trainer || {};
     return { winNumber, grid, chips, answer };
   }
 
+  function pulseBoard() {
+    if (!els.board) {
+      return;
+    }
+    els.board.classList.remove('is-enter');
+    void els.board.offsetWidth;
+    els.board.classList.add('is-enter');
+  }
+
   function renderGrid(grid, winNumber) {
     els.board.classList.toggle('no-zero', !grid.showZero);
     els.grid.innerHTML = '';
@@ -223,6 +232,7 @@ window.Trainer = window.Trainer || {};
     });
     els.zero.classList.toggle('is-win', winNumber === 0);
     els.zero.setAttribute('aria-hidden', grid.showZero ? 'false' : 'true');
+    pulseBoard();
   }
 
   function renderChips(chips) {

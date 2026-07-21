@@ -77,10 +77,9 @@ window.Trainer = window.Trainer || {};
     const next = theme === 'dark' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
     document.documentElement.style.colorScheme = next;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute('content', next === 'dark' ? '#0b1220' : '#0f766e');
-    }
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', next === 'dark' ? '#070b14' : '#0d9488');
+    });
     Trainer.saveSettings({ theme: next });
     const btn = document.getElementById('themeToggleBtn');
     if (btn) {

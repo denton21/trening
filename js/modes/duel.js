@@ -427,6 +427,9 @@ window.Trainer = window.Trainer || {};
     els.winLabel.textContent = `Выпало: ${q.winNumber}`;
     const showZero = q.grid.showZero !== false;
     els.board.classList.toggle('no-zero', !showZero);
+    els.board.classList.remove('is-enter');
+    void els.board.offsetWidth;
+    els.board.classList.add('is-enter');
     els.grid.innerHTML = '';
     q.grid.numbers.forEach((row) => {
       row.forEach((number) => {

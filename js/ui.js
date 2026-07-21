@@ -48,9 +48,7 @@ Trainer.flashTask = function flashTask(taskElement, ok) {
   }
   taskElement.classList.remove('is-correct', 'is-wrong');
   void taskElement.offsetWidth;
-  if (ok) {
-    taskElement.classList.add('is-correct');
-  }
+  taskElement.classList.add(ok ? 'is-correct' : 'is-wrong');
 };
 
 Trainer.setProgress = function setProgress(bar, secondsLeft, duration) {
