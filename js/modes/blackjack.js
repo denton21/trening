@@ -116,13 +116,19 @@ window.Trainer = window.Trainer || {};
     }
   }
 
+  function showIdleExample() {
+    els.example.textContent = '—';
+    state.currentBet = null;
+    state.questionStartedAt = null;
+  }
+
   function reset() {
     stopTimer();
     state.correct = 0;
     state.wrong = 0;
     state.secondsLeft = state.duration;
     state.running = false;
-    setNextQuestion(false);
+    showIdleExample();
     els.answer.value = '';
     els.answer.disabled = true;
     els.answerBtn.disabled = true;

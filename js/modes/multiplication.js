@@ -92,6 +92,10 @@ window.Trainer = window.Trainer || {};
     }
   }
 
+  function showIdleExample() {
+    els.example.textContent = '—';
+  }
+
   function updateStats() {
     els.timeLeft.textContent = formatTime(state.secondsLeft);
     els.correctCount.textContent = state.correct;
@@ -159,11 +163,11 @@ window.Trainer = window.Trainer || {};
     state.wrong = 0;
     state.running = false;
     state.secondsLeft = state.duration;
-    setNextQuestion();
+    state.questionStartedAt = null;
     els.answerInput.disabled = true;
     els.answerBtn.disabled = true;
     els.answerInput.value = '';
-    showQuestion(false);
+    showIdleExample();
     updateStats();
     showMessage(els.message, 'Нажмите “Старт”', '');
   }
@@ -179,10 +183,6 @@ window.Trainer = window.Trainer || {};
             state.selectedTables.add(table);
           }
           renderTables();
-          if (!state.running) {
-            setNextQuestion();
-            showQuestion(false);
-          }
         })
       );
     });
@@ -200,10 +200,6 @@ window.Trainer = window.Trainer || {};
             state.selected.add(number);
           }
           renderNumbers();
-          if (!state.running) {
-            setNextQuestion();
-            showQuestion(false);
-          }
         })
       );
     });
@@ -218,8 +214,9 @@ window.Trainer = window.Trainer || {};
       state.selected = new Set(allMultipliers);
       renderNumbers();
     }
-    setNextQuestion();
-    showQuestion(false);
+    if (!state.running) {
+      showIdleExample();
+    }
   }
 
   function setTimeMode(seconds) {
@@ -301,8 +298,6 @@ window.Trainer = window.Trainer || {};
 
     renderTables();
     renderNumbers();
-    showQuestion(false);
-    updateStats();
-    showMessage(els.message, 'Нажмите “Старт”', '');
+    reset();
   };
 })();

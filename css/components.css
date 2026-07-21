@@ -1,41 +1,61 @@
 .tabs {
+  --tabs-indicator-x: 0px;
+  --tabs-indicator-w: 0px;
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 18px;
+  gap: 0;
+  margin: 0 0 22px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: var(--tabs-indicator-w);
+  height: 2px;
+  background: var(--accent);
+  transform: translateX(var(--tabs-indicator-x));
+  transition:
+    transform 420ms var(--ease-strict),
+    width 420ms var(--ease-strict);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .tab {
-  min-height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0 14px;
-  background: #fff;
-  color: var(--text);
+  position: relative;
+  min-height: 46px;
+  border: none;
+  border-radius: 0;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--muted);
   font: inherit;
   font-weight: 800;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease-soft),
-    border-color var(--dur) var(--ease-soft),
-    color var(--dur) var(--ease-soft),
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur) var(--ease-soft);
+    color 280ms var(--ease-strict),
+    background 280ms var(--ease-strict);
 }
 
 .tab:hover {
-  border-color: #b7c4d3;
+  color: var(--text);
+  background: rgba(15, 118, 110, 0.04);
 }
 
 .tab:active {
-  transform: scale(0.98);
+  color: var(--accent-dark);
 }
 
 .tab.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.22);
+  color: var(--accent);
+  background: transparent;
+  box-shadow: none;
 }
 
 .choices {

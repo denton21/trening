@@ -224,6 +224,17 @@ window.Trainer = window.Trainer || {};
     renderChips(layout.chips);
   }
 
+  function showIdleBoard() {
+    state.answer = null;
+    state.questionStartedAt = null;
+    state.awaitingRetry = false;
+    setRetryVisible(false);
+    els.winLabel.textContent = 'Выпало: —';
+    els.grid.innerHTML = '';
+    els.chips.innerHTML = '';
+    els.zero.classList.remove('is-win');
+  }
+
   function enableAnswer(focus = true) {
     els.answer.disabled = false;
     els.answerBtn.disabled = false;
@@ -263,9 +274,7 @@ window.Trainer = window.Trainer || {};
     state.correct = 0;
     state.wrong = 0;
     state.lastMs = null;
-    setRetryVisible(false);
-    const layout = pickLayout(state.level);
-    renderLayout(layout);
+    showIdleBoard();
     els.answer.value = '';
     disableAnswer();
     updateStats();
@@ -276,8 +285,7 @@ window.Trainer = window.Trainer || {};
     state.level = level;
     els.levelButtons.forEach((button) => setPressed(button, button.dataset.level === level));
     if (!state.running) {
-      const layout = pickLayout(level);
-      renderLayout(layout);
+      showIdleBoard();
       els.answer.value = '';
       disableAnswer();
       showMessage(els.message, 'Нажмите «Старт»', '');

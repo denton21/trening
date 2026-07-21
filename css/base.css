@@ -12,9 +12,12 @@
   --focus: #f59e0b;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-strict: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-strict: cubic-bezier(0.7, 0, 0.84, 0);
   --dur-fast: 140ms;
   --dur: 220ms;
   --dur-slow: 320ms;
+  --dur-tab: 380ms;
 }
 
 * {
