@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Тренажёр для дилера: умножение, blackjack, счёт, выплаты, дуэль">
+  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, дуэль">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Рулетка">
@@ -37,6 +37,7 @@
     </div>
     <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
+      <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
@@ -109,6 +110,49 @@
         </div>
       </section>
     </div>
+
+    <section class="layout hidden" id="additionTab" role="tabpanel" aria-label="Тренировка сложения">
+      <div class="panel">
+        <h2>Сложение</h2>
+        <p class="hint">
+          Примеры из шаблонов быстрого счёта (3 листа сложения).
+          В пуле <strong id="additionBankCount">0</strong> примеров, порядок случайный.
+          Статистика только за сессию — по окончании времени или по «Сброс».
+        </p>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="time-choices" id="additionTimeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="additionStartBtn" type="button">Старт</button>
+          <button class="secondary" id="additionResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Время</span><strong id="additionTimeLeft">1:00</strong></div>
+          <div class="stat"><span>Верно</span><strong id="additionCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="additionWrongCount">0</strong></div>
+        </div>
+        <div class="progress" aria-label="Остаток времени"><span id="additionTimeProgress"></span></div>
+        <div class="task">
+          <div class="example" id="additionExample">—</div>
+          <form class="answer-row" id="additionAnswerForm">
+            <input class="answer" id="additionAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма" disabled>
+            <button class="primary" id="additionAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="additionMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
 
     <section class="layout hidden" id="blackjackTab" role="tabpanel" aria-label="Тренировка выплат Blackjack">
       <div class="panel">
@@ -395,6 +439,7 @@
   <script src="js/stats.js"></script>
   <script src="js/patterns.js"></script>
   <script src="js/modes/multiplication.js"></script>
+  <script src="js/modes/addition.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
   <script src="js/modes/payouts.js"></script>
