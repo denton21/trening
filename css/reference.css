@@ -1,0 +1,542 @@
+/* ═══════════════════════════════════════════════════════════
+   Reference tab — payout tables & roulette wheel
+   ═══════════════════════════════════════════════════════════ */
+
+.ref-layout {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+.ref-layout.layout {
+  max-width: 960px;
+}
+
+/* ── Sticky section nav ───────────────────────────────────── */
+
+.ref-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+}
+
+.ref-nav-btn {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease-soft),
+    border-color var(--dur) var(--ease-soft),
+    color var(--dur) var(--ease-soft),
+    box-shadow var(--dur) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.ref-nav-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--input-bg));
+  transform: translateY(-1px);
+}
+
+.ref-nav-btn.is-active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  color: #fff;
+  box-shadow: 0 6px 18px var(--accent-glow);
+}
+
+html[data-theme='dark'] .ref-nav-btn.is-active {
+  color: #041018;
+}
+
+/* ── Section cards ────────────────────────────────────────── */
+
+.ref-section {
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  scroll-margin-top: 88px;
+}
+
+.ref-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      color-mix(in srgb, var(--gold) 8%, transparent) 55%,
+      transparent
+    );
+}
+
+.ref-section-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.ref-section-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 42rem;
+  line-height: 1.45;
+}
+
+.ref-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.ref-badge-gold {
+  background: linear-gradient(135deg, #f6e27a, #d4a017 55%, #b8860b);
+  color: #2a1a00;
+  box-shadow: 0 4px 14px var(--gold-soft);
+}
+
+.ref-badge-felt {
+  background: color-mix(in srgb, var(--felt-mid) 85%, #000);
+  color: #e8fff8;
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.ref-badge-jackpot {
+  background: linear-gradient(135deg, #7c3aed, #db2777 60%, #f59e0b);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(219, 39, 119, 0.35);
+  animation: ref-jackpot-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes ref-jackpot-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(219, 39, 119, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(251, 191, 36, 0.45);
+  }
+}
+
+.ref-section-body {
+  padding: 16px 18px 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.ref-grid-2 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .ref-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ref-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in srgb, var(--gold) 45%, var(--line));
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* ── Pay tables ───────────────────────────────────────────── */
+
+.ref-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel-solid);
+}
+
+.ref-table-title {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ref-table th,
+.ref-table td {
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.ref-table th {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.ref-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ref-table tbody tr {
+  transition: background var(--dur-fast) var(--ease-soft);
+}
+
+.ref-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.ref-table .hand {
+  font-weight: 700;
+}
+
+.ref-table .odds {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--accent-dark);
+}
+
+html[data-theme='dark'] .ref-table .odds {
+  color: var(--accent);
+}
+
+.ref-table tr.is-jackpot {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #7c3aed 14%, transparent),
+    color-mix(in srgb, #f59e0b 10%, transparent)
+  );
+}
+
+.ref-table tr.is-jackpot .hand {
+  background: linear-gradient(90deg, #a78bfa, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 900;
+}
+
+.ref-table tr.is-jackpot .odds {
+  color: var(--gold);
+  text-shadow: 0 0 18px var(--gold-soft);
+  font-size: 15px;
+}
+
+.ref-table tr.is-top td {
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+
+.ref-table .odds-unit {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Roulette wheel ───────────────────────────────────────── */
+
+.ref-wheel-block {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.ref-wheel-stage {
+  position: relative;
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.28));
+}
+
+.ref-wheel-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ref-wheel-svg .seg {
+  cursor: pointer;
+  transition: opacity 160ms var(--ease-soft), filter 160ms var(--ease-soft);
+}
+
+.ref-wheel-svg .seg:hover,
+.ref-wheel-svg .seg.is-hot {
+  filter: brightness(1.18) saturate(1.1);
+}
+
+.ref-wheel-svg .seg-red {
+  fill: #b91c1c;
+}
+
+.ref-wheel-svg .seg-black {
+  fill: #0f172a;
+}
+
+.ref-wheel-svg .seg-green {
+  fill: #15803d;
+}
+
+.ref-wheel-svg .seg-num {
+  fill: #f8fafc;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 9.5px;
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.ref-wheel-svg .rim {
+  fill: none;
+  stroke: #c9a227;
+  stroke-width: 10;
+}
+
+.ref-wheel-svg .rim-inner {
+  fill: none;
+  stroke: #1a1205;
+  stroke-width: 3;
+}
+
+.ref-wheel-svg .hub {
+  fill: radial-gradient(circle at 35% 30%, #f6e27a, #a67c00 70%);
+  fill: #c9a227;
+}
+
+.ref-wheel-svg .hub-core {
+  fill: #1a1205;
+}
+
+.ref-wheel-svg .hub-text {
+  fill: #1a1205;
+  font-weight: 900;
+  font-size: 11px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+
+.ref-wheel-info {
+  width: 100%;
+  max-width: 340px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--felt-mid) 18%, var(--panel-solid)),
+      var(--panel-solid)
+    );
+  text-align: center;
+  min-height: 72px;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+}
+
+.ref-wheel-info .ref-picked {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ref-wheel-info .ref-picked.is-red {
+  color: #ef4444;
+}
+
+.ref-wheel-info .ref-picked.is-black {
+  color: var(--text);
+}
+
+html[data-theme='dark'] .ref-wheel-info .ref-picked.is-black {
+  color: #e2e8f0;
+}
+
+.ref-wheel-info .ref-picked.is-green {
+  color: #22c55e;
+}
+
+.ref-wheel-info .ref-picked-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── Mini bet chips row ───────────────────────────────────── */
+
+.ref-bet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ref-bet-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--input-bg);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+html[data-theme='dark'] .ref-bet-chip {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.ref-bet-chip strong {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme='dark'] .ref-bet-chip strong {
+  color: var(--accent);
+}
+
+.ref-bet-chip span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Suit icons / accent row ──────────────────────────────── */
+
+.ref-suit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ref-suit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border: 1px solid var(--line);
+}
+
+.ref-suit.clubs {
+  color: #16a34a;
+}
+
+.ref-suit.spades {
+  color: var(--text);
+}
+
+.ref-suit.hearts,
+.ref-suit.diamonds {
+  color: #dc2626;
+}
+
+/* ── Intro hero ───────────────────────────────────────────── */
+
+.ref-hero {
+  padding: 22px 20px;
+  border-radius: calc(var(--radius) + 4px);
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse 80% 120% at 0% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 100% at 100% 20%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 50%),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.ref-hero h2 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.ref-hero p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1.5;
+  max-width: 40rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ref-badge-jackpot {
+    animation: none;
+  }
+
+  .ref-nav-btn,
+  .ref-table tbody tr,
+  .ref-wheel-svg .seg {
+    transition: none;
+  }
+}

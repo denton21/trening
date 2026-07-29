@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, дуэль">
+  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, дуэль, справочник">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Рулетка">
@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/reference.css">
   <script>
     try {
       var t = JSON.parse(localStorage.getItem('roulette-trainer-settings-v1') || '{}').theme;
@@ -42,6 +43,7 @@
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
+      <button class="tab" id="referenceTabBtn" type="button" role="tab" aria-selected="false">Справка</button>
     </div>
 
     <div class="layout" id="multiplicationTab" role="tabpanel">
@@ -398,6 +400,415 @@
       </div>
     </section>
 
+    <section class="layout ref-layout hidden" id="referenceTab" role="tabpanel" aria-label="Справочник выплат">
+      <div class="ref-hero">
+        <h2>Справочник выплат</h2>
+        <p>
+          Колесо, бонусы и таблицы для дилера. Таблицы с пометкой «типовая» могут отличаться
+          по залу — сверяйте с layout стола. Джекпот всегда уточняйте у пит-босса.
+        </p>
+      </div>
+
+      <nav class="ref-nav" id="refNav" aria-label="Разделы справочника">
+        <button type="button" class="ref-nav-btn is-active" data-ref-target="refRoulette">Рулетка</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refRussianPoker">Русский покер</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refJackpotBonus">Джекпот-бонус</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refSixCard">6-карточный</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refTexas">Техас</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refAA">Бонус AA</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refUltimate">Ультимейт</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refNovo">Novo Poker</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refBj20">BJ · бонус 20</button>
+        <button type="button" class="ref-nav-btn" data-ref-target="refBjJackpot">BJ · джекпот</button>
+      </nav>
+
+      <!-- ═══ Рулетка ═══ -->
+      <article class="ref-section" id="refRoulette">
+        <header class="ref-section-head">
+          <div>
+            <h2>Колесо рулетки</h2>
+            <p>Европейское колесо (одно зеро). Нажми сектор — подсветка и цвет. Ниже — выплаты по типам ставок.</p>
+          </div>
+          <span class="ref-badge ref-badge-felt">EURO · 0–36</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-grid-2">
+            <div class="ref-wheel-block">
+              <div class="ref-wheel-stage">
+                <svg class="ref-wheel-svg" id="refWheel" viewBox="0 0 320 320" aria-hidden="false"></svg>
+              </div>
+              <div class="ref-wheel-info" id="refWheelInfo">
+                <div class="ref-picked is-green">0</div>
+                <div class="ref-picked-meta">Зеро · европейская рулетка</div>
+              </div>
+            </div>
+            <div>
+              <div class="ref-table-wrap">
+                <h3 class="ref-table-title">Выплаты (к 1, без возврата ставки)</h3>
+                <table class="ref-table">
+                  <thead>
+                    <tr><th>Ставка</th><th>Числа</th><th>Выплата</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="hand">Straight up</td><td>1</td><td class="odds">35 : 1</td></tr>
+                    <tr><td class="hand">Split</td><td>2</td><td class="odds">17 : 1</td></tr>
+                    <tr><td class="hand">Street / Trio</td><td>3</td><td class="odds">11 : 1</td></tr>
+                    <tr><td class="hand">Corner / First four</td><td>4</td><td class="odds">8 : 1</td></tr>
+                    <tr><td class="hand">Six-line</td><td>6</td><td class="odds">5 : 1</td></tr>
+                    <tr><td class="hand">Dozen / Column</td><td>12</td><td class="odds">2 : 1</td></tr>
+                    <tr><td class="hand">Even chances</td><td>18</td><td class="odds">1 : 1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="ref-bet-chips" style="margin-top: 14px">
+                <div class="ref-bet-chip"><strong>×35</strong><span>прямая</span></div>
+                <div class="ref-bet-chip"><strong>×17</strong><span>сплит</span></div>
+                <div class="ref-bet-chip"><strong>×11</strong><span>стрит</span></div>
+                <div class="ref-bet-chip"><strong>×8</strong><span>корнер</span></div>
+                <div class="ref-bet-chip"><strong>×5</strong><span>сикс-лайн</span></div>
+                <div class="ref-bet-chip"><strong>×2</strong><span>дюжина</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="ref-note">У нуля: сплиты 0–1 / 0–2 / 0–3 (×17), trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).</p>
+        </div>
+      </article>
+
+      <!-- ═══ Русский покер ═══ -->
+      <article class="ref-section" id="refRussianPoker">
+        <header class="ref-section-head">
+          <div>
+            <h2>Русский покер</h2>
+            <p>Основная игра: Ante + Bet (обычно 2× Ante). Бонус на Ante за сильную комбинацию (типовая таблица).</p>
+          </div>
+          <span class="ref-badge ref-badge-gold">Покер</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-grid-2">
+            <div class="ref-table-wrap">
+              <h3 class="ref-table-title">Ante-бонус (типовая)</h3>
+              <table class="ref-table">
+                <thead>
+                  <tr><th>Комбинация</th><th>Выплата</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">100 : 1</td></tr>
+                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
+                  <tr><td class="hand">Каре</td><td class="odds">20 : 1</td></tr>
+                  <tr><td class="hand">Фул-хаус</td><td class="odds">7 : 1</td></tr>
+                  <tr><td class="hand">Флеш</td><td class="odds">5 : 1</td></tr>
+                  <tr><td class="hand">Стрит</td><td class="odds">4 : 1</td></tr>
+                  <tr><td class="hand">Тройка</td><td class="odds">3 : 1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div class="ref-table-wrap">
+                <h3 class="ref-table-title">Основная игра</h3>
+                <table class="ref-table">
+                  <thead>
+                    <tr><th>Ситуация</th><th>Результат</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="hand">Игрок выиграл</td><td class="odds">Ante 1:1 · Bet 1:1</td></tr>
+                    <tr><td class="hand">Дилер не открылся</td><td class="odds">Ante 1:1 · Bet push</td></tr>
+                    <tr><td class="hand">Ничья</td><td class="odds">Push</td></tr>
+                    <tr><td class="hand">Игрок проиграл</td><td class="odds">Ante + Bet —</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="ref-note" style="margin-top: 14px">Квалификация дилера и exact-очки — по правилам зала. Джекпот-бонус — отдельной ставкой (см. ниже).</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ═══ Джекпот-бонус ═══ -->
+      <article class="ref-section" id="refJackpotBonus">
+        <header class="ref-section-head">
+          <div>
+            <h2>Джекпот-бонус</h2>
+            <p>Боковая ставка: две пары и выше. Стрит-флеш и роял — джекпот.</p>
+          </div>
+          <span class="ref-badge ref-badge-jackpot">Jackpot</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Выплаты джекпот-бонуса</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Комбинация</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="hand">Две пары</td><td class="odds">2 : 1</td></tr>
+                <tr><td class="hand">Тройка</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">Стрит</td><td class="odds">25 : 1</td></tr>
+                <tr><td class="hand">Флеш</td><td class="odds">50 : 1</td></tr>
+                <tr><td class="hand">Фул-хаус</td><td class="odds">100 : 1</td></tr>
+                <tr><td class="hand">Каре</td><td class="odds">250 : 1</td></tr>
+                <tr class="is-jackpot"><td class="hand">Стрит-флеш</td><td class="odds">Джекпот</td></tr>
+                <tr class="is-jackpot"><td class="hand">Роял-флеш</td><td class="odds">Джекпот</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+
+      <!-- ═══ Шестикарточный ═══ -->
+      <article class="ref-section" id="refSixCard">
+        <header class="ref-section-head">
+          <div>
+            <h2>Шестикарточный бонус</h2>
+            <p>Six Card Bonus: лучшая 5-карточная комбинация из 6 карт игрока. Типовая таблица.</p>
+          </div>
+          <span class="ref-badge ref-badge-gold">Side bet</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Six Card Bonus (типовая)</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Комбинация</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr class="is-jackpot"><td class="hand">Роял-флеш</td><td class="odds">1000 : 1 <span class="odds-unit">или % джекпота</span></td></tr>
+                <tr class="is-top"><td class="hand">Стрит-флеш</td><td class="odds">200 : 1</td></tr>
+                <tr><td class="hand">Каре</td><td class="odds">100 : 1</td></tr>
+                <tr><td class="hand">Фул-хаус</td><td class="odds">20 : 1</td></tr>
+                <tr><td class="hand">Флеш</td><td class="odds">15 : 1</td></tr>
+                <tr><td class="hand">Стрит</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">Тройка</td><td class="odds">7 : 1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ref-note">Прогрессивный джекпот на рояле — смотрите текущую сумму на дисплее стола.</p>
+        </div>
+      </article>
+
+      <!-- ═══ Техас ═══ -->
+      <article class="ref-section" id="refTexas">
+        <header class="ref-section-head">
+          <div>
+            <h2>Техасский холдем</h2>
+            <p>Casino Hold’em: Ante + Call. Ante-бонус за стрит и выше (типовая).</p>
+          </div>
+          <span class="ref-badge ref-badge-felt">Hold’em</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-grid-2">
+            <div class="ref-table-wrap">
+              <h3 class="ref-table-title">Ante-бонус (типовая)</h3>
+              <table class="ref-table">
+                <thead>
+                  <tr><th>Комбинация</th><th>Выплата</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">100 : 1</td></tr>
+                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
+                  <tr><td class="hand">Каре</td><td class="odds">20 : 1</td></tr>
+                  <tr><td class="hand">Фул-хаус</td><td class="odds">7 : 1</td></tr>
+                  <tr><td class="hand">Флеш</td><td class="odds">5 : 1</td></tr>
+                  <tr><td class="hand">Стрит</td><td class="odds">4 : 1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="ref-table-wrap">
+              <h3 class="ref-table-title">Основная игра</h3>
+              <table class="ref-table">
+                <thead>
+                  <tr><th>Ситуация</th><th>Результат</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="hand">Игрок выиграл</td><td class="odds">Ante 1:1 · Call 1:1</td></tr>
+                  <tr><td class="hand">Дилер не открылся</td><td class="odds">Ante 1:1 · Call push</td></tr>
+                  <tr><td class="hand">Ничья</td><td class="odds">Push</td></tr>
+                  <tr><td class="hand">Игрок проиграл</td><td class="odds">Ante + Call —</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ═══ AA ═══ -->
+      <article class="ref-section" id="refAA">
+        <header class="ref-section-head">
+          <div>
+            <h2>Бонус AA</h2>
+            <p>Side bet на две карманные карты игрока (типовая AA / Pairs-таблица).</p>
+          </div>
+          <span class="ref-badge ref-badge-gold">AA Bonus</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Бонус AA (типовая)</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Карманные карты</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr class="is-jackpot"><td class="hand">A-A vs A-A (у дилера тоже)</td><td class="odds">1000 : 1</td></tr>
+                <tr class="is-top"><td class="hand">A-A</td><td class="odds">30 : 1</td></tr>
+                <tr><td class="hand">A-K одномастные</td><td class="odds">25 : 1</td></tr>
+                <tr><td class="hand">A-Q / A-J одномастные</td><td class="odds">20 : 1</td></tr>
+                <tr><td class="hand">A-K разномастные</td><td class="odds">15 : 1</td></tr>
+                <tr><td class="hand">K-K / Q-Q / J-J</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">A-Q / A-J разномастные</td><td class="odds">5 : 1</td></tr>
+                <tr><td class="hand">Пара 10–2</td><td class="odds">3 : 1</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+
+      <!-- ═══ Ultimate ═══ -->
+      <article class="ref-section" id="refUltimate">
+        <header class="ref-section-head">
+          <div>
+            <h2>Техасский ультимейт</h2>
+            <p>Ultimate Texas Hold’em: Ante = Blind, Play ×1 / ×2 / ×3 / ×4. Plus бонус Trips.</p>
+          </div>
+          <span class="ref-badge ref-badge-felt">UTH</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-grid-2">
+            <div class="ref-table-wrap">
+              <h3 class="ref-table-title">Blind (выплата при выигрыше)</h3>
+              <table class="ref-table">
+                <thead>
+                  <tr><th>Комбинация</th><th>Выплата</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">500 : 1</td></tr>
+                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
+                  <tr><td class="hand">Каре</td><td class="odds">10 : 1</td></tr>
+                  <tr><td class="hand">Фул-хаус</td><td class="odds">3 : 1</td></tr>
+                  <tr><td class="hand">Флеш</td><td class="odds">3 : 2</td></tr>
+                  <tr><td class="hand">Стрит</td><td class="odds">1 : 1</td></tr>
+                  <tr><td class="hand">Меньше стрита</td><td class="odds">Push</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="ref-table-wrap">
+              <h3 class="ref-table-title">Бонус Trips</h3>
+              <table class="ref-table">
+                <thead>
+                  <tr><th>Комбинация</th><th>Выплата</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">50 : 1</td></tr>
+                  <tr><td class="hand">Стрит-флеш</td><td class="odds">40 : 1</td></tr>
+                  <tr><td class="hand">Каре</td><td class="odds">30 : 1</td></tr>
+                  <tr><td class="hand">Фул-хаус</td><td class="odds">8 : 1</td></tr>
+                  <tr><td class="hand">Флеш</td><td class="odds">6 : 1</td></tr>
+                  <tr><td class="hand">Стрит</td><td class="odds">5 : 1</td></tr>
+                  <tr><td class="hand">Тройка</td><td class="odds">3 : 1</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p class="ref-note">Ante и Play платятся 1:1 при победе над дилером. Trips платится независимо от дилера. Дилер открывается с парой+ (типовое правило).</p>
+        </div>
+      </article>
+
+      <!-- ═══ Novo ═══ -->
+      <article class="ref-section" id="refNovo">
+        <header class="ref-section-head">
+          <div>
+            <h2>Novo Poker — бонус</h2>
+            <p>Бонусная ставка на Novo Poker. Типовая прогрессивная / fixed-таблица.</p>
+          </div>
+          <span class="ref-badge ref-badge-gold">Novo</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Бонус Novo Poker (типовая)</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Комбинация</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr class="is-jackpot"><td class="hand">Роял-флеш</td><td class="odds">Джекпот</td></tr>
+                <tr class="is-top"><td class="hand">Стрит-флеш</td><td class="odds">10% джекпота</td></tr>
+                <tr><td class="hand">Каре</td><td class="odds">500 : 1</td></tr>
+                <tr><td class="hand">Фул-хаус</td><td class="odds">100 : 1</td></tr>
+                <tr><td class="hand">Флеш</td><td class="odds">50 : 1</td></tr>
+                <tr><td class="hand">Стрит</td><td class="odds">25 : 1</td></tr>
+                <tr><td class="hand">Тройка</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">Две пары</td><td class="odds">5 : 1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ref-note">Конкретные % и fixed odds зависят от layout — сверяйте с табличкой на столе.</p>
+        </div>
+      </article>
+
+      <!-- ═══ BJ 20 ═══ -->
+      <article class="ref-section" id="refBj20">
+        <header class="ref-section-head">
+          <div>
+            <h2>Blackjack — бонус 20</h2>
+            <p>Side bet на первые две карты игрока, сумма 20 (или особые руки).</p>
+          </div>
+          <span class="ref-badge ref-badge-felt">Bonus 20</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Бонус 20</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Комбинация</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="hand">Любые 20</td><td class="odds">5 : 1</td></tr>
+                <tr><td class="hand">Одномастные 20</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">Одинаковые 20</td><td class="odds">30 : 1</td></tr>
+                <tr class="is-top"><td class="hand">Два крестовых короля (♣K + ♣K)</td><td class="odds">50 : 1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ref-suit-row">
+            <span class="ref-suit clubs">♣ крести — короли ×50</span>
+            <span class="ref-suit spades">♠</span>
+            <span class="ref-suit hearts">♥</span>
+            <span class="ref-suit diamonds">♦</span>
+          </div>
+          <p class="ref-note">«Одинаковые 20» — пара одного ранга, дающая 20 (например 10–10, J–J, Q–Q, K–K), обычно любой масти; уточняйте формулировку на layout.</p>
+        </div>
+      </article>
+
+      <!-- ═══ BJ Jackpot ═══ -->
+      <article class="ref-section" id="refBjJackpot">
+        <header class="ref-section-head">
+          <div>
+            <h2>Blackjack — джекпот-бонус</h2>
+            <p>Бонус на первые карты / блекджек. Три одномастные семёрки — джекпот.</p>
+          </div>
+          <span class="ref-badge ref-badge-jackpot">BJ Jackpot</span>
+        </header>
+        <div class="ref-section-body">
+          <div class="ref-table-wrap">
+            <h3 class="ref-table-title">Джекпот-бонус на блекджек</h3>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Комбинация</th><th>Выплата</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="hand">Блекджек</td><td class="odds">2 : 1</td></tr>
+                <tr><td class="hand">Одномастный блекджек</td><td class="odds">10 : 1</td></tr>
+                <tr><td class="hand">Дама + король одномастные</td><td class="odds">25 : 1</td></tr>
+                <tr><td class="hand">Две семёрки</td><td class="odds">50 : 1</td></tr>
+                <tr><td class="hand">Две одномастные семёрки</td><td class="odds">100 : 1</td></tr>
+                <tr><td class="hand">Три семёрки</td><td class="odds">250 : 1</td></tr>
+                <tr class="is-jackpot"><td class="hand">Три одномастные семёрки</td><td class="odds">Джекпот</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ref-note">Три семёрки обычно считаются с картой дилера (общая / community) — смотрите правило стола.</p>
+        </div>
+      </article>
+    </section>
+
     <section class="panel history" aria-label="Статистика устройства">
       <h2>Статистика устройства</h2>
       <div class="history-stats">
@@ -444,6 +855,7 @@
   <script src="js/modes/counting.js"></script>
   <script src="js/modes/payouts.js"></script>
   <script src="js/modes/duel.js"></script>
+  <script src="js/modes/reference.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -33,6 +33,11 @@ window.Trainer = window.Trainer || {};
       panel: $('#duelTab'),
       button: $('#duelTabBtn'),
       stop: () => Trainer.stopDuel()
+    },
+    reference: {
+      panel: $('#referenceTab'),
+      button: $('#referenceTabBtn'),
+      stop: () => Trainer.stopReference()
     }
   };
 
@@ -180,6 +185,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initCounting();
   Trainer.initPayouts();
   Trainer.initDuel();
+  Trainer.initReference();
   initTabs();
   Trainer.renderStoredStats();
   if (Trainer.initStatsControls) {
