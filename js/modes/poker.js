@@ -31,10 +31,11 @@ window.Trainer = window.Trainer || {};
 
   /**
    * pay:
-   *  - bonus  — только ставка × коэф
-   *  - texas  — анте по коэф + бет 1:1 (бет = анте) → stake × (mult + 1)
-   *  - russian — дан ante, ответ = бет = 2 × ante
-   *  - blind  — только выплата Blind (ставка × коэф), ante/play отдельно
+   *  - bonus    — только ставка × коэф
+   *  - texas    — анте по коэф + бет 1:1 (бет = анте) → stake × (mult + 1)
+   *  - russian  — дан ante + комбо; бет = 2×ante (в уме); выплата = бет × коэф
+   *  - ultimate — полная: Ante 1:1 + Play 1:1 + Blind×коэф (Blind=Ante, Play=k×Ante)
+   *               ниже стрита Blind push (×0). Play k ∈ {1, 2, 4}
    */
   const CATALOG = {
     jackpot: {
@@ -125,13 +126,18 @@ window.Trainer = window.Trainer || {};
         { hand: 'Роял-флеш', mult: 50 }
       ]
     },
-    ultimate_blind: {
-      id: 'ultimate_blind',
-      label: 'Ультимейт · Blind',
-      short: 'UTH Blind',
+    ultimate: {
+      id: 'ultimate',
+      label: 'Ультимейт',
+      short: 'Ультимейт',
       stake: 'std',
-      pay: 'blind',
+      pay: 'ultimate',
+      // Play: ×1 (ривер), ×2 (флоп), ×4 (префлоп)
+      playMults: [1, 2, 4],
       rows: [
+        { hand: 'Пара', mult: 0 },
+        { hand: 'Две пары', mult: 0 },
+        { hand: 'Тройка', mult: 0 },
         { hand: 'Стрит', mult: 1 },
         { hand: 'Флеш', mult: 1.5 },
         { hand: 'Фул-хаус', mult: 3 },
@@ -159,12 +165,20 @@ window.Trainer = window.Trainer || {};
     },
     russian: {
       id: 'russian',
-      label: 'Русский покер · Бет',
+      label: 'Русский покер',
       short: 'Рус. покер',
       stake: 'std',
       pay: 'russian',
-      // Только ante → бет 2×; комбинации не нужны
-      rows: [{ hand: 'Бет = 2 × Ante', mult: 2 }]
+      // Ante на экране; бет = 2×ante в уме; выплата = бет × коэф
+      rows: [
+        { hand: 'Тройка', mult: 3 },
+        { hand: 'Стрит', mult: 4 },
+        { hand: 'Флеш', mult: 5 },
+        { hand: 'Фул-хаус', mult: 7 },
+        { hand: 'Каре', mult: 20 },
+        { hand: 'Стрит-флеш', mult: 50 },
+        { hand: 'Роял-флеш', mult: 100 }
+      ]
     },
     bj20: {
       id: 'bj20',
@@ -250,28 +264,32 @@ window.Trainer = window.Trainer || {};
   }
 
   /**
-   * stake — сумма на столе (для бонусов; для техаса/русского — Ante)
-   * mult — коэф комбинации (для russian не используется)
+   * stake — бонусная ставка или Ante
+   * mult — коэф комбо (для ultimate — коэф Blind; 0 = push)
+   * playMult — множитель Play к Ante (только ultimate)
    */
-  function computeAnswer(pay, stake, mult) {
+  function computeAnswer(pay, stake, mult, playMult) {
     if (pay === 'russian') {
-      // Бет = 2 × Ante
-      return roundPay(stake * 2);
+      // Бет = 2 × Ante; выплата по бету: (2 × ante) × mult
+      return roundPay(stake * 2 * mult);
     }
     if (pay === 'texas') {
-      // Ante × mult + Bet × 1, Bet = Ante → stake × (mult + 1)
+      // Ante × mult + Bet × 1, Bet = Ante
       return roundPay(stake * mult + stake);
     }
-    // bonus / blind — только ставка × коэф
+    if (pay === 'ultimate') {
+      // Ante 1:1 + Play 1:1 + Blind×mult; Blind = Ante, Play = playMult×Ante
+      // Пример: ante 25, play ×4, флеш 1.5 → 25 + 100 + 37.5 = 162.5
+      const k = playMult || 1;
+      return roundPay(stake + stake * k + stake * mult);
+    }
+    // bonus — только ставка × коэф
     return roundPay(stake * mult);
   }
 
   function stakeLabel(pay) {
-    if (pay === 'russian' || pay === 'texas') {
+    if (pay === 'russian' || pay === 'texas' || pay === 'ultimate') {
       return 'Ante';
-    }
-    if (pay === 'blind') {
-      return 'Blind';
     }
     return 'Ставка';
   }
@@ -313,18 +331,22 @@ window.Trainer = window.Trainer || {};
     const pool = [];
     selectedCatalog().forEach((cat) => {
       const stakes = stakesFor(cat);
+      const playMults = cat.pay === 'ultimate' ? cat.playMults || [1, 2, 4] : [null];
       cat.rows.forEach((row) => {
         stakes.forEach((stake) => {
-          pool.push({
-            gameId: cat.id,
-            game: cat.label,
-            short: cat.short,
-            pay: cat.pay,
-            hand: row.hand,
-            mult: row.mult,
-            stake,
-            answer: computeAnswer(cat.pay, stake, row.mult),
-            key: `${cat.id}|${row.hand}|${stake}`
+          playMults.forEach((playMult) => {
+            pool.push({
+              gameId: cat.id,
+              game: cat.label,
+              short: cat.short,
+              pay: cat.pay,
+              hand: row.hand,
+              mult: row.mult,
+              playMult,
+              stake,
+              answer: computeAnswer(cat.pay, stake, row.mult, playMult),
+              key: `${cat.id}|${row.hand}|${stake}|${playMult ?? ''}`
+            });
           });
         });
       });
@@ -382,7 +404,8 @@ window.Trainer = window.Trainer || {};
     const names = selectedCatalog().map((c) => c.short).join(', ');
     els.hint.textContent =
       `Выбрано: ${n} · ${names}. ` +
-      'Бонусы: ставка × коэф. Техас: анте по коэф + бет 1:1 (бет = анте). Русский: бет = 2 × анте.';
+      'Бонусы: ставка×коэф. Техас: анте×коэф+бет1:1. Русский: бет=2×анте, бет×коэф. ' +
+      'Ультимейт: Ante+Play+Blind (Play ×1/×2/×4).';
   }
 
   function toggleGame(id) {
@@ -445,23 +468,18 @@ window.Trainer = window.Trainer || {};
       els.example.textContent = line;
     }
     if (els.meta) {
-      const parts = [
-        `<span class="poker-meta-game">${q.game}</span>`,
-        `<span class="poker-meta-sep">·</span>`,
-        `<span class="poker-meta-hand">${stakeLabel(q.pay)} ${formatMoney(q.stake)}</span>`
-      ];
-      if (q.pay !== 'russian') {
-        parts.push(
-          `<span class="poker-meta-sep">·</span>`,
-          `<span class="poker-meta-hand">${q.hand}</span>`
-        );
-      } else {
-        parts.push(
-          `<span class="poker-meta-sep">·</span>`,
-          `<span class="poker-meta-hand">сколько бет?</span>`
-        );
+      let html =
+        `<span class="poker-meta-game">${q.game}</span>` +
+        `<span class="poker-meta-sep">·</span>` +
+        `<span class="poker-meta-hand">${stakeLabel(q.pay)}</span>` +
+        `<span class="poker-meta-sep">·</span>` +
+        `<span class="poker-meta-hand">${q.hand}</span>`;
+      if (q.pay === 'ultimate' && q.playMult != null) {
+        html +=
+          `<span class="poker-meta-sep">·</span>` +
+          `<span class="poker-meta-hand">Play ×${q.playMult}</span>`;
       }
-      els.meta.innerHTML = parts.join('');
+      els.meta.innerHTML = html;
     }
     return true;
   }
@@ -512,7 +530,7 @@ window.Trainer = window.Trainer || {};
     state.running = true;
     nextQuestion();
     updateStats();
-    showMessage(els.message, 'Назовите выплату / бет', '');
+    showMessage(els.message, 'Назовите выплату', '');
 
     if (state.secondsLeft !== null) {
       state.timer = window.setInterval(() => {
@@ -566,7 +584,9 @@ window.Trainer = window.Trainer || {};
       state.secondsLeft = saved.duration;
     }
     if (Array.isArray(saved.selected) && saved.selected.length) {
-      const valid = saved.selected.filter((id) => CATALOG[id]);
+      const valid = saved.selected
+        .map((id) => (id === 'ultimate_blind' ? 'ultimate' : id))
+        .filter((id) => CATALOG[id]);
       if (valid.length) {
         state.selected = new Set(valid);
       }
@@ -625,9 +645,12 @@ window.Trainer = window.Trainer || {};
       const isCorrect = Number.isFinite(given) && Math.abs(given - expected) < 0.001;
       let label;
       if (q.pay === 'russian') {
-        label = `${q.short}: Ante ${formatMoney(q.stake)} → бет ${formatMoney(expected)}`;
+        const bet = q.stake * 2;
+        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
       } else if (q.pay === 'texas') {
-        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} → ${formatMoney(expected)} (анте+бет)`;
+        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
+      } else if (q.pay === 'ultimate') {
+        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} · Play ×${q.playMult} → ${formatMoney(expected)}`;
       } else {
         label = `${q.short}: ${q.hand} · ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
       }
