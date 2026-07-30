@@ -250,6 +250,11 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
   color: var(--accent-dark);
 }
 
+.ref-table th:not(:first-child),
+.ref-table td.odds {
+  text-align: right;
+}
+
 html[data-theme='dark'] .ref-table .odds {
   color: var(--accent);
 }
