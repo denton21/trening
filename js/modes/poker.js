@@ -29,13 +29,20 @@ window.Trainer = window.Trainer || {};
   const STAKES_STD = range(25, 200, 5);
   const STAKES_JACKPOT = range(5, 100, 5);
 
-  /** @type {Record<string, { id: string, label: string, short: string, stake: 'jackpot'|'std', rows: { hand: string, mult: number, note?: string }[] }>} */
+  /**
+   * pay:
+   *  - bonus  — только ставка × коэф
+   *  - texas  — анте по коэф + бет 1:1 (бет = анте) → stake × (mult + 1)
+   *  - russian — дан ante, ответ = бет = 2 × ante
+   *  - blind  — только выплата Blind (ставка × коэф), ante/play отдельно
+   */
   const CATALOG = {
     jackpot: {
       id: 'jackpot',
       label: 'Джекпот-бонус',
       short: 'Джекпот',
       stake: 'jackpot',
+      pay: 'bonus',
       rows: [
         { hand: 'Две пары', mult: 2 },
         { hand: 'Тройка', mult: 10 },
@@ -50,6 +57,7 @@ window.Trainer = window.Trainer || {};
       label: 'Шестикарточный',
       short: '6-карт',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Стрит · с раздачи', mult: 25 },
         { hand: 'Стрит · с покупкой', mult: 7 },
@@ -70,6 +78,7 @@ window.Trainer = window.Trainer || {};
       label: 'Техасский холдем',
       short: 'Техас',
       stake: 'std',
+      pay: 'texas',
       rows: [
         { hand: 'Пара', mult: 1 },
         { hand: 'Две пары', mult: 1 },
@@ -87,6 +96,7 @@ window.Trainer = window.Trainer || {};
       label: 'Бонус AA',
       short: 'AA',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Пара тузов', mult: 7 },
         { hand: 'Две пары', mult: 7 },
@@ -104,6 +114,7 @@ window.Trainer = window.Trainer || {};
       label: 'Бонус Trips',
       short: 'Trips',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Тройка', mult: 3 },
         { hand: 'Стрит', mult: 4 },
@@ -119,6 +130,7 @@ window.Trainer = window.Trainer || {};
       label: 'Ультимейт · Blind',
       short: 'UTH Blind',
       stake: 'std',
+      pay: 'blind',
       rows: [
         { hand: 'Стрит', mult: 1 },
         { hand: 'Флеш', mult: 1.5 },
@@ -133,6 +145,7 @@ window.Trainer = window.Trainer || {};
       label: 'Novo Poker',
       short: 'Novo',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Карты одного цвета', mult: 2 },
         { hand: 'Туз · король · дама', mult: 5 },
@@ -146,24 +159,19 @@ window.Trainer = window.Trainer || {};
     },
     russian: {
       id: 'russian',
-      label: 'Русский покер · Ante',
+      label: 'Русский покер · Бет',
       short: 'Рус. покер',
       stake: 'std',
-      rows: [
-        { hand: 'Тройка', mult: 3 },
-        { hand: 'Стрит', mult: 4 },
-        { hand: 'Флеш', mult: 5 },
-        { hand: 'Фул-хаус', mult: 7 },
-        { hand: 'Каре', mult: 20 },
-        { hand: 'Стрит-флеш', mult: 50 },
-        { hand: 'Роял-флеш', mult: 100 }
-      ]
+      pay: 'russian',
+      // Только ante → бет 2×; комбинации не нужны
+      rows: [{ hand: 'Бет = 2 × Ante', mult: 2 }]
     },
     bj20: {
       id: 'bj20',
       label: 'BJ · бонус 20',
       short: 'BJ 20',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Любые 20', mult: 5 },
         { hand: 'Одномастные 20', mult: 10 },
@@ -176,6 +184,7 @@ window.Trainer = window.Trainer || {};
       label: 'BJ · джекпот',
       short: 'BJ JP',
       stake: 'std',
+      pay: 'bonus',
       rows: [
         { hand: 'Блекджек', mult: 2 },
         { hand: 'Одномастный блекджек', mult: 10 },
@@ -236,8 +245,35 @@ window.Trainer = window.Trainer || {};
     return String(Math.round(n * 100) / 100).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
   }
 
-  function payoutOf(bet, mult) {
-    return Math.round(bet * mult * 1000) / 1000;
+  function roundPay(n) {
+    return Math.round(n * 1000) / 1000;
+  }
+
+  /**
+   * stake — сумма на столе (для бонусов; для техаса/русского — Ante)
+   * mult — коэф комбинации (для russian не используется)
+   */
+  function computeAnswer(pay, stake, mult) {
+    if (pay === 'russian') {
+      // Бет = 2 × Ante
+      return roundPay(stake * 2);
+    }
+    if (pay === 'texas') {
+      // Ante × mult + Bet × 1, Bet = Ante → stake × (mult + 1)
+      return roundPay(stake * mult + stake);
+    }
+    // bonus / blind — только ставка × коэф
+    return roundPay(stake * mult);
+  }
+
+  function stakeLabel(pay) {
+    if (pay === 'russian' || pay === 'texas') {
+      return 'Ante';
+    }
+    if (pay === 'blind') {
+      return 'Blind';
+    }
+    return 'Ставка';
   }
 
   function persistSettings() {
@@ -278,16 +314,17 @@ window.Trainer = window.Trainer || {};
     selectedCatalog().forEach((cat) => {
       const stakes = stakesFor(cat);
       cat.rows.forEach((row) => {
-        stakes.forEach((bet) => {
+        stakes.forEach((stake) => {
           pool.push({
             gameId: cat.id,
             game: cat.label,
             short: cat.short,
+            pay: cat.pay,
             hand: row.hand,
             mult: row.mult,
-            bet,
-            answer: payoutOf(bet, row.mult),
-            key: `${cat.id}|${row.hand}|${bet}`
+            stake,
+            answer: computeAnswer(cat.pay, stake, row.mult),
+            key: `${cat.id}|${row.hand}|${stake}`
           });
         });
       });
@@ -343,7 +380,9 @@ window.Trainer = window.Trainer || {};
       return;
     }
     const names = selectedCatalog().map((c) => c.short).join(', ');
-    els.hint.textContent = `Выбрано: ${n} · ${names}. Выплата без возврата ставки (× коэф. из справки).`;
+    els.hint.textContent =
+      `Выбрано: ${n} · ${names}. ` +
+      'Бонусы: ставка × коэф. Техас: анте по коэф + бет 1:1 (бет = анте). Русский: бет = 2 × анте.';
   }
 
   function toggleGame(id) {
@@ -399,17 +438,30 @@ window.Trainer = window.Trainer || {};
     state.current = q;
     state.lastKey = q.key;
     state.questionStartedAt = Date.now();
-    const line = `${formatMoney(q.bet)}`;
+    const line = `${formatMoney(q.stake)}`;
     if (animate) {
       animateExample(els.example, line);
     } else {
       els.example.textContent = line;
     }
     if (els.meta) {
-      els.meta.innerHTML =
-        `<span class="poker-meta-game">${q.game}</span>` +
-        `<span class="poker-meta-sep">·</span>` +
-        `<span class="poker-meta-hand">${q.hand}</span>`;
+      const parts = [
+        `<span class="poker-meta-game">${q.game}</span>`,
+        `<span class="poker-meta-sep">·</span>`,
+        `<span class="poker-meta-hand">${stakeLabel(q.pay)} ${formatMoney(q.stake)}</span>`
+      ];
+      if (q.pay !== 'russian') {
+        parts.push(
+          `<span class="poker-meta-sep">·</span>`,
+          `<span class="poker-meta-hand">${q.hand}</span>`
+        );
+      } else {
+        parts.push(
+          `<span class="poker-meta-sep">·</span>`,
+          `<span class="poker-meta-hand">сколько бет?</span>`
+        );
+      }
+      els.meta.innerHTML = parts.join('');
     }
     return true;
   }
@@ -460,7 +512,7 @@ window.Trainer = window.Trainer || {};
     state.running = true;
     nextQuestion();
     updateStats();
-    showMessage(els.message, 'Назовите выплату (без возврата ставки)', '');
+    showMessage(els.message, 'Назовите выплату / бет', '');
 
     if (state.secondsLeft !== null) {
       state.timer = window.setInterval(() => {
@@ -571,7 +623,14 @@ window.Trainer = window.Trainer || {};
       const expected = q.answer;
       const given = parseUserAnswer(els.answer.value);
       const isCorrect = Number.isFinite(given) && Math.abs(given - expected) < 0.001;
-      const label = `${q.short}: ${q.hand} · ${formatMoney(q.bet)} → ${formatMoney(expected)}`;
+      let label;
+      if (q.pay === 'russian') {
+        label = `${q.short}: Ante ${formatMoney(q.stake)} → бет ${formatMoney(expected)}`;
+      } else if (q.pay === 'texas') {
+        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} → ${formatMoney(expected)} (анте+бет)`;
+      } else {
+        label = `${q.short}: ${q.hand} · ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
+      }
 
       pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
       flashAnswer(els.answer, isCorrect);
