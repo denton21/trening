@@ -771,11 +771,6 @@ html[data-theme='dark'] #pokerMeta .poker-meta-game {
   color: var(--text);
 }
 
-#pokerMeta .poker-meta-mult {
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-}
-
 #pokerMeta .poker-meta-sep {
   color: var(--muted);
   opacity: 0.7;

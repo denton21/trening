@@ -409,9 +409,7 @@ window.Trainer = window.Trainer || {};
       els.meta.innerHTML =
         `<span class="poker-meta-game">${q.game}</span>` +
         `<span class="poker-meta-sep">·</span>` +
-        `<span class="poker-meta-hand">${q.hand}</span>` +
-        `<span class="poker-meta-sep">·</span>` +
-        `<span class="poker-meta-mult">×${formatMoney(q.mult)}</span>`;
+        `<span class="poker-meta-hand">${q.hand}</span>`;
     }
     return true;
   }
