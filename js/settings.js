@@ -22,6 +22,10 @@ window.Trainer = window.Trainer || {};
       mode: 'cash',
       duration: 60
     },
+    poker: {
+      duration: 60,
+      selected: null
+    },
     duel: {
       playerName: '',
       mode: 'multiplication',

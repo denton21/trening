@@ -29,6 +29,11 @@ window.Trainer = window.Trainer || {};
       button: $('#payoutsTabBtn'),
       stop: () => Trainer.stopPayouts()
     },
+    poker: {
+      panel: $('#pokerTab'),
+      button: $('#pokerTabBtn'),
+      stop: () => Trainer.stopPoker()
+    },
     duel: {
       panel: $('#duelTab'),
       button: $('#duelTabBtn'),
@@ -184,6 +189,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initBlackjack();
   Trainer.initCounting();
   Trainer.initPayouts();
+  Trainer.initPoker();
   Trainer.initDuel();
   Trainer.initReference();
   initTabs();

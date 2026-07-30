@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, дуэль, справочник">
+  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, покер, дуэль, справочник">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Рулетка">
@@ -42,6 +42,7 @@
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
+      <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
       <button class="tab" id="referenceTabBtn" type="button" role="tab" aria-selected="false">Справка</button>
     </div>
@@ -311,6 +312,58 @@
             <button class="primary" id="payoutsAnswerBtn" type="submit" disabled>Ответить</button>
           </form>
           <div class="message" id="payoutsMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden" id="pokerTab" role="tabpanel" aria-label="Тренировка выплат покер и бонусы">
+      <div class="panel">
+        <h2>Покер и бонусы</h2>
+        <p class="hint" id="pokerHint">
+          Выплата без возврата ставки (ставка × коэф. из справки).
+          Джекпот-бонус: ставки 5–100 шаг 5. Остальные: 25–200 шаг 5.
+        </p>
+
+        <div class="field">
+          <span class="label">Игры и бонусы</span>
+          <div class="choices poker-game-choices" id="pokerGameChoices"></div>
+          <div class="actions" style="margin-top: 10px">
+            <button class="secondary" id="pokerSelectAllBtn" type="button">Все</button>
+            <button class="secondary" id="pokerSelectNoneBtn" type="button">Оставить одну</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Время</span>
+          <div class="time-choices" id="pokerTimeChoices">
+            <button class="choice active" type="button" data-seconds="60" aria-pressed="true">1 минута</button>
+            <button class="choice" type="button" data-seconds="120" aria-pressed="false">2 минуты</button>
+            <button class="choice" type="button" data-seconds="180" aria-pressed="false">3 минуты</button>
+            <button class="choice" type="button" data-seconds="free" aria-pressed="false">Без лимита</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="pokerStartBtn" type="button">Старт</button>
+          <button class="secondary" id="pokerResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Время</span><strong id="pokerTimeLeft">1:00</strong></div>
+          <div class="stat"><span>Верно</span><strong id="pokerCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="pokerWrongCount">0</strong></div>
+        </div>
+        <div class="progress" aria-label="Остаток времени"><span id="pokerTimeProgress"></span></div>
+        <div class="task">
+          <div class="payouts-meta" id="pokerMeta">Выберите игры и нажмите «Старт»</div>
+          <div class="example" id="pokerExample">—</div>
+          <form class="answer-row" id="pokerAnswerForm">
+            <input class="answer" id="pokerAnswer" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата" disabled>
+            <button class="primary" id="pokerAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="message" id="pokerMessage">Нажмите «Старт»</div>
         </div>
       </div>
     </section>
@@ -838,6 +891,7 @@
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
   <script src="js/modes/payouts.js"></script>
+  <script src="js/modes/poker.js"></script>
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
   <script src="js/app.js"></script>
