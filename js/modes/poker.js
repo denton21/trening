@@ -29,6 +29,37 @@ window.Trainer = window.Trainer || {};
   const STAKES_STD = range(25, 200, 5);
   const STAKES_JACKPOT = range(5, 100, 5);
 
+  /** Мелкие ставки чаще; 25–40, 50, 75, 100 — самые частые. Джекпот без весов. */
+  const STAKE_PREFERRED = new Set([25, 30, 35, 40, 50, 75, 100]);
+
+  function stakeWeight(stake) {
+    if (STAKE_PREFERRED.has(stake)) {
+      return 12;
+    }
+    if (stake <= 100) {
+      return 4;
+    }
+    if (stake <= 150) {
+      return 2;
+    }
+    return 1;
+  }
+
+  /** Разворачиваем список ставок по весу (для равномерного random по пулу). */
+  function expandStakes(stakes, weighted) {
+    if (!weighted) {
+      return stakes.slice();
+    }
+    const out = [];
+    stakes.forEach((s) => {
+      const w = stakeWeight(s);
+      for (let i = 0; i < w; i += 1) {
+        out.push(s);
+      }
+    });
+    return out;
+  }
+
   /**
    * pay:
    *  - bonus    — только ставка × коэф
@@ -330,7 +361,8 @@ window.Trainer = window.Trainer || {};
   function buildPool() {
     const pool = [];
     selectedCatalog().forEach((cat) => {
-      const stakes = stakesFor(cat);
+      const weighted = cat.stake !== 'jackpot';
+      const stakes = expandStakes(stakesFor(cat), weighted);
       const playMults = cat.pay === 'ultimate' ? cat.playMults || [1, 2, 4] : [null];
       cat.rows.forEach((row) => {
         stakes.forEach((stake) => {
