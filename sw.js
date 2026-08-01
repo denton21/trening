@@ -1,5 +1,5 @@
 /* Offline cache for solo modes. Duel MQTT still needs network. */
-const CACHE = 'roulette-trainer-v14';
+const CACHE = 'roulette-trainer-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -9,18 +9,15 @@ const ASSETS = [
   './css/board.css',
   './css/animations.css',
   './css/reference.css',
-  './css/roulette3d.css',
   './js/utils.js',
   './js/settings.js',
   './js/ui.js',
   './js/stats.js',
   './js/patterns.js',
-  './js/roulette3d-rules.js',
   './js/modes/multiplication.js',
   './js/modes/addition.js',
   './js/modes/blackjack.js',
   './js/modes/counting.js',
-  './js/modes/roulette3d.js',
   './js/modes/payouts.js',
   './js/modes/poker.js',
   './js/modes/duel.js',
