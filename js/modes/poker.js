@@ -63,7 +63,7 @@ window.Trainer = window.Trainer || {};
   /**
    * pay:
    *  - bonus    — только ставка × коэф
-   *  - texas    — анте по коэф + бет 1:1 (бет = анте) → stake × (mult + 1)
+   *  - texas    — анте по коэф + бет 1:1 (бет = 2×анте) → stake × (mult + 2)
    *  - russian  — дан ante + комбо; бет = 2×ante (в уме); выплата = бет × коэф
    *  - ultimate — полная: Ante 1:1 + Play 1:1 + Blind×коэф (Blind=Ante, Play=k×Ante)
    *               ниже стрита Blind push (×0). Play k ∈ {1, 2, 4}
@@ -305,8 +305,9 @@ window.Trainer = window.Trainer || {};
       return roundPay(stake * 2 * mult);
     }
     if (pay === 'texas') {
-      // Ante × mult + Bet × 1, Bet = Ante
-      return roundPay(stake * mult + stake);
+      // Ante × mult + Bet × 1, Bet = 2 × Ante
+      // Пример: ante 55, каре ×10 → 55×10 + 110 = 660
+      return roundPay(stake * mult + stake * 2);
     }
     if (pay === 'ultimate') {
       // Ante 1:1 + Play 1:1 + Blind×mult; Blind = Ante, Play = playMult×Ante
@@ -436,7 +437,7 @@ window.Trainer = window.Trainer || {};
     const names = selectedCatalog().map((c) => c.short).join(', ');
     els.hint.textContent =
       `Выбрано: ${n} · ${names}. ` +
-      'Бонусы: ставка×коэф. Техас: анте×коэф+бет1:1. Русский: бет=2×анте, бет×коэф. ' +
+      'Бонусы: ставка×коэф. Техас: анте×коэф+бет1:1 (бет=2×анте). Русский: бет=2×анте, бет×коэф. ' +
       'Ультимейт: Ante+Play+Blind (Play ×1/×2/×4).';
   }
 
@@ -680,7 +681,8 @@ window.Trainer = window.Trainer || {};
         const bet = q.stake * 2;
         label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
       } else if (q.pay === 'texas') {
-        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
+        const bet = q.stake * 2;
+        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
       } else if (q.pay === 'ultimate') {
         label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} · Play ×${q.playMult} → ${formatMoney(expected)}`;
       } else {
