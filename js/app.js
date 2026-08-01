@@ -24,6 +24,12 @@ window.Trainer = window.Trainer || {};
       button: $('#countingTabBtn'),
       stop: () => Trainer.stopCounting()
     },
+    roulette3d: {
+      panel: $('#roulette3dTab'),
+      button: $('#roulette3dTabBtn'),
+      stop: () => Trainer.stopRoulette3D(),
+      enter: () => Trainer.refreshRoulette3D()
+    },
     payouts: {
       panel: $('#payoutsTab'),
       button: $('#payoutsTabBtn'),
@@ -128,6 +134,9 @@ window.Trainer = window.Trainer || {};
 
       next.panel.classList.remove('hidden', 'tab-leave');
       next.panel.setAttribute('aria-hidden', 'false');
+      if (next.enter) {
+        next.enter();
+      }
       void next.panel.offsetWidth;
       next.panel.classList.add('tab-enter');
 
@@ -188,6 +197,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initAddition();
   Trainer.initBlackjack();
   Trainer.initCounting();
+  Trainer.initRoulette3D();
   Trainer.initPayouts();
   Trainer.initPoker();
   Trainer.initDuel();

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
+  <link rel="stylesheet" href="css/roulette3d.css">
   <script>
     try {
       var t = JSON.parse(localStorage.getItem('roulette-trainer-settings-v1') || '{}').theme;
@@ -41,6 +42,7 @@
       <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
+      <button class="tab" id="roulette3dTabBtn" type="button" role="tab" aria-selected="false">3D тест</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
@@ -236,6 +238,101 @@
             <button class="primary" id="countingSkipBtn" type="button">Пропустить</button>
           </div>
           <div class="message" id="countingMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden roulette3d-layout" id="roulette3dTab" role="tabpanel" aria-label="Тестовая 3D рулетка">
+      <div class="panel roulette3d-controls">
+        <div class="roulette3d-kicker">THREE.JS · EUROPEAN WHEEL</div>
+        <h2>3D Roulette Lab</h2>
+        <p class="hint">
+          Отдельный тестовый стол. Клик по зоне ставит одну выбранную фишку, режим «Снять» убирает последнюю.
+          Камера управляется мышью или пальцами.
+        </p>
+
+        <div class="field">
+          <span class="label">Сценарий</span>
+          <div class="actions roulette3d-action-row">
+            <button class="primary" id="roulette3dNewBtn" type="button">Новый расклад</button>
+            <button class="secondary" id="roulette3dRandomBetsBtn" type="button">Случайные ставки</button>
+          </div>
+          <div class="actions roulette3d-action-row">
+            <button class="secondary" id="roulette3dClearBtn" type="button">Убрать фишки</button>
+            <button class="secondary" id="roulette3dResetViewBtn" type="button">Сбросить камеру</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Номинал фишки</span>
+          <div class="time-choices roulette3d-chip-choices" id="roulette3dChipChoices">
+            <button class="choice active" type="button" data-value="1" aria-pressed="true">1</button>
+            <button class="choice" type="button" data-value="5" aria-pressed="false">5</button>
+            <button class="choice" type="button" data-value="25" aria-pressed="false">25</button>
+            <button class="choice" type="button" data-value="100" aria-pressed="false">100</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Действие по клику</span>
+          <div class="toggle-row" id="roulette3dActionChoices">
+            <button class="choice active" type="button" data-action="place" aria-pressed="true">Ставить</button>
+            <button class="choice" type="button" data-action="remove" aria-pressed="false">Снять</button>
+          </div>
+        </div>
+
+        <div class="field roulette3d-result-controls">
+          <span class="label">Результат</span>
+          <div class="roulette3d-result-input-row">
+            <input class="answer" id="roulette3dResultInput" type="number" min="0" max="36" step="1" value="17" inputmode="numeric" aria-label="Выпавшее число">
+            <button class="secondary" id="roulette3dApplyResultBtn" type="button">Применить</button>
+          </div>
+          <button class="secondary roulette3d-full-button" id="roulette3dRandomResultBtn" type="button">Случайное число</button>
+        </div>
+
+        <div class="roulette3d-rule-card">
+          <strong>Математика стола</strong>
+          <span>Чистая выплата = ставка × коэффициент. Возврат самой ставки считается отдельно.</span>
+          <span>Внешние ставки на 0 не выигрывают. Все выигрышные ставки складываются независимо друг от друга.</span>
+          <em id="roulette3dRulesStatus">Проверка правил…</em>
+        </div>
+      </div>
+
+      <div class="trainer roulette3d-trainer">
+        <div class="stats roulette3d-stats">
+          <div class="stat"><span>Выпало</span><strong id="roulette3dResultStat">17</strong></div>
+          <div class="stat"><span>Ставлено</span><strong id="roulette3dStakeStat">0</strong></div>
+          <div class="stat"><span>Выигрывает</span><strong id="roulette3dWinningStat">0</strong></div>
+        </div>
+
+        <div class="roulette3d-workspace">
+          <div>
+            <div class="roulette3d-stage" id="roulette3dStage" aria-label="3D стол европейской рулетки">
+              <div class="roulette3d-stage-badge" id="roulette3dStageBadge">Выпало: 17</div>
+              <div class="roulette3d-loading" id="roulette3dLoading">Загрузка 3D-сцены…</div>
+            </div>
+            <p class="hint roulette3d-stage-hint">ЛКМ/палец — вращение. Колесо мыши или pinch — масштаб. Нажимайте на разметку стола, чтобы ставить фишки.</p>
+          </div>
+
+          <aside class="roulette3d-ledger" aria-label="Расчёт выплаты">
+            <div class="roulette3d-result-card" id="roulette3dResultCard">
+              <span class="label">Результат</span>
+              <strong id="roulette3dResultLabel">17 · красное</strong>
+            </div>
+            <div class="roulette3d-ledger-head">
+              <span class="label">Расчёт</span>
+              <strong id="roulette3dPayoutTotal">—</strong>
+            </div>
+            <div class="roulette3d-breakdown" id="roulette3dBreakdown">Введите ответ после расстановки фишек.</div>
+            <form class="roulette3d-answer-form" id="roulette3dAnswerForm">
+              <label class="label" for="roulette3dAnswer">Чистая выплата без возврата ставки</label>
+              <div class="answer-row">
+                <input class="answer" id="roulette3dAnswer" type="number" inputmode="numeric" min="0" step="1" autocomplete="off" aria-label="Чистая выплата">
+                <button class="primary" id="roulette3dAnswerBtn" type="submit">Проверить</button>
+              </div>
+            </form>
+            <div class="message" id="roulette3dMessage">Новый расклад создаёт демонстрационные ставки.</div>
+          </aside>
         </div>
       </div>
     </section>
@@ -883,15 +980,19 @@
   </div>
 
   <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>
   <script src="js/patterns.js"></script>
+  <script src="js/roulette3d-rules.js"></script>
   <script src="js/modes/multiplication.js"></script>
   <script src="js/modes/addition.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
+  <script src="js/modes/roulette3d.js"></script>
   <script src="js/modes/payouts.js"></script>
   <script src="js/modes/poker.js"></script>
   <script src="js/modes/duel.js"></script>
