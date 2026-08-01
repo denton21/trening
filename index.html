@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/board.css">
+  <link rel="stylesheet" href="css/roulette3d.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
   <script>
@@ -41,6 +42,7 @@
       <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
+      <button class="tab" id="roulette3dTabBtn" type="button" role="tab" aria-selected="false">3D рулетка</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
@@ -236,6 +238,52 @@
             <button class="primary" id="countingSkipBtn" type="button">Пропустить</button>
           </div>
           <div class="message" id="countingMessage">Нажмите «Старт»</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden" id="roulette3dTab" role="tabpanel" aria-label="Тренировка 3D рулетки">
+      <div class="panel">
+        <h2>3D рулетка</h2>
+        <p class="hint">Смешанные номиналы: на каждом поле может лежать несколько фишек разных цветов. Считайте выплату как сумму по каждой фишке: <strong>номинал × количество × коэффициент</strong>.</p>
+        <div class="field">
+          <span class="label">Сложность</span>
+          <div class="time-choices" id="roulette3dLevelChoices">
+            <button class="choice active" type="button" data-level="easy" aria-pressed="true">Лёгкий</button>
+            <button class="choice" type="button" data-level="medium" aria-pressed="false">Средний</button>
+            <button class="choice" type="button" data-level="hard" aria-pressed="false">Высокий</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">Номиналы</span>
+          <div class="choices" id="roulette3dDenominationChoices">
+            <button class="choice active" type="button" data-denomination="1" aria-pressed="true">1</button>
+            <button class="choice active" type="button" data-denomination="5" aria-pressed="true">5</button>
+            <button class="choice active" type="button" data-denomination="25" aria-pressed="true">25</button>
+            <button class="choice" type="button" data-denomination="100" aria-pressed="false">100</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="roulette3dStartBtn" type="button">Старт</button>
+          <button class="secondary" id="roulette3dResetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+      <div class="trainer">
+        <div class="stats">
+          <div class="stat"><span>Верно</span><strong id="roulette3dCorrectCount">0</strong></div>
+          <div class="stat"><span>Ошибки</span><strong id="roulette3dWrongCount">0</strong></div>
+          <div class="stat"><span>Последнее</span><strong id="roulette3dLastTime">—</strong></div>
+        </div>
+        <div class="picture-task counting-task" id="roulette3dTask">
+          <div class="counting-win" id="roulette3dWinLabel">Выпало: —</div>
+          <div class="roulette-3d-scene" id="roulette3dScene" aria-label="Трёхмерное колесо рулетки"><div class="roulette-3d-wheel" id="roulette3dWheel"></div><div class="roulette-3d-ball"></div></div>
+          <div class="roulette3d-bets" id="roulette3dBets"></div>
+          <form class="answer-row" id="roulette3dAnswerForm">
+            <input class="answer" id="roulette3dAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
+            <button class="primary" id="roulette3dAnswerBtn" type="submit" disabled>Ответить</button>
+          </form>
+          <div class="actions counting-retry-actions hidden" id="roulette3dRetryActions"><button class="secondary" id="roulette3dRetryBtn" type="button">Пересчитать</button><button class="primary" id="roulette3dSkipBtn" type="button">Пропустить</button></div>
+          <div class="message" id="roulette3dMessage">Нажмите «Старт»</div>
         </div>
       </div>
     </section>
@@ -892,6 +940,7 @@
   <script src="js/modes/addition.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
+  <script src="js/modes/roulette3d.js"></script>
   <script src="js/modes/payouts.js"></script>
   <script src="js/modes/poker.js"></script>
   <script src="js/modes/duel.js"></script>
