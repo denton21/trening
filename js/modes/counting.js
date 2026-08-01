@@ -49,6 +49,8 @@ window.Trainer = window.Trainer || {};
     answerBtn: $('#countingAnswerBtn'),
     message: $('#countingMessage'),
     task: $('#countingTask'),
+    view: $('#countingBoardView'),
+    camera: $('#countingCamera'),
     board: $('#countingBoard'),
     grid: $('#countingGrid'),
     chips: $('#countingChips'),
@@ -60,6 +62,23 @@ window.Trainer = window.Trainer || {};
     correctCount: $('#countingCorrectCount'),
     wrongCount: $('#countingWrongCount'),
     lastTime: $('#countingLastTime')
+  };
+
+  const CAMERA = {
+    defaultPitch: 54,
+    defaultYaw: 0,
+    minPitch: 40,
+    maxPitch: 68,
+    maxYaw: 18,
+    pitchSensitivity: 0.2,
+    yawSensitivity: 0.32
+  };
+
+  const cameraDrag = {
+    active: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0
   };
 
   function randInt(min, max) {
@@ -238,15 +257,98 @@ window.Trainer = window.Trainer || {};
   function renderChips(chips) {
     els.chips.innerHTML = '';
     chips.forEach((chip, index) => {
-      const el = document.createElement('span');
-      el.className = 'chip has-count';
-      el.style.left = `${chip.x}%`;
-      el.style.top = `${chip.y}%`;
-      el.style.setProperty('--i', String(index));
-      el.textContent = String(chip.count);
-      el.title = `${chip.count} фиш.`;
-      els.chips.appendChild(el);
+      const stack = document.createElement('div');
+      stack.className = 'chip-stack';
+      stack.style.left = `${chip.x}%`;
+      stack.style.top = `${chip.y}%`;
+      stack.style.setProperty('--group-index', String(index));
+      stack.setAttribute('role', 'img');
+      stack.setAttribute('aria-label', `${chip.count} ${chip.count === 1 ? 'фишка' : 'фишки'}`);
+      stack.title = `${chip.count} ${chip.count === 1 ? 'фишка' : 'фишки'}`;
+
+      for (let stackIndex = 0; stackIndex < chip.count; stackIndex += 1) {
+        const el = document.createElement('span');
+        el.className = 'chip';
+        el.style.setProperty('--stack-index', String(stackIndex));
+        stack.appendChild(el);
+      }
+
+      els.chips.appendChild(stack);
     });
+  }
+
+  function setCamera(yaw, pitch) {
+    if (!els.camera) {
+      return;
+    }
+    els.camera.style.setProperty('--camera-yaw', `${yaw.toFixed(2)}deg`);
+    els.camera.style.setProperty('--camera-pitch', `${pitch.toFixed(2)}deg`);
+  }
+
+  function resetCamera() {
+    if (els.view) {
+      els.view.classList.remove('is-dragging');
+    }
+    setCamera(CAMERA.defaultYaw, CAMERA.defaultPitch);
+  }
+
+  function beginCameraDrag(event) {
+    if (!els.view || !els.camera || (event.pointerType === 'mouse' && event.button !== 0)) {
+      return;
+    }
+
+    cameraDrag.active = true;
+    cameraDrag.pointerId = event.pointerId;
+    cameraDrag.startX = event.clientX;
+    cameraDrag.startY = event.clientY;
+    els.view.classList.add('is-dragging');
+    els.view.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }
+
+  function moveCamera(event) {
+    if (!cameraDrag.active || event.pointerId !== cameraDrag.pointerId) {
+      return;
+    }
+
+    const yaw = Math.max(
+      -CAMERA.maxYaw,
+      Math.min(CAMERA.maxYaw, (event.clientX - cameraDrag.startX) * CAMERA.yawSensitivity)
+    );
+    const pitch = Math.max(
+      CAMERA.minPitch,
+      Math.min(CAMERA.maxPitch, CAMERA.defaultPitch - (event.clientY - cameraDrag.startY) * CAMERA.pitchSensitivity)
+    );
+    setCamera(yaw, pitch);
+    event.preventDefault();
+  }
+
+  function endCameraDrag(event) {
+    if (!cameraDrag.active || (event && event.pointerId !== cameraDrag.pointerId)) {
+      return;
+    }
+
+    const pointerId = cameraDrag.pointerId;
+    cameraDrag.active = false;
+    cameraDrag.pointerId = null;
+    try {
+      els.view?.releasePointerCapture(pointerId);
+    } catch {
+      // Pointer capture may already be released by the browser.
+    }
+    resetCamera();
+  }
+
+  function initCamera() {
+    if (!els.view) {
+      return;
+    }
+    resetCamera();
+    els.view.addEventListener('pointerdown', beginCameraDrag);
+    els.view.addEventListener('pointermove', moveCamera);
+    els.view.addEventListener('pointerup', endCameraDrag);
+    els.view.addEventListener('pointercancel', endCameraDrag);
+    els.view.addEventListener('lostpointercapture', () => endCameraDrag());
   }
 
   function renderLayout(layout) {
@@ -292,6 +394,7 @@ window.Trainer = window.Trainer || {};
     els.board.classList.remove('no-zero');
     els.zero.classList.remove('is-win');
     els.zero.setAttribute('aria-hidden', 'true');
+    resetCamera();
   }
 
   function enableAnswer(focus = true) {
@@ -426,6 +529,7 @@ window.Trainer = window.Trainer || {};
     stopTimer();
     state.running = false;
     state.awaitingRetry = false;
+    resetCamera();
   };
 
   Trainer.initCounting = function initCounting() {
@@ -445,6 +549,7 @@ window.Trainer = window.Trainer || {};
     els.answerForm.addEventListener('submit', onSubmit);
     els.retryBtn.addEventListener('click', onRetry);
     els.skipBtn.addEventListener('click', onSkip);
+    initCamera();
     reset();
   };
 })();
