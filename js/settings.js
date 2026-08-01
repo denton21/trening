@@ -15,10 +15,11 @@ window.Trainer = window.Trainer || {};
       duration: 60
     },
     counting: {
-      level: 'easy'
-    },
-    mixed: {
-      level: 'easy'
+      preset: 'easy',
+      denoms: [1],
+      slotsId: 'few',
+      chipsId: '3',
+      dualMode: 'off'
     },
     payouts: {
       color: 1,

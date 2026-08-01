@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, 3D номиналы, выплаты, покер, дуэль, справочник">
+  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, покер, дуэль, справочник">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Рулетка">
@@ -41,7 +41,6 @@
       <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
-      <button class="tab" id="mixedTabBtn" type="button" role="tab" aria-selected="false">3D</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
@@ -200,15 +199,63 @@
     <section class="layout hidden" id="countingTab" role="tabpanel" aria-label="Тренировка счёта">
       <div class="panel">
         <h2>Счёт выплат</h2>
-        <p class="hint">На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).</p>
+        <p class="hint" id="countingHint">
+          На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте.
+          Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5.
+          У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).
+          В настройках можно включить номиналы ×2 / ×5 — как на реальном столе.
+        </p>
+
         <div class="field">
-          <span class="label">Сложность</span>
-          <div class="time-choices" id="countingLevelChoices">
-            <button class="choice active" type="button" data-level="easy" aria-pressed="true">Лёгкий</button>
-            <button class="choice" type="button" data-level="medium" aria-pressed="false">Средний</button>
-            <button class="choice" type="button" data-level="hard" aria-pressed="false">Высокий</button>
+          <span class="label">Пресет</span>
+          <div class="time-choices" id="countingPresetChoices">
+            <button class="choice active" type="button" data-preset="easy" aria-pressed="true">Лёгкий</button>
+            <button class="choice" type="button" data-preset="medium" aria-pressed="false">Средний</button>
+            <button class="choice" type="button" data-preset="hard" aria-pressed="false">Высокий</button>
+          </div>
+          <p class="hint counting-preset-hint">Пресет подставляет настройки; ниже можно подкрутить вручную.</p>
+        </div>
+
+        <div class="field">
+          <span class="label">Номиналы</span>
+          <div class="time-choices" id="countingDenomChoices">
+            <button class="choice active" type="button" data-denom="1" aria-pressed="true">×1</button>
+            <button class="choice" type="button" data-denom="2" aria-pressed="false">×2</button>
+            <button class="choice" type="button" data-denom="5" aria-pressed="false">×5</button>
+          </div>
+          <div class="mixed-legend counting-legend hidden" id="countingLegend" aria-label="Номиналы фишек"></div>
+        </div>
+
+        <div class="field">
+          <span class="label">Слотов на поле</span>
+          <div class="time-choices" id="countingSlotsChoices">
+            <button class="choice active" type="button" data-slots="few" aria-pressed="true">2–4</button>
+            <button class="choice" type="button" data-slots="mid" aria-pressed="false">3–6</button>
+            <button class="choice" type="button" data-slots="many" aria-pressed="false">4–8</button>
+            <button class="choice" type="button" data-slots="max" aria-pressed="false">6–11</button>
           </div>
         </div>
+
+        <div class="field">
+          <span class="label">Фишек в стеке</span>
+          <div class="time-choices" id="countingChipsChoices">
+            <button class="choice active" type="button" data-chips="3" aria-pressed="true">до 3</button>
+            <button class="choice" type="button" data-chips="5" aria-pressed="false">до 5</button>
+            <button class="choice" type="button" data-chips="7" aria-pressed="false">до 7</button>
+            <button class="choice" type="button" data-chips="10" aria-pressed="false">до 10</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Два номинала на одном слоте</span>
+          <div class="time-choices" id="countingDualChoices">
+            <button class="choice active" type="button" data-dual="off" aria-pressed="true">Выкл</button>
+            <button class="choice" type="button" data-dual="rare" aria-pressed="false">Редко</button>
+            <button class="choice" type="button" data-dual="often" aria-pressed="false">Часто</button>
+          </div>
+          <p class="hint">Нужно ≥2 номинала. На одном bet — стеки ×1 и ×5 рядом.</p>
+        </div>
+
         <div class="actions">
           <button class="primary" id="countingStartBtn" type="button">Старт</button>
           <button class="secondary" id="countingResetBtn" type="button">Сброс</button>
@@ -237,60 +284,6 @@
             <button class="primary" id="countingSkipBtn" type="button">Пропустить</button>
           </div>
           <div class="message" id="countingMessage">Нажмите «Старт»</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="layout hidden" id="mixedTab" role="tabpanel" aria-label="Тренировка 3D — смешанные номиналы">
-      <div class="panel">
-        <h2>3D · смешанные номиналы</h2>
-        <p class="hint">
-          Как на реальном столе: на поле лежат фишки разных цветов (номиналов) — ×1, ×2, ×5.
-          Цифра на фишке = <strong>сколько штук</strong>, цвет / бейдж = <strong>номинал</strong>.
-          Считайте: <strong>кол-во × номинал × выплата</strong> по каждому стеку, затем сумма.
-          Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5.
-        </p>
-        <div class="mixed-legend" aria-label="Номиналы фишек">
-          <span class="mixed-legend-item chip-v1"><i></i>×1</span>
-          <span class="mixed-legend-item chip-v2"><i></i>×2</span>
-          <span class="mixed-legend-item chip-v5"><i></i>×5</span>
-        </div>
-        <div class="field">
-          <span class="label">Сложность</span>
-          <div class="time-choices" id="mixedLevelChoices">
-            <button class="choice active" type="button" data-level="easy" aria-pressed="true">Лёгкий</button>
-            <button class="choice" type="button" data-level="medium" aria-pressed="false">Средний</button>
-            <button class="choice" type="button" data-level="hard" aria-pressed="false">Высокий</button>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="primary" id="mixedStartBtn" type="button">Старт</button>
-          <button class="secondary" id="mixedResetBtn" type="button">Сброс</button>
-        </div>
-      </div>
-
-      <div class="trainer">
-        <div class="stats">
-          <div class="stat"><span>Верно</span><strong id="mixedCorrectCount">0</strong></div>
-          <div class="stat"><span>Ошибки</span><strong id="mixedWrongCount">0</strong></div>
-          <div class="stat"><span>Последнее</span><strong id="mixedLastTime">—</strong></div>
-        </div>
-        <div class="picture-task counting-task mixed-task" id="mixedTask">
-          <div class="counting-win" id="mixedWinLabel">Выпало: —</div>
-          <div class="roulette-board counting-board mixed-board" id="mixedBoard" aria-label="Поле рулетки со смешанными номиналами">
-            <div class="board-zero" id="mixedZero" aria-hidden="true">0</div>
-            <div class="board-grid counting-grid" id="mixedGrid" aria-hidden="true"></div>
-            <div class="board-chips" id="mixedChips"></div>
-          </div>
-          <form class="answer-row" id="mixedAnswerForm">
-            <input class="answer" id="mixedAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
-            <button class="primary" id="mixedAnswerBtn" type="submit" disabled>Ответить</button>
-          </form>
-          <div class="actions counting-retry-actions hidden" id="mixedRetryActions">
-            <button class="secondary" id="mixedRetryBtn" type="button">Пересчитать</button>
-            <button class="primary" id="mixedSkipBtn" type="button">Пропустить</button>
-          </div>
-          <div class="message" id="mixedMessage">Нажмите «Старт»</div>
         </div>
       </div>
     </section>
@@ -947,7 +940,6 @@
   <script src="js/modes/addition.js"></script>
   <script src="js/modes/blackjack.js"></script>
   <script src="js/modes/counting.js"></script>
-  <script src="js/modes/mixed.js"></script>
   <script src="js/modes/payouts.js"></script>
   <script src="js/modes/poker.js"></script>
   <script src="js/modes/duel.js"></script>

@@ -20,14 +20,64 @@ window.Trainer = window.Trainer || {};
 
   const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 
-  const LEVEL = {
-    easy: { minSlots: 2, maxSlots: 4, maxChips: 3 },
-    medium: { minSlots: 4, maxSlots: 7, maxChips: 5 },
-    hard: { minSlots: 6, maxSlots: 11, maxChips: 8 }
+  const ALL_DENOMS = [1, 2, 5];
+
+  const SLOT_PRESETS = [
+    { id: 'few', label: '2–4', minSlots: 2, maxSlots: 4 },
+    { id: 'mid', label: '3–6', minSlots: 3, maxSlots: 6 },
+    { id: 'many', label: '4–8', minSlots: 4, maxSlots: 8 },
+    { id: 'max', label: '6–11', minSlots: 6, maxSlots: 11 }
+  ];
+
+  const CHIP_PRESETS = [
+    { id: '3', label: 'до 3', maxChips: 3 },
+    { id: '5', label: 'до 5', maxChips: 5 },
+    { id: '7', label: 'до 7', maxChips: 7 },
+    { id: '10', label: 'до 10', maxChips: 10 }
+  ];
+
+  const DUAL_MODES = {
+    off: { dualChance: 0, maxDual: 0, label: 'Выкл' },
+    rare: { dualChance: 0.2, maxDual: 2, label: 'Редко' },
+    often: { dualChance: 0.55, maxDual: 5, label: 'Часто' }
+  };
+
+  /** Пресеты сложности — применяют полный набор настроек. */
+  const PRESETS = {
+    easy: {
+      denoms: [1],
+      slotsId: 'few',
+      chipsId: '3',
+      dualMode: 'off'
+    },
+    medium: {
+      denoms: [1, 5],
+      slotsId: 'mid',
+      chipsId: '5',
+      dualMode: 'rare'
+    },
+    hard: {
+      denoms: [1, 2, 5],
+      slotsId: 'many',
+      chipsId: '7',
+      dualMode: 'often'
+    }
+  };
+
+  const DEFAULT_CFG = {
+    preset: 'easy',
+    denoms: [1],
+    slotsId: 'few',
+    chipsId: '3',
+    dualMode: 'off'
   };
 
   const state = {
-    level: 'easy',
+    preset: DEFAULT_CFG.preset,
+    denoms: DEFAULT_CFG.denoms.slice(),
+    slotsId: DEFAULT_CFG.slotsId,
+    chipsId: DEFAULT_CFG.chipsId,
+    dualMode: DEFAULT_CFG.dualMode,
     answer: 0,
     running: false,
     nextTimer: null,
@@ -41,7 +91,14 @@ window.Trainer = window.Trainer || {};
   };
 
   const els = {
-    levelButtons: $$('#countingLevelChoices button'),
+    presetButtons: $$('#countingPresetChoices button'),
+    denomChoices: $('#countingDenomChoices'),
+    denomButtons: $$('#countingDenomChoices button'),
+    slotsButtons: $$('#countingSlotsChoices button'),
+    chipsButtons: $$('#countingChipsChoices button'),
+    dualButtons: $$('#countingDualChoices button'),
+    legend: $('#countingLegend'),
+    hint: $('#countingHint'),
     startBtn: $('#countingStartBtn'),
     resetBtn: $('#countingResetBtn'),
     answerForm: $('#countingAnswerForm'),
@@ -79,6 +136,48 @@ window.Trainer = window.Trainer || {};
     return `${(ms / 1000).toFixed(1)} с`;
   }
 
+  function slotsCfg() {
+    return SLOT_PRESETS.find((p) => p.id === state.slotsId) || SLOT_PRESETS[0];
+  }
+
+  function chipsCfg() {
+    return CHIP_PRESETS.find((p) => p.id === state.chipsId) || CHIP_PRESETS[0];
+  }
+
+  function dualCfg() {
+    return DUAL_MODES[state.dualMode] || DUAL_MODES.off;
+  }
+
+  function activeDenoms() {
+    const list = state.denoms.filter((v) => ALL_DENOMS.includes(v));
+    return list.length ? list.slice().sort((a, b) => a - b) : [1];
+  }
+
+  function pickDenom(pool, exclude) {
+    const options = exclude == null ? pool : pool.filter((v) => v !== exclude);
+    if (!options.length) {
+      return pool[randInt(0, pool.length - 1)];
+    }
+    return options[randInt(0, options.length - 1)];
+  }
+
+  function matchPreset() {
+    const denoms = activeDenoms();
+    for (const [name, p] of Object.entries(PRESETS)) {
+      const sameDenoms =
+        p.denoms.length === denoms.length && p.denoms.every((d) => denoms.includes(d));
+      if (
+        sameDenoms &&
+        p.slotsId === state.slotsId &&
+        p.chipsId === state.chipsId &&
+        p.dualMode === state.dualMode
+      ) {
+        return name;
+      }
+    }
+    return null;
+  }
+
   function updateStats() {
     els.correctCount.textContent = state.correct;
     els.wrongCount.textContent = state.wrong;
@@ -103,7 +202,6 @@ window.Trainer = window.Trainer || {};
     return RED.has(number) ? 'is-red' : 'is-black';
   }
 
-  /** Три улицы вокруг выпавшего числа (или 1–9 / 28–36 у краёв). */
   function buildNumberGrid(winNumber) {
     if (winNumber === 0) {
       return {
@@ -115,7 +213,6 @@ window.Trainer = window.Trainer || {};
         winCol: null,
         winRow: null,
         isZero: true,
-        // 0 рядом с 1–2–3 — полоса zero нужна
         showZero: true,
         firstStreet: 0
       };
@@ -146,7 +243,6 @@ window.Trainer = window.Trainer || {};
       });
     });
 
-    // Полоса 0 только если верхний ряд поля — 1–2–3
     const showZero = firstStreet === 0;
 
     return {
@@ -159,11 +255,29 @@ window.Trainer = window.Trainer || {};
     };
   }
 
-  function pickLayout(level) {
-    const cfg = LEVEL[level] || LEVEL.easy;
+  /** Стек на слоте; offsetIndex 0/1 — сдвиг, если два номинала рядом. */
+  function makeStackPair(slot, value, count, offsetIndex) {
+    const dx = offsetIndex === 0 ? -2.2 : offsetIndex === 1 ? 2.2 : 0;
+    const dy = offsetIndex === 0 ? -1.6 : offsetIndex === 1 ? 1.6 : 0;
+    return {
+      type: slot.type,
+      key: slot.key,
+      x: slot.x + dx,
+      y: slot.y + dy,
+      count,
+      value
+    };
+  }
+
+  function pickLayout() {
+    const slots = slotsCfg();
+    const maxChips = chipsCfg().maxChips;
+    const dual = dualCfg();
+    const denoms = activeDenoms();
+    const multiDenom = denoms.length > 1;
+
     const winNumber = Math.random() < 0.08 ? 0 : randInt(1, 36);
     const grid = buildNumberGrid(winNumber);
-    // При 1/2/3 (верхний ряд 1–2–3, winRow 0) — сплиты/трио/first four с 0
     const includeZeroEdge = grid.showZero && !grid.isZero && grid.winRow === 0;
     const available = grid.isZero
       ? winningSlotsForZero()
@@ -174,7 +288,7 @@ window.Trainer = window.Trainer || {};
 
     const slotCount = Math.min(
       available.length,
-      randInt(cfg.minSlots, Math.min(cfg.maxSlots, available.length))
+      randInt(slots.minSlots, Math.min(slots.maxSlots, available.length))
     );
 
     const straight = available.find((s) => s.type === 'straight');
@@ -189,7 +303,7 @@ window.Trainer = window.Trainer || {};
       }
       chosen.push(slot);
     }
-    while (chosen.length < Math.min(cfg.minSlots, available.length)) {
+    while (chosen.length < Math.min(slots.minSlots, available.length)) {
       const next = available.find((s) => !chosen.some((c) => c.key === s.key));
       if (!next) {
         break;
@@ -197,14 +311,58 @@ window.Trainer = window.Trainer || {};
       chosen.push(next);
     }
 
-    const chips = chosen.map((slot) => ({
-      ...slot,
-      count: randInt(1, cfg.maxChips)
-    }));
+    const usedValues = new Set();
+    let dualLeft = multiDenom ? dual.maxDual : 0;
+    const chips = [];
 
-    const answer = chips.reduce((sum, chip) => sum + chip.count * payoutOf(chip.type), 0);
+    chosen.forEach((slot, index) => {
+      let value;
+      if (!multiDenom) {
+        value = denoms[0];
+      } else if (index === 0) {
+        value = pickDenom(denoms);
+      } else if (index === 1 && usedValues.size < 2) {
+        value = pickDenom(denoms, [...usedValues][0]);
+      } else {
+        value = pickDenom(denoms);
+      }
+      usedValues.add(value);
+      const count = randInt(1, maxChips);
 
-    return { winNumber, grid, chips, answer };
+      const willDual = dualLeft > 0 && multiDenom && Math.random() < dual.dualChance;
+
+      if (willDual) {
+        chips.push(makeStackPair(slot, value, count, 0));
+        const other = pickDenom(denoms, value);
+        const otherCount = randInt(1, Math.max(1, Math.ceil(maxChips * 0.7)));
+        chips.push(makeStackPair(slot, other, otherCount, 1));
+        usedValues.add(other);
+        dualLeft -= 1;
+      } else {
+        chips.push({
+          type: slot.type,
+          key: slot.key,
+          x: slot.x,
+          y: slot.y,
+          count,
+          value
+        });
+      }
+    });
+
+    // Гарантия микса номиналов на поле
+    if (multiDenom && usedValues.size < 2 && chips.length >= 2) {
+      const first = chips[0].value;
+      const other = pickDenom(denoms, first);
+      chips[1].value = other;
+    }
+
+    const answer = chips.reduce(
+      (sum, chip) => sum + chip.count * chip.value * payoutOf(chip.type),
+      0
+    );
+
+    return { winNumber, grid, chips, answer, denoms };
   }
 
   function pulseBoard() {
@@ -237,34 +395,224 @@ window.Trainer = window.Trainer || {};
 
   function renderChips(chips) {
     els.chips.innerHTML = '';
+    const multi = activeDenoms().length > 1 || chips.some((c) => c.value !== 1);
+
     chips.forEach((chip, index) => {
       const el = document.createElement('span');
-      el.className = 'chip has-count';
-      el.style.left = `${chip.x}%`;
-      el.style.top = `${chip.y}%`;
-      el.style.setProperty('--i', String(index));
-      el.textContent = String(chip.count);
-      el.title = `${chip.count} фиш.`;
+      const layers = Math.min(chip.count, 5);
+      const value = chip.value || 1;
+
+      if (multi || value !== 1) {
+        el.className = `chip chip-3d has-count chip-v${value}`;
+        el.style.left = `${chip.x}%`;
+        el.style.top = `${chip.y}%`;
+        el.style.setProperty('--i', String(index));
+        el.style.setProperty('--layers', String(layers));
+        el.title = `${chip.count} × ${value} · ${chip.type} ×${payoutOf(chip.type)}`;
+        el.setAttribute('aria-label', `${chip.count} фишек по ${value}, ${chip.type}`);
+
+        const stack = document.createElement('span');
+        stack.className = 'chip-3d-stack';
+        stack.setAttribute('aria-hidden', 'true');
+        for (let L = layers; L >= 1; L -= 1) {
+          const disc = document.createElement('span');
+          disc.className = 'chip-3d-disc';
+          disc.style.setProperty('--l', String(L));
+          stack.appendChild(disc);
+        }
+        el.appendChild(stack);
+
+        const face = document.createElement('span');
+        face.className = 'chip-3d-face';
+        face.textContent = String(chip.count);
+        el.appendChild(face);
+
+        const badge = document.createElement('span');
+        badge.className = 'chip-3d-badge';
+        badge.textContent = String(value);
+        el.appendChild(badge);
+      } else {
+        // Классика: один номинал ×1 — простая фишка как раньше
+        el.className = 'chip has-count';
+        el.style.left = `${chip.x}%`;
+        el.style.top = `${chip.y}%`;
+        el.style.setProperty('--i', String(index));
+        el.textContent = String(chip.count);
+        el.title = `${chip.count} фиш.`;
+      }
+
       els.chips.appendChild(el);
     });
+  }
+
+  function renderLegend() {
+    if (!els.legend) {
+      return;
+    }
+    const denoms = activeDenoms();
+    const multi = denoms.length > 1 || denoms[0] !== 1;
+    els.legend.classList.toggle('hidden', !multi);
+    els.legend.innerHTML = denoms
+      .map((v) => `<span class="mixed-legend-item chip-v${v}"><i></i>×${v}</span>`)
+      .join('');
+  }
+
+  function updateHint() {
+    if (!els.hint) {
+      return;
+    }
+    const denoms = activeDenoms();
+    const multi = denoms.length > 1 || denoms[0] !== 1;
+    if (multi) {
+      els.hint.innerHTML =
+        'Цифра на фишке = <strong>сколько штук</strong>, цвет / бейдж = <strong>номинал</strong>. ' +
+        'Считайте: <strong>кол-во × номинал × выплата</strong> по каждому стеку, затем сумма. ' +
+        'Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. ' +
+        'У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).';
+    } else {
+      els.hint.innerHTML =
+        'На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте. ' +
+        'Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. ' +
+        'У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8). ' +
+        'В настройках можно включить номиналы ×2 / ×5 — как на реальном столе.';
+    }
+  }
+
+  function syncUi() {
+    const denoms = activeDenoms();
+    state.preset = matchPreset();
+
+    els.presetButtons.forEach((btn) => {
+      setPressed(btn, btn.dataset.preset === state.preset);
+    });
+
+    els.denomButtons.forEach((btn) => {
+      const v = Number(btn.dataset.denom);
+      setPressed(btn, denoms.includes(v));
+    });
+
+    els.slotsButtons.forEach((btn) => {
+      setPressed(btn, btn.dataset.slots === state.slotsId);
+    });
+
+    els.chipsButtons.forEach((btn) => {
+      setPressed(btn, btn.dataset.chips === state.chipsId);
+    });
+
+    els.dualButtons.forEach((btn) => {
+      setPressed(btn, btn.dataset.dual === state.dualMode);
+    });
+
+    // Микс на слоте бесполезен при одном номинале
+    const dualDisabled = denoms.length < 2;
+    els.dualButtons.forEach((btn) => {
+      btn.disabled = dualDisabled;
+      btn.classList.toggle('is-disabled', dualDisabled);
+    });
+
+    renderLegend();
+    updateHint();
+  }
+
+  function persistSettings() {
+    if (!saveSettings) {
+      return;
+    }
+    saveSettings({
+      counting: {
+        preset: state.preset,
+        denoms: activeDenoms(),
+        slotsId: state.slotsId,
+        chipsId: state.chipsId,
+        dualMode: state.dualMode
+      }
+    });
+  }
+
+  function applyPreset(name) {
+    const p = PRESETS[name];
+    if (!p) {
+      return;
+    }
+    state.preset = name;
+    state.denoms = p.denoms.slice();
+    state.slotsId = p.slotsId;
+    state.chipsId = p.chipsId;
+    state.dualMode = p.dualMode;
+    syncUi();
+    persistSettings();
+    if (!state.running) {
+      showIdleBoard();
+      els.answer.value = '';
+      disableAnswer();
+      showMessage(els.message, 'Нажмите «Старт»', '');
+    }
+  }
+
+  function toggleDenom(value) {
+    const v = Number(value);
+    if (!ALL_DENOMS.includes(v)) {
+      return;
+    }
+    const set = new Set(activeDenoms());
+    if (set.has(v)) {
+      if (set.size <= 1) {
+        // нельзя снять последний номинал
+        return;
+      }
+      set.delete(v);
+    } else {
+      set.add(v);
+    }
+    state.denoms = [...set].sort((a, b) => a - b);
+    if (state.denoms.length < 2 && state.dualMode !== 'off') {
+      state.dualMode = 'off';
+    }
+    syncUi();
+    persistSettings();
+  }
+
+  function setSlotsId(id) {
+    if (!SLOT_PRESETS.some((p) => p.id === id)) {
+      return;
+    }
+    state.slotsId = id;
+    syncUi();
+    persistSettings();
+  }
+
+  function setChipsId(id) {
+    if (!CHIP_PRESETS.some((p) => p.id === id)) {
+      return;
+    }
+    state.chipsId = id;
+    syncUi();
+    persistSettings();
+  }
+
+  function setDualMode(mode) {
+    if (!DUAL_MODES[mode]) {
+      return;
+    }
+    if (activeDenoms().length < 2 && mode !== 'off') {
+      return;
+    }
+    state.dualMode = mode;
+    syncUi();
+    persistSettings();
   }
 
   function renderLayout(layout) {
     state.answer = layout.answer;
     state.questionStartedAt = Date.now();
     state.awaitingRetry = false;
-    state.currentLabel = `счёт · ${layout.winNumber} · ${layout.chips.length} слот.`;
+    const values = [...new Set(layout.chips.map((c) => c.value || 1))].sort((a, b) => a - b);
+    state.currentLabel = `счёт · ${layout.winNumber} · ${layout.chips.length} стек. · ${values.join('/')}`;
     setRetryVisible(false);
 
     els.winLabel.textContent = `Выпало: ${layout.winNumber}`;
     renderGrid(layout.grid, layout.winNumber);
     renderChips(layout.chips);
-  }
-
-  function persistSettings() {
-    if (saveSettings) {
-      saveSettings({ counting: { level: state.level } });
-    }
   }
 
   function presentSummary(correct, wrong, log) {
@@ -307,13 +655,20 @@ window.Trainer = window.Trainer || {};
     els.answerBtn.disabled = true;
   }
 
+  function promptMessage() {
+    const multi = activeDenoms().length > 1 || activeDenoms()[0] !== 1;
+    return multi
+      ? 'Сложите: кол-во × номинал × выплата'
+      : 'Сложите выплаты по фишкам';
+  }
+
   function nextQuestion() {
     stopTimer();
-    const layout = pickLayout(state.level);
+    const layout = pickLayout();
     renderLayout(layout);
     els.answer.value = '';
     enableAnswer(true);
-    showMessage(els.message, 'Сложите выплаты по фишкам', '');
+    showMessage(els.message, promptMessage(), '');
   }
 
   function start() {
@@ -343,18 +698,6 @@ window.Trainer = window.Trainer || {};
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
     presentSummary(prevCorrect, prevWrong, prevLog);
-  }
-
-  function setLevel(level) {
-    state.level = level;
-    els.levelButtons.forEach((button) => setPressed(button, button.dataset.level === level));
-    persistSettings();
-    if (!state.running) {
-      showIdleBoard();
-      els.answer.value = '';
-      disableAnswer();
-      showMessage(els.message, 'Нажмите «Старт»', '');
-    }
   }
 
   function onRetry() {
@@ -422,6 +765,46 @@ window.Trainer = window.Trainer || {};
     }
   }
 
+  function loadSettings() {
+    if (!getSettings) {
+      return;
+    }
+    const saved = getSettings().counting || {};
+
+    // Миграция: старый формат { level: 'easy' }
+    if (saved.level && PRESETS[saved.level] && !saved.denoms) {
+      const p = PRESETS[saved.level];
+      state.preset = saved.level;
+      state.denoms = p.denoms.slice();
+      state.slotsId = p.slotsId;
+      state.chipsId = p.chipsId;
+      state.dualMode = p.dualMode;
+      return;
+    }
+
+    if (Array.isArray(saved.denoms) && saved.denoms.length) {
+      state.denoms = saved.denoms
+        .map(Number)
+        .filter((v) => ALL_DENOMS.includes(v));
+      if (!state.denoms.length) {
+        state.denoms = [1];
+      }
+    }
+    if (saved.slotsId && SLOT_PRESETS.some((p) => p.id === saved.slotsId)) {
+      state.slotsId = saved.slotsId;
+    }
+    if (saved.chipsId && CHIP_PRESETS.some((p) => p.id === saved.chipsId)) {
+      state.chipsId = saved.chipsId;
+    }
+    if (saved.dualMode && DUAL_MODES[saved.dualMode]) {
+      state.dualMode = saved.dualMode;
+    }
+    if (state.denoms.length < 2) {
+      state.dualMode = 'off';
+    }
+    state.preset = matchPreset();
+  }
+
   Trainer.stopCounting = function stopCounting() {
     stopTimer();
     state.running = false;
@@ -429,17 +812,33 @@ window.Trainer = window.Trainer || {};
   };
 
   Trainer.initCounting = function initCounting() {
-    if (getSettings) {
-      const saved = getSettings().counting || {};
-      if (saved.level && LEVEL[saved.level]) {
-        state.level = saved.level;
-      }
-      els.levelButtons.forEach((button) => setPressed(button, button.dataset.level === state.level));
+    if (!els.startBtn) {
+      return;
     }
 
-    els.levelButtons.forEach((button) => {
-      button.addEventListener('click', () => setLevel(button.dataset.level));
+    loadSettings();
+    syncUi();
+
+    els.presetButtons.forEach((button) => {
+      button.addEventListener('click', () => applyPreset(button.dataset.preset));
     });
+
+    els.denomButtons.forEach((button) => {
+      button.addEventListener('click', () => toggleDenom(button.dataset.denom));
+    });
+
+    els.slotsButtons.forEach((button) => {
+      button.addEventListener('click', () => setSlotsId(button.dataset.slots));
+    });
+
+    els.chipsButtons.forEach((button) => {
+      button.addEventListener('click', () => setChipsId(button.dataset.chips));
+    });
+
+    els.dualButtons.forEach((button) => {
+      button.addEventListener('click', () => setDualMode(button.dataset.dual));
+    });
+
     els.startBtn.addEventListener('click', start);
     els.resetBtn.addEventListener('click', reset);
     els.answerForm.addEventListener('submit', onSubmit);
