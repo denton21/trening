@@ -24,6 +24,11 @@ window.Trainer = window.Trainer || {};
       button: $('#countingTabBtn'),
       stop: () => Trainer.stopCounting()
     },
+    mixed: {
+      panel: $('#mixedTab'),
+      button: $('#mixedTabBtn'),
+      stop: () => Trainer.stopMixed()
+    },
     payouts: {
       panel: $('#payoutsTab'),
       button: $('#payoutsTabBtn'),
@@ -188,6 +193,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initAddition();
   Trainer.initBlackjack();
   Trainer.initCounting();
+  Trainer.initMixed();
   Trainer.initPayouts();
   Trainer.initPoker();
   Trainer.initDuel();

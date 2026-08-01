@@ -17,6 +17,9 @@ window.Trainer = window.Trainer || {};
     counting: {
       level: 'easy'
     },
+    mixed: {
+      level: 'easy'
+    },
     payouts: {
       color: 1,
       mode: 'cash',
