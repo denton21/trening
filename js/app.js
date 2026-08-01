@@ -24,11 +24,6 @@ window.Trainer = window.Trainer || {};
       button: $('#countingTabBtn'),
       stop: () => Trainer.stopCounting()
     },
-    roulette3d: {
-      panel: $('#roulette3dTab'),
-      button: $('#roulette3dTabBtn'),
-      stop: () => Trainer.stopRoulette3d()
-    },
     payouts: {
       panel: $('#payoutsTab'),
       button: $('#payoutsTabBtn'),
@@ -193,7 +188,6 @@ window.Trainer = window.Trainer || {};
   Trainer.initAddition();
   Trainer.initBlackjack();
   Trainer.initCounting();
-  Trainer.initRoulette3d();
   Trainer.initPayouts();
   Trainer.initPoker();
   Trainer.initDuel();
