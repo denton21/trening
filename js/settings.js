@@ -15,7 +15,6 @@ window.Trainer = window.Trainer || {};
       duration: 60
     },
     counting: {
-      preset: 'easy',
       denoms: [1],
       slotsId: 'few',
       chipsId: '3',

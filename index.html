@@ -199,22 +199,6 @@
     <section class="layout hidden" id="countingTab" role="tabpanel" aria-label="Тренировка счёта">
       <div class="panel">
         <h2>Счёт выплат</h2>
-        <p class="hint" id="countingHint">
-          На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте.
-          Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5.
-          У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).
-          В настройках можно включить номиналы ×2 / ×5 — как на реальном столе.
-        </p>
-
-        <div class="field">
-          <span class="label">Пресет</span>
-          <div class="time-choices" id="countingPresetChoices">
-            <button class="choice active" type="button" data-preset="easy" aria-pressed="true">Лёгкий</button>
-            <button class="choice" type="button" data-preset="medium" aria-pressed="false">Средний</button>
-            <button class="choice" type="button" data-preset="hard" aria-pressed="false">Высокий</button>
-          </div>
-          <p class="hint counting-preset-hint">Пресет подставляет настройки; ниже можно подкрутить вручную.</p>
-        </div>
 
         <div class="field">
           <span class="label">Номиналы</span>
@@ -243,6 +227,8 @@
             <button class="choice" type="button" data-chips="5" aria-pressed="false">до 5</button>
             <button class="choice" type="button" data-chips="7" aria-pressed="false">до 7</button>
             <button class="choice" type="button" data-chips="10" aria-pressed="false">до 10</button>
+            <button class="choice" type="button" data-chips="20" aria-pressed="false">до 20</button>
+            <button class="choice" type="button" data-chips="30" aria-pressed="false">до 30</button>
           </div>
         </div>
 

@@ -332,10 +332,6 @@ html[data-theme='dark'] .roulette-board {
   margin: 10px 0 0;
 }
 
-.counting-preset-hint {
-  margin-top: 8px;
-}
-
 .time-choices .choice.is-disabled,
 .time-choices .choice:disabled {
   opacity: 0.4;

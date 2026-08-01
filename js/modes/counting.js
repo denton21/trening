@@ -33,7 +33,9 @@ window.Trainer = window.Trainer || {};
     { id: '3', label: 'до 3', maxChips: 3 },
     { id: '5', label: 'до 5', maxChips: 5 },
     { id: '7', label: 'до 7', maxChips: 7 },
-    { id: '10', label: 'до 10', maxChips: 10 }
+    { id: '10', label: 'до 10', maxChips: 10 },
+    { id: '20', label: 'до 20', maxChips: 20 },
+    { id: '30', label: 'до 30', maxChips: 30 }
   ];
 
   const DUAL_MODES = {
@@ -42,30 +44,7 @@ window.Trainer = window.Trainer || {};
     often: { dualChance: 0.55, maxDual: 5, label: 'Часто' }
   };
 
-  /** Пресеты сложности — применяют полный набор настроек. */
-  const PRESETS = {
-    easy: {
-      denoms: [1],
-      slotsId: 'few',
-      chipsId: '3',
-      dualMode: 'off'
-    },
-    medium: {
-      denoms: [1, 5],
-      slotsId: 'mid',
-      chipsId: '5',
-      dualMode: 'rare'
-    },
-    hard: {
-      denoms: [1, 2, 5],
-      slotsId: 'many',
-      chipsId: '7',
-      dualMode: 'often'
-    }
-  };
-
   const DEFAULT_CFG = {
-    preset: 'easy',
     denoms: [1],
     slotsId: 'few',
     chipsId: '3',
@@ -73,7 +52,6 @@ window.Trainer = window.Trainer || {};
   };
 
   const state = {
-    preset: DEFAULT_CFG.preset,
     denoms: DEFAULT_CFG.denoms.slice(),
     slotsId: DEFAULT_CFG.slotsId,
     chipsId: DEFAULT_CFG.chipsId,
@@ -91,14 +69,11 @@ window.Trainer = window.Trainer || {};
   };
 
   const els = {
-    presetButtons: $$('#countingPresetChoices button'),
-    denomChoices: $('#countingDenomChoices'),
     denomButtons: $$('#countingDenomChoices button'),
     slotsButtons: $$('#countingSlotsChoices button'),
     chipsButtons: $$('#countingChipsChoices button'),
     dualButtons: $$('#countingDualChoices button'),
     legend: $('#countingLegend'),
-    hint: $('#countingHint'),
     startBtn: $('#countingStartBtn'),
     resetBtn: $('#countingResetBtn'),
     answerForm: $('#countingAnswerForm'),
@@ -159,23 +134,6 @@ window.Trainer = window.Trainer || {};
       return pool[randInt(0, pool.length - 1)];
     }
     return options[randInt(0, options.length - 1)];
-  }
-
-  function matchPreset() {
-    const denoms = activeDenoms();
-    for (const [name, p] of Object.entries(PRESETS)) {
-      const sameDenoms =
-        p.denoms.length === denoms.length && p.denoms.every((d) => denoms.includes(d));
-      if (
-        sameDenoms &&
-        p.slotsId === state.slotsId &&
-        p.chipsId === state.chipsId &&
-        p.dualMode === state.dualMode
-      ) {
-        return name;
-      }
-    }
-    return null;
   }
 
   function updateStats() {
@@ -457,34 +415,8 @@ window.Trainer = window.Trainer || {};
       .join('');
   }
 
-  function updateHint() {
-    if (!els.hint) {
-      return;
-    }
-    const denoms = activeDenoms();
-    const multi = denoms.length > 1 || denoms[0] !== 1;
-    if (multi) {
-      els.hint.innerHTML =
-        'Цифра на фишке = <strong>сколько штук</strong>, цвет / бейдж = <strong>номинал</strong>. ' +
-        'Считайте: <strong>кол-во × номинал × выплата</strong> по каждому стеку, затем сумма. ' +
-        'Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. ' +
-        'У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).';
-    } else {
-      els.hint.innerHTML =
-        'На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте. ' +
-        'Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. ' +
-        'У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8). ' +
-        'В настройках можно включить номиналы ×2 / ×5 — как на реальном столе.';
-    }
-  }
-
   function syncUi() {
     const denoms = activeDenoms();
-    state.preset = matchPreset();
-
-    els.presetButtons.forEach((btn) => {
-      setPressed(btn, btn.dataset.preset === state.preset);
-    });
 
     els.denomButtons.forEach((btn) => {
       const v = Number(btn.dataset.denom);
@@ -511,7 +443,6 @@ window.Trainer = window.Trainer || {};
     });
 
     renderLegend();
-    updateHint();
   }
 
   function persistSettings() {
@@ -520,33 +451,12 @@ window.Trainer = window.Trainer || {};
     }
     saveSettings({
       counting: {
-        preset: state.preset,
         denoms: activeDenoms(),
         slotsId: state.slotsId,
         chipsId: state.chipsId,
         dualMode: state.dualMode
       }
     });
-  }
-
-  function applyPreset(name) {
-    const p = PRESETS[name];
-    if (!p) {
-      return;
-    }
-    state.preset = name;
-    state.denoms = p.denoms.slice();
-    state.slotsId = p.slotsId;
-    state.chipsId = p.chipsId;
-    state.dualMode = p.dualMode;
-    syncUi();
-    persistSettings();
-    if (!state.running) {
-      showIdleBoard();
-      els.answer.value = '';
-      disableAnswer();
-      showMessage(els.message, 'Нажмите «Старт»', '');
-    }
   }
 
   function toggleDenom(value) {
@@ -771,14 +681,24 @@ window.Trainer = window.Trainer || {};
     }
     const saved = getSettings().counting || {};
 
-    // Миграция: старый формат { level: 'easy' }
-    if (saved.level && PRESETS[saved.level] && !saved.denoms) {
-      const p = PRESETS[saved.level];
-      state.preset = saved.level;
-      state.denoms = p.denoms.slice();
-      state.slotsId = p.slotsId;
-      state.chipsId = p.chipsId;
-      state.dualMode = p.dualMode;
+    // Миграция: старый формат { level: 'easy'|'medium'|'hard' }
+    if (saved.level && !saved.denoms) {
+      if (saved.level === 'medium') {
+        state.denoms = [1, 5];
+        state.slotsId = 'mid';
+        state.chipsId = '5';
+        state.dualMode = 'rare';
+      } else if (saved.level === 'hard') {
+        state.denoms = [1, 2, 5];
+        state.slotsId = 'many';
+        state.chipsId = '7';
+        state.dualMode = 'often';
+      } else {
+        state.denoms = [1];
+        state.slotsId = 'few';
+        state.chipsId = '3';
+        state.dualMode = 'off';
+      }
       return;
     }
 
@@ -802,7 +722,6 @@ window.Trainer = window.Trainer || {};
     if (state.denoms.length < 2) {
       state.dualMode = 'off';
     }
-    state.preset = matchPreset();
   }
 
   Trainer.stopCounting = function stopCounting() {
@@ -818,10 +737,6 @@ window.Trainer = window.Trainer || {};
 
     loadSettings();
     syncUi();
-
-    els.presetButtons.forEach((button) => {
-      button.addEventListener('click', () => applyPreset(button.dataset.preset));
-    });
 
     els.denomButtons.forEach((button) => {
       button.addEventListener('click', () => toggleDenom(button.dataset.denom));
