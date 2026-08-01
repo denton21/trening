@@ -176,27 +176,6 @@
   }
 }
 
-@keyframes chip-drop-3d {
-  0% {
-    opacity: 0;
-    transform: translateZ(calc(var(--stack-index, 0) * 6px)) scale(0.3) rotateZ(-26deg);
-    filter: blur(2px) brightness(1.2);
-  }
-  55% {
-    opacity: 1;
-    filter: blur(0) brightness(1.08);
-    transform: translateZ(calc(var(--stack-index, 0) * 6px + 8px)) scale(1.08) rotateZ(5deg);
-  }
-  78% {
-    transform: translateZ(calc(var(--stack-index, 0) * 6px - 2px)) scale(0.96) rotateZ(-2deg);
-  }
-  100% {
-    opacity: 1;
-    transform: translateZ(calc(var(--stack-index, 0) * 6px)) scale(1) rotateZ(0deg);
-    filter: blur(0) brightness(1);
-  }
-}
-
 @keyframes board-slam {
   0% {
     opacity: 0;
@@ -436,9 +415,5 @@
   .chip {
     opacity: 1 !important;
     transform: translate(-50%, -50%) scale(1) !important;
-  }
-
-  .counting-board .chip-stack .chip {
-    transform: translateZ(calc(var(--stack-index, 0) * 6px)) scale(1) !important;
   }
 }

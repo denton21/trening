@@ -199,7 +199,7 @@
     <section class="layout hidden" id="countingTab" role="tabpanel" aria-label="Тренировка счёта">
       <div class="panel">
         <h2>Счёт выплат</h2>
-        <p class="hint">На столе — выигрышная комбинация. В каждом слоте лежит настоящая стопка фишек, их количество нужно посчитать. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).</p>
+        <p class="hint">На столе — выигрышная комбинация. Цифра на кружке = число фишек в слоте. Выплаты: straight 35, split 17, street/trio 11, corner 8, sixline 5. У нуля: сплиты 0–1/2/3, trio 0–1–2 и 0–2–3 (×11), first four 0–1–2–3 (×8).</p>
         <div class="field">
           <span class="label">Сложность</span>
           <div class="time-choices" id="countingLevelChoices">
@@ -222,16 +222,11 @@
         </div>
         <div class="picture-task counting-task" id="countingTask">
           <div class="counting-win" id="countingWinLabel">Выпало: —</div>
-          <div class="roulette-view" id="countingBoardView" aria-label="3D-поле рулетки. Удерживайте и тяните поле для осмотра">
-            <div class="roulette-camera" id="countingCamera">
-              <div class="roulette-board counting-board" id="countingBoard" aria-label="Поле рулетки с выигрышной комбинацией">
-                <div class="board-zero" id="countingZero" aria-hidden="true">0</div>
-                <div class="board-grid counting-grid" id="countingGrid" aria-hidden="true"></div>
-                <div class="board-chips" id="countingChips"></div>
-              </div>
-            </div>
+          <div class="roulette-board counting-board" id="countingBoard" aria-label="Поле рулетки с выигрышной комбинацией">
+            <div class="board-zero" id="countingZero" aria-hidden="true">0</div>
+            <div class="board-grid counting-grid" id="countingGrid" aria-hidden="true"></div>
+            <div class="board-chips" id="countingChips"></div>
           </div>
-          <p class="roulette-view-hint">Удерживайте и тяните поле, чтобы осмотреть его. После отпускания камера вернётся в рабочую позицию.</p>
           <form class="answer-row" id="countingAnswerForm">
             <input class="answer" id="countingAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма выплат" disabled>
             <button class="primary" id="countingAnswerBtn" type="submit" disabled>Ответить</button>
