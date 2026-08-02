@@ -1,5 +1,5 @@
 /* Offline cache for solo modes. Duel MQTT still needs network. */
-const CACHE = 'roulette-trainer-v17';
+const CACHE = 'roulette-trainer-v18';
 const ASSETS = [
   './',
   './index.html',

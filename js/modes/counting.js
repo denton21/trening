@@ -213,17 +213,24 @@ window.Trainer = window.Trainer || {};
     };
   }
 
-  /** Стек на слоте; offsetIndex 0/1 — сдвиг, если два номинала рядом. */
+  /**
+   * Стек на слоте; offsetIndex 0/1 — два номинала рядом.
+   * Разнос ~диаметр фишки, иначе цифры (особенно 10–30) перекрываются.
+   * Координаты клампим, чтобы overflow:hidden поля не срезал цифры.
+   */
   function makeStackPair(slot, value, count, offsetIndex) {
-    const dx = offsetIndex === 0 ? -2.2 : offsetIndex === 1 ? 2.2 : 0;
-    const dy = offsetIndex === 0 ? -1.6 : offsetIndex === 1 ? 1.6 : 0;
+    const dx = offsetIndex === 0 ? -6 : offsetIndex === 1 ? 6 : 0;
+    const dy = offsetIndex === 0 ? -5 : offsetIndex === 1 ? 5 : 0;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
     return {
       type: slot.type,
       key: slot.key,
-      x: slot.x + dx,
-      y: slot.y + dy,
+      x: clamp(slot.x + dx, 8, 92),
+      y: clamp(slot.y + dy, 7, 93),
       count,
-      value
+      value,
+      pair: true,
+      pairIndex: offsetIndex
     };
   }
 
@@ -359,13 +366,24 @@ window.Trainer = window.Trainer || {};
       const el = document.createElement('span');
       const layers = Math.min(chip.count, 5);
       const value = chip.value || 1;
+      const isWide = chip.count >= 10;
 
       if (multi || value !== 1) {
         el.className = `chip chip-3d has-count chip-v${value}`;
+        if (chip.pair) {
+          el.classList.add('is-pair', chip.pairIndex === 0 ? 'is-pair-a' : 'is-pair-b');
+        }
+        if (isWide) {
+          el.classList.add('is-wide-count');
+        }
         el.style.left = `${chip.x}%`;
         el.style.top = `${chip.y}%`;
         el.style.setProperty('--i', String(index));
         el.style.setProperty('--layers', String(layers));
+        // Передний стек пары выше, чтобы оба круга не сливались
+        if (chip.pair) {
+          el.style.zIndex = chip.pairIndex === 1 ? '6' : '5';
+        }
         el.title = `${chip.count} × ${value} · ${chip.type} ×${payoutOf(chip.type)}`;
         el.setAttribute('aria-label', `${chip.count} фишек по ${value}, ${chip.type}`);
 
@@ -381,7 +399,7 @@ window.Trainer = window.Trainer || {};
         el.appendChild(stack);
 
         const face = document.createElement('span');
-        face.className = 'chip-3d-face';
+        face.className = `chip-3d-face${isWide ? ' is-wide' : ''}`;
         face.textContent = String(chip.count);
         el.appendChild(face);
 
@@ -391,7 +409,7 @@ window.Trainer = window.Trainer || {};
         el.appendChild(badge);
       } else {
         // Классика: один номинал ×1 — простая фишка как раньше
-        el.className = 'chip has-count';
+        el.className = `chip has-count${isWide ? ' is-wide-count' : ''}`;
         el.style.left = `${chip.x}%`;
         el.style.top = `${chip.y}%`;
         el.style.setProperty('--i', String(index));
