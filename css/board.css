@@ -397,17 +397,17 @@ html[data-theme='dark'] .roulette-board {
   display: none;
 }
 
-/* Два номинала на слоте: кликабельны; по hover/tap — слегка разъезжаются */
+/*
+ * Пара номиналов: сдвиг на внутреннем .chip-pair-shift.
+ * Нельзя анимировать transform самого .chip — chip-drop animation:forwards его держит.
+ */
 .chip.is-pair {
   pointer-events: auto;
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    transform 120ms cubic-bezier(0.2, 0.9, 0.3, 1),
-    filter 120ms ease-out;
+  transition: filter 180ms ease-out, z-index 0s;
 }
 
-/* Увеличенная зона тапа/hover, не меняет визуал */
 .chip.is-pair::after {
   content: '';
   position: absolute;
@@ -416,19 +416,35 @@ html[data-theme='dark'] .roulette-board {
   z-index: 0;
 }
 
+.chip-pair-shift {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: translate(0, 0) scale(1);
+  transition: transform 220ms cubic-bezier(0.22, 0.82, 0.28, 1);
+  will-change: transform;
+}
+
 .chip.is-pair.is-spread {
   filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.45));
 }
 
-/* Небольшой разнос — только чтобы цифры читались */
 .chip.is-pair.is-pair-a.is-spread {
-  transform: translate(calc(-50% - 9px), calc(-50% - 7px)) scale(1.04) !important;
   z-index: 14 !important;
 }
 
 .chip.is-pair.is-pair-b.is-spread {
-  transform: translate(calc(-50% + 9px), calc(-50% + 7px)) scale(1.04) !important;
   z-index: 15 !important;
+}
+
+.chip.is-pair.is-pair-a.is-spread .chip-pair-shift {
+  transform: translate(-9px, -7px) scale(1.04);
+}
+
+.chip.is-pair.is-pair-b.is-spread .chip-pair-shift {
+  transform: translate(9px, 7px) scale(1.04);
 }
 
 .chip.is-pair.is-spread::after {

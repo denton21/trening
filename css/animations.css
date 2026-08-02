@@ -416,4 +416,8 @@
     opacity: 1 !important;
     transform: translate(-50%, -50%) scale(1) !important;
   }
+
+  .chip-pair-shift {
+    transition: none !important;
+  }
 }

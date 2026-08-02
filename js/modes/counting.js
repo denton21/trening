@@ -539,6 +539,16 @@ window.Trainer = window.Trainer || {};
           : `${chip.count} × ${value} · ${chip.type} ×${payoutOf(chip.type)}`;
         el.setAttribute('aria-label', `${chip.count} фишек по ${value}, ${chip.type}`);
 
+        // Сдвиг пары на внутреннем слое — иначе chip-drop animation блокирует transition
+        const mount = chip.pair
+          ? (() => {
+              const shift = document.createElement('span');
+              shift.className = 'chip-pair-shift';
+              el.appendChild(shift);
+              return shift;
+            })()
+          : el;
+
         const stack = document.createElement('span');
         stack.className = 'chip-3d-stack';
         stack.setAttribute('aria-hidden', 'true');
@@ -548,17 +558,17 @@ window.Trainer = window.Trainer || {};
           disc.style.setProperty('--l', String(L));
           stack.appendChild(disc);
         }
-        el.appendChild(stack);
+        mount.appendChild(stack);
 
         const face = document.createElement('span');
         face.className = `chip-3d-face${isWide ? ' is-wide' : ''}`;
         face.textContent = String(chip.count);
-        el.appendChild(face);
+        mount.appendChild(face);
 
         const badge = document.createElement('span');
         badge.className = 'chip-3d-badge';
         badge.textContent = String(value);
-        el.appendChild(badge);
+        mount.appendChild(badge);
       } else {
         el.className = `chip has-count${isWide ? ' is-wide-count' : ''}`;
         el.style.left = `${chip.x}%`;
