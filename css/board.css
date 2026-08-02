@@ -397,14 +397,14 @@ html[data-theme='dark'] .roulette-board {
   display: none;
 }
 
-/* Два номинала на слоте: кликабельны; по hover/tap — разъезжаются */
+/* Два номинала на слоте: кликабельны; по hover/tap — слегка разъезжаются */
 .chip.is-pair {
   pointer-events: auto;
   cursor: pointer;
   touch-action: manipulation;
   transition:
-    transform 200ms var(--ease-soft, ease),
-    filter 200ms var(--ease-soft, ease);
+    transform 120ms cubic-bezier(0.2, 0.9, 0.3, 1),
+    filter 120ms ease-out;
 }
 
 /* Увеличенная зона тапа/hover, не меняет визуал */
@@ -417,21 +417,22 @@ html[data-theme='dark'] .roulette-board {
 }
 
 .chip.is-pair.is-spread {
-  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.5));
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.45));
 }
 
+/* Небольшой разнос — только чтобы цифры читались */
 .chip.is-pair.is-pair-a.is-spread {
-  transform: translate(calc(-50% - 18px), calc(-50% - 14px)) scale(1.08) !important;
+  transform: translate(calc(-50% - 9px), calc(-50% - 7px)) scale(1.04) !important;
   z-index: 14 !important;
 }
 
 .chip.is-pair.is-pair-b.is-spread {
-  transform: translate(calc(-50% + 18px), calc(-50% + 14px)) scale(1.08) !important;
+  transform: translate(calc(-50% + 9px), calc(-50% + 7px)) scale(1.04) !important;
   z-index: 15 !important;
 }
 
 .chip.is-pair.is-spread::after {
-  inset: -16px;
+  inset: -12px;
 }
 
 .chip-3d-stack {

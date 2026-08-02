@@ -353,10 +353,20 @@ window.Trainer = window.Trainer || {};
     pulseBoard();
   }
 
+  let pairCollapseTimer = null;
+
+  function clearPairCollapseTimer() {
+    if (pairCollapseTimer) {
+      window.clearTimeout(pairCollapseTimer);
+      pairCollapseTimer = null;
+    }
+  }
+
   function clearPairSpread(pairKey) {
     if (!els.chips) {
       return;
     }
+    clearPairCollapseTimer();
     const sel = pairKey
       ? `.chip.is-pair[data-pair="${CSS.escape(pairKey)}"]`
       : '.chip.is-pair.is-spread';
@@ -368,15 +378,32 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function spreadPair(pairKey) {
+  function scheduleTouchCollapse() {
+    clearPairCollapseTimer();
+    pairCollapseTimer = window.setTimeout(() => {
+      pairCollapseTimer = null;
+      clearPairSpread();
+    }, 1500);
+  }
+
+  function spreadPair(pairKey, options = {}) {
     if (!pairKey || !els.chips) {
       return;
     }
-    clearPairSpread();
+    clearPairCollapseTimer();
+    // Свернуть другие пары, оставить/открыть нужную
+    els.chips.querySelectorAll('.chip.is-pair.is-spread').forEach((el) => {
+      if (el.dataset.pair !== pairKey) {
+        el.classList.remove('is-spread');
+      }
+    });
     els.chips.querySelectorAll(`.chip.is-pair[data-pair="${CSS.escape(pairKey)}"]`).forEach((el) => {
       el.classList.add('is-spread');
     });
     els.board?.classList.add('has-pair-spread');
+    if (options.autoCollapse) {
+      scheduleTouchCollapse();
+    }
   }
 
   function setupChipInteractions() {
@@ -385,7 +412,7 @@ window.Trainer = window.Trainer || {};
     }
     els.chips.dataset.pairBound = '1';
 
-    // Desktop: hover разводит пару
+    // Desktop: hover разводит пару (без автосворачивания — свернётся по mouseout)
     els.chips.addEventListener('pointerover', (event) => {
       if (event.pointerType === 'touch') {
         return;
@@ -396,7 +423,7 @@ window.Trainer = window.Trainer || {};
       }
       const key = chip.dataset.pair;
       if (key) {
-        spreadPair(key);
+        spreadPair(key, { autoCollapse: false });
       }
     });
 
@@ -410,43 +437,59 @@ window.Trainer = window.Trainer || {};
       }
       const key = chip.dataset.pair;
       const related = event.relatedTarget;
-      if (related && related.closest && related.closest(`.chip.is-pair[data-pair="${key}"]`)) {
+      if (related && related.closest && key && related.closest(`.chip.is-pair[data-pair="${key}"]`)) {
         return;
       }
-      // Небольшая задержка — палец/мышь между двумя стеками
       window.setTimeout(() => {
-        const still = els.chips.querySelector(`.chip.is-pair.is-spread[data-pair="${CSS.escape(key || '')}"]`);
-        if (!still) {
-          return;
-        }
-        // Если курсор всё ещё над любой фишкой этой пары — не закрываем
-        const hovered = els.chips.querySelector(`.chip.is-pair[data-pair="${CSS.escape(key || '')}"]:hover`);
+        const hovered = key
+          ? els.chips.querySelector(`.chip.is-pair[data-pair="${CSS.escape(key)}"]:hover`)
+          : null;
         if (!hovered) {
           clearPairSpread(key);
         }
-      }, 80);
+      }, 60);
     });
 
-    // Тап / клик — toggle (телефон + мышь)
+    // Тап на телефоне: развести + через 1.5 с свернуть
+    els.chips.addEventListener(
+      'pointerup',
+      (event) => {
+        if (event.pointerType !== 'touch') {
+          return;
+        }
+        const chip = event.target.closest?.('.chip.is-pair');
+        if (!chip || !els.chips.contains(chip)) {
+          return;
+        }
+        const key = chip.dataset.pair;
+        if (!key) {
+          return;
+        }
+        event.preventDefault();
+        if (chip.classList.contains('is-spread')) {
+          // Повторный тап — сразу свернуть
+          clearPairSpread(key);
+        } else {
+          spreadPair(key, { autoCollapse: true });
+        }
+      },
+      { passive: false }
+    );
+
+    // Клик мышью — toggle (если hover уже открыл, повторный клик закроет)
     els.chips.addEventListener('click', (event) => {
+      // touch обрабатываем через pointerup
+      if (event.pointerType === 'touch') {
+        return;
+      }
       const chip = event.target.closest?.('.chip.is-pair');
       if (!chip || !els.chips.contains(chip)) {
         return;
       }
-      event.preventDefault();
-      event.stopPropagation();
-      const key = chip.dataset.pair;
-      if (!key) {
-        return;
-      }
-      if (chip.classList.contains('is-spread')) {
-        clearPairSpread(key);
-      } else {
-        spreadPair(key);
-      }
+      // На десктопе hover уже развёл — клик не обязателен; не мешаем
     });
 
-    // Тап мимо — свернуть
+    // Тап мимо — свернуть (и на телефоне, и на десктопе)
     document.addEventListener(
       'pointerdown',
       (event) => {
@@ -464,6 +507,7 @@ window.Trainer = window.Trainer || {};
   }
 
   function renderChips(chips) {
+    clearPairCollapseTimer();
     els.chips.innerHTML = '';
     const multi = activeDenoms().length > 1 || chips.some((c) => c.value !== 1);
     els.board?.classList.remove('has-pair-spread');
