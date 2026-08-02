@@ -228,7 +228,7 @@ window.Trainer = window.Trainer || {};
       id: 'bj_jackpot',
       label: 'BJ · джекпот',
       short: 'BJ JP',
-      stake: 'std',
+      stake: 'jackpot',
       pay: 'bonus',
       rows: [
         { hand: 'Блекджек', mult: 2 },
