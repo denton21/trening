@@ -213,20 +213,15 @@ window.Trainer = window.Trainer || {};
     };
   }
 
-  /**
-   * Стек на слоте; offsetIndex 0/1 — два номинала рядом.
-   * Разнос ~диаметр фишки, иначе цифры (особенно 10–30) перекрываются.
-   * Координаты клампим, чтобы overflow:hidden поля не срезал цифры.
-   */
+  /** Стек на слоте; offsetIndex 0/1 — лёгкий сдвиг; разнос по hover/tap. */
   function makeStackPair(slot, value, count, offsetIndex) {
-    const dx = offsetIndex === 0 ? -6 : offsetIndex === 1 ? 6 : 0;
-    const dy = offsetIndex === 0 ? -5 : offsetIndex === 1 ? 5 : 0;
-    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const dx = offsetIndex === 0 ? -2.2 : offsetIndex === 1 ? 2.2 : 0;
+    const dy = offsetIndex === 0 ? -1.6 : offsetIndex === 1 ? 1.6 : 0;
     return {
       type: slot.type,
       key: slot.key,
-      x: clamp(slot.x + dx, 8, 92),
-      y: clamp(slot.y + dy, 7, 93),
+      x: slot.x + dx,
+      y: slot.y + dy,
       count,
       value,
       pair: true,
@@ -358,9 +353,120 @@ window.Trainer = window.Trainer || {};
     pulseBoard();
   }
 
+  function clearPairSpread(pairKey) {
+    if (!els.chips) {
+      return;
+    }
+    const sel = pairKey
+      ? `.chip.is-pair[data-pair="${CSS.escape(pairKey)}"]`
+      : '.chip.is-pair.is-spread';
+    els.chips.querySelectorAll(sel).forEach((el) => {
+      el.classList.remove('is-spread');
+    });
+    if (!els.chips.querySelector('.chip.is-pair.is-spread')) {
+      els.board?.classList.remove('has-pair-spread');
+    }
+  }
+
+  function spreadPair(pairKey) {
+    if (!pairKey || !els.chips) {
+      return;
+    }
+    clearPairSpread();
+    els.chips.querySelectorAll(`.chip.is-pair[data-pair="${CSS.escape(pairKey)}"]`).forEach((el) => {
+      el.classList.add('is-spread');
+    });
+    els.board?.classList.add('has-pair-spread');
+  }
+
+  function setupChipInteractions() {
+    if (!els.chips || els.chips.dataset.pairBound === '1') {
+      return;
+    }
+    els.chips.dataset.pairBound = '1';
+
+    // Desktop: hover разводит пару
+    els.chips.addEventListener('pointerover', (event) => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
+      const chip = event.target.closest?.('.chip.is-pair');
+      if (!chip || !els.chips.contains(chip)) {
+        return;
+      }
+      const key = chip.dataset.pair;
+      if (key) {
+        spreadPair(key);
+      }
+    });
+
+    els.chips.addEventListener('pointerout', (event) => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
+      const chip = event.target.closest?.('.chip.is-pair');
+      if (!chip) {
+        return;
+      }
+      const key = chip.dataset.pair;
+      const related = event.relatedTarget;
+      if (related && related.closest && related.closest(`.chip.is-pair[data-pair="${key}"]`)) {
+        return;
+      }
+      // Небольшая задержка — палец/мышь между двумя стеками
+      window.setTimeout(() => {
+        const still = els.chips.querySelector(`.chip.is-pair.is-spread[data-pair="${CSS.escape(key || '')}"]`);
+        if (!still) {
+          return;
+        }
+        // Если курсор всё ещё над любой фишкой этой пары — не закрываем
+        const hovered = els.chips.querySelector(`.chip.is-pair[data-pair="${CSS.escape(key || '')}"]:hover`);
+        if (!hovered) {
+          clearPairSpread(key);
+        }
+      }, 80);
+    });
+
+    // Тап / клик — toggle (телефон + мышь)
+    els.chips.addEventListener('click', (event) => {
+      const chip = event.target.closest?.('.chip.is-pair');
+      if (!chip || !els.chips.contains(chip)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const key = chip.dataset.pair;
+      if (!key) {
+        return;
+      }
+      if (chip.classList.contains('is-spread')) {
+        clearPairSpread(key);
+      } else {
+        spreadPair(key);
+      }
+    });
+
+    // Тап мимо — свернуть
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        if (!els.board?.classList.contains('has-pair-spread')) {
+          return;
+        }
+        const onPair = event.target.closest?.('.chip.is-pair');
+        if (onPair && els.chips.contains(onPair)) {
+          return;
+        }
+        clearPairSpread();
+      },
+      true
+    );
+  }
+
   function renderChips(chips) {
     els.chips.innerHTML = '';
     const multi = activeDenoms().length > 1 || chips.some((c) => c.value !== 1);
+    els.board?.classList.remove('has-pair-spread');
 
     chips.forEach((chip, index) => {
       const el = document.createElement('span');
@@ -372,6 +478,7 @@ window.Trainer = window.Trainer || {};
         el.className = `chip chip-3d has-count chip-v${value}`;
         if (chip.pair) {
           el.classList.add('is-pair', chip.pairIndex === 0 ? 'is-pair-a' : 'is-pair-b');
+          el.dataset.pair = chip.key;
         }
         if (isWide) {
           el.classList.add('is-wide-count');
@@ -380,11 +487,12 @@ window.Trainer = window.Trainer || {};
         el.style.top = `${chip.y}%`;
         el.style.setProperty('--i', String(index));
         el.style.setProperty('--layers', String(layers));
-        // Передний стек пары выше, чтобы оба круга не сливались
         if (chip.pair) {
           el.style.zIndex = chip.pairIndex === 1 ? '6' : '5';
         }
-        el.title = `${chip.count} × ${value} · ${chip.type} ×${payoutOf(chip.type)}`;
+        el.title = chip.pair
+          ? `${chip.count} × ${value} · наведи / тапни, чтобы развести`
+          : `${chip.count} × ${value} · ${chip.type} ×${payoutOf(chip.type)}`;
         el.setAttribute('aria-label', `${chip.count} фишек по ${value}, ${chip.type}`);
 
         const stack = document.createElement('span');
@@ -408,7 +516,6 @@ window.Trainer = window.Trainer || {};
         badge.textContent = String(value);
         el.appendChild(badge);
       } else {
-        // Классика: один номинал ×1 — простая фишка как раньше
         el.className = `chip has-count${isWide ? ' is-wide-count' : ''}`;
         el.style.left = `${chip.x}%`;
         el.style.top = `${chip.y}%`;
@@ -419,6 +526,8 @@ window.Trainer = window.Trainer || {};
 
       els.chips.appendChild(el);
     });
+
+    setupChipInteractions();
   }
 
   function renderLegend() {
