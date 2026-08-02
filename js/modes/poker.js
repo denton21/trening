@@ -267,6 +267,10 @@ window.Trainer = window.Trainer || {};
     resetBtn: $('#pokerResetBtn'),
     answerForm: $('#pokerAnswerForm'),
     answer: $('#pokerAnswer'),
+    answerBlind: $('#pokerAnswerBlind'),
+    answerAnte: $('#pokerAnswerAnte'),
+    singleInputs: $('#pokerSingleInputs'),
+    ultimateInputs: $('#pokerUltimateInputs'),
     answerBtn: $('#pokerAnswerBtn'),
     example: $('#pokerExample'),
     meta: $('#pokerMeta'),
@@ -278,6 +282,50 @@ window.Trainer = window.Trainer || {};
     task: $('#pokerTab .task'),
     hint: $('#pokerHint')
   };
+
+  function isUltimateQ(q) {
+    return q && q.pay === 'ultimate';
+  }
+
+  function setAnswerMode(ultimate) {
+    els.singleInputs?.classList.toggle('hidden', ultimate);
+    els.ultimateInputs?.classList.toggle('hidden', !ultimate);
+  }
+
+  function clearAnswers() {
+    if (els.answer) {
+      els.answer.value = '';
+    }
+    if (els.answerBlind) {
+      els.answerBlind.value = '';
+    }
+    if (els.answerAnte) {
+      els.answerAnte.value = '';
+    }
+  }
+
+  function setAnswersEnabled(enabled) {
+    if (els.answer) {
+      els.answer.disabled = !enabled;
+    }
+    if (els.answerBlind) {
+      els.answerBlind.disabled = !enabled;
+    }
+    if (els.answerAnte) {
+      els.answerAnte.disabled = !enabled;
+    }
+    if (els.answerBtn) {
+      els.answerBtn.disabled = !enabled;
+    }
+  }
+
+  function focusAnswer(q) {
+    if (isUltimateQ(q) && els.answerBlind) {
+      els.answerBlind.focus();
+      return;
+    }
+    els.answer?.focus();
+  }
 
   function stakesFor(cat) {
     return cat.stake === 'jackpot' ? STAKES_JACKPOT : STAKES_STD;
@@ -292,6 +340,21 @@ window.Trainer = window.Trainer || {};
 
   function roundPay(n) {
     return Math.round(n * 1000) / 1000;
+  }
+
+  /**
+   * Ultimate: Blind = Ante×mult (0 = push ниже стрита);
+   * Ante+Play 1:1 = Ante + Play, Play = playMult×Ante.
+   */
+  function computeUltimateParts(stake, mult, playMult) {
+    const k = playMult || 1;
+    const blind = roundPay(stake * mult);
+    const antePlay = roundPay(stake + stake * k);
+    return {
+      blind,
+      antePlay,
+      total: roundPay(blind + antePlay)
+    };
   }
 
   /**
@@ -310,10 +373,7 @@ window.Trainer = window.Trainer || {};
       return roundPay(stake * mult + stake * 2);
     }
     if (pay === 'ultimate') {
-      // Ante 1:1 + Play 1:1 + Blind×mult; Blind = Ante, Play = playMult×Ante
-      // Пример: ante 25, play ×4, флеш 1.5 → 25 + 100 + 37.5 = 162.5
-      const k = playMult || 1;
-      return roundPay(stake + stake * k + stake * mult);
+      return computeUltimateParts(stake, mult, playMult).total;
     }
     // bonus — только ставка × коэф
     return roundPay(stake * mult);
@@ -368,7 +428,7 @@ window.Trainer = window.Trainer || {};
       cat.rows.forEach((row) => {
         stakes.forEach((stake) => {
           playMults.forEach((playMult) => {
-            pool.push({
+            const item = {
               gameId: cat.id,
               game: cat.label,
               short: cat.short,
@@ -379,7 +439,14 @@ window.Trainer = window.Trainer || {};
               stake,
               answer: computeAnswer(cat.pay, stake, row.mult, playMult),
               key: `${cat.id}|${row.hand}|${stake}|${playMult ?? ''}`
-            });
+            };
+            if (cat.pay === 'ultimate') {
+              const parts = computeUltimateParts(stake, row.mult, playMult);
+              item.answerBlind = parts.blind;
+              item.answerAntePlay = parts.antePlay;
+              item.answer = parts.total;
+            }
+            pool.push(item);
           });
         });
       });
@@ -438,7 +505,7 @@ window.Trainer = window.Trainer || {};
     els.hint.textContent =
       `Выбрано: ${n} · ${names}. ` +
       'Бонусы: ставка×коэф. Техас: анте×коэф+бет1:1 (бет=2×анте). Русский: бет=2×анте, бет×коэф. ' +
-      'Ультимейт: Ante+Play+Blind (Play ×1/×2/×4).';
+      'Ультимейт: Blind (от стрита, ниже 0) и Ante+Play (Play ×1/×2/×4).';
   }
 
   function toggleGame(id) {
@@ -521,10 +588,11 @@ window.Trainer = window.Trainer || {};
     if (!setNextQuestion(true)) {
       return;
     }
-    els.answer.value = '';
-    els.answer.disabled = false;
-    els.answerBtn.disabled = false;
-    els.answer.focus();
+    const q = state.current;
+    setAnswerMode(isUltimateQ(q));
+    clearAnswers();
+    setAnswersEnabled(true);
+    focusAnswer(q);
   }
 
   function presentSummary(correct, wrong, log) {
@@ -544,8 +612,7 @@ window.Trainer = window.Trainer || {};
   function finish() {
     stopTimer();
     state.running = false;
-    els.answer.disabled = true;
-    els.answerBtn.disabled = true;
+    setAnswersEnabled(false);
     showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
     presentSummary();
   }
@@ -586,9 +653,9 @@ window.Trainer = window.Trainer || {};
     state.secondsLeft = state.duration;
     state.running = false;
     showIdleExample();
-    els.answer.value = '';
-    els.answer.disabled = true;
-    els.answerBtn.disabled = true;
+    setAnswerMode(false);
+    clearAnswers();
+    setAnswersEnabled(false);
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
     presentSummary(prevCorrect, prevWrong, prevLog);
@@ -666,31 +733,59 @@ window.Trainer = window.Trainer || {};
       if (!state.running || !state.current) {
         return;
       }
-      if (els.answer.value.trim() === '') {
-        showMessage(els.message, 'Введите выплату', 'bad');
-        flashAnswer(els.answer, false);
-        return;
-      }
 
       const q = state.current;
-      const expected = q.answer;
-      const given = parseUserAnswer(els.answer.value);
-      const isCorrect = Number.isFinite(given) && Math.abs(given - expected) < 0.001;
+      const ultimate = isUltimateQ(q);
+      let isCorrect = false;
       let label;
-      if (q.pay === 'russian') {
-        const bet = q.stake * 2;
-        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
-      } else if (q.pay === 'texas') {
-        const bet = q.stake * 2;
-        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
-      } else if (q.pay === 'ultimate') {
-        label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} · Play ×${q.playMult} → ${formatMoney(expected)}`;
+
+      if (ultimate) {
+        const rawBlind = els.answerBlind?.value.trim() ?? '';
+        const rawAnte = els.answerAnte?.value.trim() ?? '';
+        if (rawBlind === '' || rawAnte === '') {
+          showMessage(els.message, 'Введите блайнд и анте+бет', 'bad');
+          if (rawBlind === '') {
+            flashAnswer(els.answerBlind, false);
+          }
+          if (rawAnte === '') {
+            flashAnswer(els.answerAnte, false);
+          }
+          return;
+        }
+        const givenBlind = parseUserAnswer(rawBlind);
+        const givenAnte = parseUserAnswer(rawAnte);
+        const expBlind = q.answerBlind;
+        const expAnte = q.answerAntePlay;
+        const okBlind = Number.isFinite(givenBlind) && Math.abs(givenBlind - expBlind) < 0.001;
+        const okAnte = Number.isFinite(givenAnte) && Math.abs(givenAnte - expAnte) < 0.001;
+        isCorrect = okBlind && okAnte;
+        label =
+          `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} · Play ×${q.playMult} → ` +
+          `Blind ${formatMoney(expBlind)} · Ante+Play ${formatMoney(expAnte)}`;
+        flashAnswer(els.answerBlind, okBlind);
+        flashAnswer(els.answerAnte, okAnte);
       } else {
-        label = `${q.short}: ${q.hand} · ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
+        if (els.answer.value.trim() === '') {
+          showMessage(els.message, 'Введите выплату', 'bad');
+          flashAnswer(els.answer, false);
+          return;
+        }
+        const expected = q.answer;
+        const given = parseUserAnswer(els.answer.value);
+        isCorrect = Number.isFinite(given) && Math.abs(given - expected) < 0.001;
+        if (q.pay === 'russian') {
+          const bet = q.stake * 2;
+          label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
+        } else if (q.pay === 'texas') {
+          const bet = q.stake * 2;
+          label = `${q.short}: ${q.hand} · Ante ${formatMoney(q.stake)} (бет ${formatMoney(bet)}) → ${formatMoney(expected)}`;
+        } else {
+          label = `${q.short}: ${q.hand} · ${formatMoney(q.stake)} → ${formatMoney(expected)}`;
+        }
+        flashAnswer(els.answer, isCorrect);
       }
 
       pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
-      flashAnswer(els.answer, isCorrect);
       flashTask(els.task, isCorrect);
 
       if (isCorrect) {
@@ -702,8 +797,7 @@ window.Trainer = window.Trainer || {};
         state.wrong += 1;
         bumpStat(els.wrongCount);
         showMessage(els.message, `Ошибка: ${label}`, 'bad');
-        els.answer.disabled = true;
-        els.answerBtn.disabled = true;
+        setAnswersEnabled(false);
         state.nextTimer = window.setTimeout(() => {
           if (state.running) {
             nextQuestion();

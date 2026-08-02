@@ -356,7 +356,7 @@
         <p class="hint" id="pokerHint">
           Бонусы: ставка × коэф. Техас: анте×коэф + бет 1:1 (бет = 2×ante).
           Русский: бет = 2×ante, выплата = бет×коэф.
-          Ультимейт: Ante 1:1 + Play 1:1 + Blind×коэф (Play ×1/×2/×4; ниже стрита Blind push).
+          Ультимейт: два поля — Blind (от стрита, ниже push = 0) и Ante+Play 1:1 (Play ×1/×2/×4).
           Джекпот 5–100 шаг 5; остальное 25–200 шаг 5.
         </p>
 
@@ -395,8 +395,20 @@
         <div class="task">
           <div class="payouts-meta" id="pokerMeta">Выберите игры и нажмите «Старт»</div>
           <div class="example" id="pokerExample">—</div>
-          <form class="answer-row" id="pokerAnswerForm">
-            <input class="answer" id="pokerAnswer" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата" disabled>
+          <form class="answer-row payouts-answer-row" id="pokerAnswerForm">
+            <div class="payouts-inputs" id="pokerSingleInputs">
+              <input class="answer" id="pokerAnswer" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата" disabled>
+            </div>
+            <div class="payouts-inputs hidden" id="pokerUltimateInputs">
+              <label class="payouts-field">
+                <span>Блайнд</span>
+                <input class="answer" id="pokerAnswerBlind" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата Blind" disabled>
+              </label>
+              <label class="payouts-field">
+                <span>Анте + бет</span>
+                <input class="answer" id="pokerAnswerAnte" type="text" inputmode="decimal" autocomplete="off" aria-label="Выплата Ante и Play" disabled>
+              </label>
+            </div>
             <button class="primary" id="pokerAnswerBtn" type="submit" disabled>Ответить</button>
           </form>
           <div class="message" id="pokerMessage">Нажмите «Старт»</div>
