@@ -33,6 +33,20 @@
   animation: board-slam 520ms var(--ease-strict) both;
 }
 
+.roulette-board.is-enter .counting-cell,
+.roulette-board.is-enter .board-zero {
+  animation: grid-cell-in 360ms var(--ease-out) both;
+}
+
+.roulette-board.is-enter .counting-cell:nth-child(2) { animation-delay: 28ms; }
+.roulette-board.is-enter .counting-cell:nth-child(3) { animation-delay: 56ms; }
+.roulette-board.is-enter .counting-cell:nth-child(4) { animation-delay: 84ms; }
+.roulette-board.is-enter .counting-cell:nth-child(5) { animation-delay: 112ms; }
+.roulette-board.is-enter .counting-cell:nth-child(6) { animation-delay: 140ms; }
+.roulette-board.is-enter .counting-cell:nth-child(7) { animation-delay: 168ms; }
+.roulette-board.is-enter .counting-cell:nth-child(8) { animation-delay: 196ms; }
+.roulette-board.is-enter .counting-cell:nth-child(9) { animation-delay: 224ms; }
+
 /* Угол ST над street */
 .roulette-board::after {
   content: 'ST';

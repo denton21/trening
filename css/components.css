@@ -878,16 +878,26 @@ html[data-theme='dark'] #pokerMeta .poker-meta-game {
   display: none;
 }
 
-/* Statistics sections */
 .stats-section {
   margin-top: 12px;
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+  overflow: clip;
+  transition: border-color var(--dur) var(--ease-soft), box-shadow var(--dur) var(--ease-soft), background var(--dur) var(--ease-soft);
+}
+
+.stats-section:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+}
+
+.stats-section[open] {
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 .stats-section summary {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -896,14 +906,21 @@ html[data-theme='dark'] #pokerMeta .poker-meta-game {
   font-weight: 800;
   color: var(--text);
   list-style-position: inside;
+  transition: color var(--dur-fast) var(--ease-soft), transform var(--dur-fast) var(--ease-out);
 }
 
 .stats-section summary::marker { color: var(--accent); }
+.stats-section summary:hover { color: var(--accent-dark); }
+.stats-section summary:active { transform: translateX(1px); }
 .stats-summary-value { color: var(--muted); font-size: 13px; font-weight: 600; }
 .stats-summary-value strong { color: var(--accent-dark); }
 .stats-section .timing-chart { margin: 14px 0 10px; }
 .stats-section .secondary { min-height: 38px; }
 
 @media (max-width: 520px) {
-  .stats-section summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .stats-section summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
 }

@@ -315,6 +315,56 @@
   }
 }
 
+@keyframes task-ready {
+  0%, 100% {
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 4%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  50% {
+    box-shadow: 0 16px 38px color-mix(in srgb, var(--accent) 9%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+}
+
+@keyframes grid-cell-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes details-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes focus-ring {
+  0% { box-shadow: 0 0 0 0 var(--accent-soft); }
+  100% { box-shadow: 0 0 0 5px transparent; }
+}
+
+@keyframes answer-success {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-2px) scale(1.018); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes answer-failure {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-0.4deg); }
+  40% { transform: translateX(5px) rotate(0.3deg); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
 /* ── Applied classes ──────────────────────────────────────── */
 
 .example.is-enter {
@@ -338,16 +388,54 @@
   animation: stat-bump 340ms var(--ease-bounce);
 }
 
+.task,
+.picture-task {
+  animation: task-ready 4.5s var(--ease-soft) infinite;
+}
+
+.task.is-correct .answer,
+.picture-task.is-correct .answer,
+.counting-task.is-correct .answer {
+  animation: answer-success 420ms var(--ease-spring);
+}
+
+.task.is-wrong .answer,
+.picture-task.is-wrong .answer,
+.counting-task.is-wrong .answer {
+  animation: answer-failure 360ms var(--ease-out);
+}
+
+.answer:focus {
+  animation: focus-ring 420ms var(--ease-out);
+}
+
+.stats-section[open] > :not(summary) {
+  animation: details-content-in 260ms var(--ease-out) both;
+}
+
+.counting-cell {
+  animation: grid-cell-in 360ms var(--ease-out) both;
+}
+
+.counting-grid .counting-cell:nth-child(2) { animation-delay: 28ms; }
+.counting-grid .counting-cell:nth-child(3) { animation-delay: 56ms; }
+.counting-grid .counting-cell:nth-child(4) { animation-delay: 84ms; }
+.counting-grid .counting-cell:nth-child(5) { animation-delay: 112ms; }
+.counting-grid .counting-cell:nth-child(6) { animation-delay: 140ms; }
+.counting-grid .counting-cell:nth-child(7) { animation-delay: 168ms; }
+.counting-grid .counting-cell:nth-child(8) { animation-delay: 196ms; }
+.counting-grid .counting-cell:nth-child(9) { animation-delay: 224ms; }
+
 .task.is-correct,
 .picture-task.is-correct,
 .counting-task.is-correct {
-  animation: pulse-good 620ms var(--ease-soft);
+  animation: pulse-good 620ms var(--ease-soft), task-ready 4.5s 620ms var(--ease-soft) infinite;
 }
 
 .task.is-wrong,
 .picture-task.is-wrong,
 .counting-task.is-wrong {
-  animation: pulse-wrong 520ms var(--ease-soft), shake-bad 380ms var(--ease-out);
+  animation: pulse-wrong 520ms var(--ease-soft), shake-bad 380ms var(--ease-out), task-ready 4.5s 520ms var(--ease-soft) infinite;
 }
 
 .layout.tab-leave {
@@ -383,6 +471,7 @@
 
 /* ── Reduced motion ───────────────────────────────────────── */
 
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
