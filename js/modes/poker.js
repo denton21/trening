@@ -211,6 +211,50 @@ window.Trainer = window.Trainer || {};
         { hand: 'Роял-флеш', mult: 100 }
       ]
     },
+    tcp_ante: {
+      id: 'tcp_ante',
+      label: '3-карт · Ante Bonus',
+      short: '3к Ante',
+      stake: 'std',
+      pay: 'bonus',
+      rows: [
+        { hand: 'Стрит', mult: 1 },
+        { hand: 'Три одинаковых', mult: 3 },
+        { hand: 'Стрит-флеш', mult: 4 },
+        { hand: 'Мини-рояль', mult: 10 }
+      ]
+    },
+    tcp_pair: {
+      id: 'tcp_pair',
+      label: '3-карт · Пара Плюс',
+      short: '3к Pair+',
+      stake: 'std',
+      pay: 'bonus',
+      rows: [
+        { hand: 'Пара', mult: 1 },
+        { hand: 'Флеш', mult: 4 },
+        { hand: 'Стрит', mult: 5 },
+        { hand: 'Три одинаковых', mult: 30 },
+        { hand: 'Стрит-флеш', mult: 40 },
+        { hand: 'Мини-рояль', mult: 50 }
+      ]
+    },
+    tcp_jp: {
+      id: 'tcp_jp',
+      label: '3-карт · JP Bonus',
+      short: '3к JP',
+      stake: 'jackpot',
+      pay: 'bonus',
+      // Мини-рояль ♠ — джекпот % (не в тренажёре)
+      rows: [
+        { hand: 'Флеш', mult: 2 },
+        { hand: 'Стрит', mult: 10 },
+        { hand: 'Три одинаковых', mult: 25 },
+        { hand: 'Стрит-флеш', mult: 50 },
+        { hand: 'Стрит-флеш ♠', mult: 100 },
+        { hand: 'Мини-рояль', mult: 250 }
+      ]
+    },
     bj20: {
       id: 'bj20',
       label: 'BJ · бонус 20',
