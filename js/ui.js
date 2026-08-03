@@ -1,5 +1,13 @@
 window.Trainer = window.Trainer || {};
 
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
 function replayClass(element, className) {
   if (!element) {
     return;
@@ -8,6 +16,8 @@ function replayClass(element, className) {
   void element.offsetWidth;
   element.classList.add(className);
 }
+
+const exampleTimers = new WeakMap();
 
 Trainer.showMessage = function showMessage(element, text, type = '') {
   if (!element) {
@@ -22,8 +32,31 @@ Trainer.animateExample = function animateExample(element, text) {
   if (!element) {
     return;
   }
-  element.textContent = text;
-  replayClass(element, 'is-enter');
+
+  const nextText = text == null ? '' : String(text);
+  if (prefersReducedMotion() || element.textContent === nextText || !element.textContent || element.textContent === '—') {
+    element.textContent = nextText;
+    replayClass(element, 'is-enter');
+    return;
+  }
+
+  const prev = exampleTimers.get(element);
+  if (prev) {
+    window.clearTimeout(prev);
+  }
+
+  element.classList.remove('is-enter');
+  element.classList.add('is-leave');
+
+  const timer = window.setTimeout(() => {
+    element.textContent = nextText;
+    element.classList.remove('is-leave');
+    void element.offsetWidth;
+    element.classList.add('is-enter');
+    exampleTimers.delete(element);
+  }, 150);
+
+  exampleTimers.set(element, timer);
 };
 
 Trainer.flashAnswer = function flashAnswer(input, ok) {
@@ -40,6 +73,10 @@ Trainer.bumpStat = function bumpStat(element) {
     return;
   }
   replayClass(element, 'is-bump');
+  const card = element.closest?.('.stat');
+  if (card) {
+    replayClass(card, 'is-bump-card');
+  }
 };
 
 Trainer.flashTask = function flashTask(taskElement, ok) {
@@ -55,7 +92,15 @@ Trainer.setProgress = function setProgress(bar, secondsLeft, duration) {
   if (!bar) {
     return;
   }
-  bar.style.width = secondsLeft === null ? '100%' : `${(secondsLeft / duration) * 100}%`;
+  const track = bar.parentElement;
+  if (secondsLeft === null || duration == null || duration <= 0) {
+    bar.style.width = '100%';
+    track?.classList.remove('is-low');
+    return;
+  }
+  const ratio = Math.max(0, Math.min(1, secondsLeft / duration));
+  bar.style.width = `${ratio * 100}%`;
+  track?.classList.toggle('is-low', ratio > 0 && ratio <= 0.22);
 };
 
 /** Track one attempt inside a training session. */
@@ -114,7 +159,7 @@ Trainer.showSessionSummary = function showSessionSummary(options = {}) {
     `;
   }
 
-  overlay.classList.remove('hidden');
+  overlay.classList.remove('hidden', 'is-leaving');
   overlay.setAttribute('aria-hidden', 'false');
   const closeBtn = document.getElementById('sessionSummaryClose');
   if (closeBtn) {
@@ -124,11 +169,25 @@ Trainer.showSessionSummary = function showSessionSummary(options = {}) {
 
 Trainer.hideSessionSummary = function hideSessionSummary() {
   const overlay = document.getElementById('sessionSummary');
-  if (!overlay) {
+  if (!overlay || overlay.classList.contains('hidden')) {
     return;
   }
-  overlay.classList.add('hidden');
-  overlay.setAttribute('aria-hidden', 'true');
+
+  if (prefersReducedMotion()) {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('is-leaving');
+    overlay.setAttribute('aria-hidden', 'true');
+    return;
+  }
+
+  overlay.classList.add('is-leaving');
+  const finish = () => {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('is-leaving');
+    overlay.setAttribute('aria-hidden', 'true');
+  };
+
+  window.setTimeout(finish, 220);
 };
 
 Trainer.initSessionSummary = function initSessionSummary() {

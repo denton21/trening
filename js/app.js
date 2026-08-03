@@ -47,7 +47,7 @@ window.Trainer = window.Trainer || {};
   };
 
   const tabOrder = Object.keys(tabs);
-  const LEAVE_MS = 210;
+  const LEAVE_MS = 190;
   let activeTab = Trainer.safeStorageGet?.('roulette-trainer-active-tab', 'multiplication') || 'multiplication';
   if (!tabs[activeTab]) activeTab = 'multiplication';
   let switching = false;
@@ -133,11 +133,11 @@ window.Trainer = window.Trainer || {};
       void next.panel.offsetWidth;
       next.panel.classList.add('tab-enter');
 
-      // Ждём children stagger (~590ms), потом снимаем классы
+      // Children stagger + panel enter, then clear classes
       window.setTimeout(() => {
         next.panel.classList.remove('tab-enter');
         switching = false;
-      }, 620);
+      }, 560);
     }, LEAVE_MS);
   }
 

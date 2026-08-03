@@ -703,6 +703,9 @@ window.Trainer = window.Trainer || {};
     setRetryVisible(false);
 
     els.winLabel.textContent = `Выпало: ${layout.winNumber}`;
+    els.winLabel.classList.remove('is-enter');
+    void els.winLabel.offsetWidth;
+    els.winLabel.classList.add('is-enter');
     renderGrid(layout.grid, layout.winNumber);
     renderChips(layout.chips);
   }

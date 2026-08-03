@@ -31,10 +31,17 @@
     0 0 2px var(--accent);
   transform: translateX(var(--tabs-indicator-x));
   transition:
-    transform 420ms var(--ease-strict),
-    width 420ms var(--ease-strict);
+    transform 480ms cubic-bezier(0.22, 1.2, 0.28, 1),
+    width 480ms cubic-bezier(0.22, 1.2, 0.28, 1),
+    box-shadow 280ms var(--ease-soft);
   pointer-events: none;
   z-index: 1;
+}
+
+.tabs:has(.tab:active)::after {
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    0 0 4px var(--accent);
 }
 
 .tab {
@@ -54,7 +61,8 @@
   transition:
     color 280ms var(--ease-strict),
     background 280ms var(--ease-strict),
-    transform var(--dur-fast) var(--ease-out);
+    transform var(--dur-fast) var(--ease-out),
+    letter-spacing 280ms var(--ease-soft);
 }
 
 .tab:hover {
@@ -63,13 +71,14 @@
 }
 
 .tab:active {
-  transform: scale(0.98);
+  transform: scale(0.97) translateY(1px);
 }
 
 .tab.active {
   color: var(--accent-dark);
   background: transparent;
   box-shadow: none;
+  letter-spacing: 0.04em;
 }
 
 html[data-theme='dark'] .tab.active {
@@ -136,6 +145,12 @@ html[data-theme='dark'] .tab.active {
   box-shadow:
     0 4px 14px var(--accent-glow),
     0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.choice.active:hover,
+.choice[aria-pressed="true"]:hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: brightness(1.04);
 }
 
 .choice:focus-visible,
@@ -250,7 +265,11 @@ html[data-theme='dark'] .tab.active {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--accent-dark), var(--accent) 55%, color-mix(in srgb, var(--gold) 55%, var(--accent)));
   box-shadow: 0 0 12px var(--accent-glow);
-  transition: width 0.4s var(--ease-strict);
+  transition:
+    width 0.45s var(--ease-strict),
+    background 0.35s var(--ease-soft),
+    box-shadow 0.35s var(--ease-soft),
+    filter 0.35s var(--ease-soft);
 }
 
 .progress span::after {
@@ -408,7 +427,8 @@ html[data-theme='dark'] .payouts-detail {
     border-color var(--dur) var(--ease-soft),
     box-shadow var(--dur) var(--ease-soft),
     background var(--dur) var(--ease-soft),
-    transform var(--dur-fast) var(--ease-out);
+    transform var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-soft);
 }
 
 .answer:focus {
@@ -417,6 +437,11 @@ html[data-theme='dark'] .payouts-detail {
     0 0 0 4px var(--accent-soft),
     0 0 24px var(--accent-glow);
   outline: none;
+  transform: translateY(-1px);
+}
+
+.answer:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line-strong));
 }
 
 .answer:disabled {
@@ -482,7 +507,15 @@ html[data-theme='dark'] .payouts-detail {
 
 .primary:active,
 .secondary:active {
-  transform: scale(0.97) translateY(0);
+  transform: scale(0.965) translateY(1px);
+  filter: brightness(0.98);
+  transition-duration: 80ms;
+}
+
+.primary:active::before {
+  animation: none;
+  transform: translateX(0);
+  opacity: 0.15;
 }
 
 .primary:disabled {
@@ -547,6 +580,11 @@ html[data-theme='dark'] .secondary {
   background: var(--panel-solid);
   box-shadow: var(--shadow-lg);
   animation: card-rise 480ms var(--ease-strict) both;
+  transition: transform 180ms var(--ease-out);
+}
+
+.session-card:hover {
+  transform: translateY(-1px);
 }
 
 .session-card h2 {
@@ -633,6 +671,13 @@ html[data-theme='dark'] .secondary {
   min-height: 28px;
   font-size: 14px;
   font-weight: 700;
+  transition:
+    transform 180ms var(--ease-out),
+    opacity 180ms var(--ease-soft);
+}
+
+.timing-row:hover {
+  transform: translateX(2px);
 }
 
 .timing-track {
@@ -648,7 +693,8 @@ html[data-theme='dark'] .secondary {
   width: 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--accent-dark), var(--accent));
-  transition: width 0.55s var(--ease-out);
+  transition: width 0.65s var(--ease-strict);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .timing-empty {
