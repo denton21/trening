@@ -48,7 +48,8 @@ window.Trainer = window.Trainer || {};
 
   const tabOrder = Object.keys(tabs);
   const LEAVE_MS = 210;
-  let activeTab = 'multiplication';
+  let activeTab = Trainer.safeStorageGet?.('roulette-trainer-active-tab', 'multiplication') || 'multiplication';
+  if (!tabs[activeTab]) activeTab = 'multiplication';
   let switching = false;
   let switchTimer = null;
   const tabsEl = document.querySelector('.tabs');
@@ -117,6 +118,7 @@ window.Trainer = window.Trainer || {};
     Object.values(tabs).forEach((tab) => tab.stop());
     setButtons(name);
     activeTab = name;
+    Trainer.safeStorageSet?.('roulette-trainer-active-tab', name);
 
     prev.panel.classList.remove('tab-enter');
     prev.panel.classList.add('tab-leave');

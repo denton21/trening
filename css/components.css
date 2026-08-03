@@ -1,8 +1,8 @@
-/* ═══════════════════════════════════════════════════════════
-   Components — tabs, controls, task stage, duel, session
-   ═══════════════════════════════════════════════════════════ */
+﻿/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+   Components тАФ tabs, controls, task stage, duel, session
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
-/* ── Tabs ─────────────────────────────────────────────────── */
+/* тФАтФА Tabs тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .tabs {
   --tabs-indicator-x: 0px;
@@ -76,7 +76,7 @@ html[data-theme='dark'] .tab.active {
   color: var(--accent);
 }
 
-/* ── Choice chips ─────────────────────────────────────────── */
+/* тФАтФА Choice chips тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .choices {
   display: flex;
@@ -165,7 +165,7 @@ html[data-theme='dark'] .tab.active {
   gap: 8px;
 }
 
-/* ── Stats ────────────────────────────────────────────────── */
+/* тФАтФА Stats тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .stats {
   display: grid;
@@ -231,7 +231,7 @@ html[data-theme='dark'] .tab.active {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Progress ─────────────────────────────────────────────── */
+/* тФАтФА Progress тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .progress {
   position: relative;
@@ -267,7 +267,7 @@ html[data-theme='dark'] .tab.active {
   transform: translateX(-100%);
 }
 
-/* ── Task stage ───────────────────────────────────────────── */
+/* тФАтФА Task stage тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .task,
 .picture-task {
@@ -424,7 +424,7 @@ html[data-theme='dark'] .payouts-detail {
   cursor: not-allowed;
 }
 
-/* ── Buttons ──────────────────────────────────────────────── */
+/* тФАтФА Buttons тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .primary,
 .secondary {
@@ -520,7 +520,7 @@ html[data-theme='dark'] .secondary {
   border-radius: var(--radius-pill);
 }
 
-/* ── Session summary ──────────────────────────────────────── */
+/* тФАтФА Session summary тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .session-overlay {
   position: fixed;
@@ -618,7 +618,7 @@ html[data-theme='dark'] .secondary {
   text-shadow: 0 0 20px var(--bad-soft);
 }
 
-/* ── Timing chart ─────────────────────────────────────────── */
+/* тФАтФА Timing chart тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .timing-chart {
   display: grid;
@@ -658,7 +658,7 @@ html[data-theme='dark'] .secondary {
   font-weight: 700;
 }
 
-/* ── Duel ─────────────────────────────────────────────────── */
+/* тФАтФА Duel тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .duel-code {
   margin: 8px 0 16px;
@@ -708,7 +708,7 @@ html[data-theme='dark'] .duel-code {
   box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-/* ── Poker / bonus trainer ────────────────────────────────── */
+/* тФАтФА Poker / bonus trainer тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 
 .poker-game-choices {
   gap: 8px;
@@ -876,4 +876,34 @@ html[data-theme='dark'] #pokerMeta .poker-meta-game {
 #duelEndActions.hidden,
 #duelStartBtn.hidden {
   display: none;
+}
+
+/* Statistics sections */
+.stats-section {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+}
+
+.stats-section summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--text);
+  list-style-position: inside;
+}
+
+.stats-section summary::marker { color: var(--accent); }
+.stats-summary-value { color: var(--muted); font-size: 13px; font-weight: 600; }
+.stats-summary-value strong { color: var(--accent-dark); }
+.stats-section .timing-chart { margin: 14px 0 10px; }
+.stats-section .secondary { min-height: 38px; }
+
+@media (max-width: 520px) {
+  .stats-section summary { align-items: flex-start; flex-direction: column; gap: 4px; }
 }

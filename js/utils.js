@@ -1,5 +1,32 @@
 window.Trainer = window.Trainer || {};
 
+Trainer.safeStorageGet = function safeStorageGet(key, fallback = null) {
+  try {
+    const value = localStorage.getItem(key);
+    return value == null ? fallback : value;
+  } catch {
+    return fallback;
+  }
+};
+
+Trainer.safeStorageSet = function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+Trainer.safeStorageRemove = function safeStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 Trainer.tableOptions = [5, 8, 11, 17, 35];
 Trainer.allMultipliers = Array.from({ length: 20 }, (_, index) => index + 1);
 

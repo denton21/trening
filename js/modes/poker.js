@@ -15,6 +15,7 @@ window.Trainer = window.Trainer || {};
     getSettings,
     saveSettings,
     pushSessionAttempt,
+    recordAttempt,
     showSessionSummary
   } = Trainer;
 
@@ -68,6 +69,9 @@ window.Trainer = window.Trainer || {};
    *  - ultimate — полная: Ante 1:1 + Play 1:1 + Blind×коэф (Blind=Ante, Play=k×Ante)
    *               ниже стрита Blind push (×0). Play k ∈ {1, 2, 4}
    */
+  const threeCardPayouts = Trainer.payoutCatalog?.threeCard || {};
+  const rowsFromCatalog = (rows) => (rows || []).filter(([, mult]) => typeof mult === 'number').map(([hand, mult]) => ({ hand, mult }));
+
   const CATALOG = {
     jackpot: {
       id: 'jackpot',
@@ -217,12 +221,7 @@ window.Trainer = window.Trainer || {};
       short: '3к Ante',
       stake: 'std',
       pay: 'bonus',
-      rows: [
-        { hand: 'Стрит', mult: 1 },
-        { hand: 'Три одинаковых', mult: 3 },
-        { hand: 'Стрит-флеш', mult: 4 },
-        { hand: 'Мини-рояль', mult: 10 }
-      ]
+      rows: rowsFromCatalog(threeCardPayouts.ante)
     },
     tcp_pair: {
       id: 'tcp_pair',
@@ -230,14 +229,7 @@ window.Trainer = window.Trainer || {};
       short: '3к Pair+',
       stake: 'std',
       pay: 'bonus',
-      rows: [
-        { hand: 'Пара', mult: 1 },
-        { hand: 'Флеш', mult: 4 },
-        { hand: 'Стрит', mult: 5 },
-        { hand: 'Три одинаковых', mult: 30 },
-        { hand: 'Стрит-флеш', mult: 40 },
-        { hand: 'Мини-рояль', mult: 50 }
-      ]
+      rows: rowsFromCatalog(threeCardPayouts.pairPlus)
     },
     tcp_jp: {
       id: 'tcp_jp',
@@ -246,14 +238,7 @@ window.Trainer = window.Trainer || {};
       stake: 'jackpot',
       pay: 'bonus',
       // Мини-рояль ♠ — джекпот % (не в тренажёре)
-      rows: [
-        { hand: 'Флеш', mult: 2 },
-        { hand: 'Стрит', mult: 10 },
-        { hand: 'Три одинаковых', mult: 25 },
-        { hand: 'Стрит-флеш', mult: 50 },
-        { hand: 'Стрит-флеш ♠', mult: 100 },
-        { hand: 'Мини-рояль', mult: 250 }
-      ]
+      rows: rowsFromCatalog(threeCardPayouts.jp)
     },
     bj20: {
       id: 'bj20',
@@ -830,6 +815,7 @@ window.Trainer = window.Trainer || {};
       }
 
       pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
+      recordAttempt('poker', label, isCorrect, state.questionStartedAt);
       flashTask(els.task, isCorrect);
 
       if (isCorrect) {

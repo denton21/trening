@@ -14,6 +14,7 @@ window.Trainer = window.Trainer || {};
     showMessage,
     getSettings,
     saveSettings,
+    recordAttempt,
     pushSessionAttempt,
     showSessionSummary
   } = Trainer;
@@ -663,7 +664,7 @@ window.Trainer = window.Trainer || {};
       const expected = state.current.answer;
       const isCorrect = Number(els.answer.value) === expected;
       const label = state.current.a + ' + ' + state.current.b + ' = ' + expected;
-      // Только локальная сессия — без recordAttempt / глобальной статистики
+      recordAttempt('addition', label, isCorrect, state.questionStartedAt);
       pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
 
       flashAnswer(els.answer, isCorrect);

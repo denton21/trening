@@ -13,6 +13,7 @@ window.Trainer = window.Trainer || {};
     winningSlotsForCell,
     payoutOf,
     getSettings,
+    recordAttempt,
     saveSettings,
     pushSessionAttempt,
     showSessionSummary
@@ -826,6 +827,7 @@ window.Trainer = window.Trainer || {};
     }
 
     const isCorrect = Number(els.answer.value) === state.answer;
+    recordAttempt('counting', state.currentLabel, isCorrect, state.questionStartedAt);
     flashAnswer(els.answer, isCorrect);
     flashTask(els.task, isCorrect);
 

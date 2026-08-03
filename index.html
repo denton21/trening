@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Тренажёр для дилера: умножение, сложение, blackjack, счёт, выплаты, покер, дуэль, справочник">
+  <meta name="description" content="Тренажёр дилера: умножение, сложение, blackjack, счёт, выплаты, покер, дуэль, справочник">
+  <meta name="application-name" content="Тренажёр дилера">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Рулетка">
-  <title>Тренажёр рулетки</title>
+  <title>Тренажёр дилера</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -29,14 +30,14 @@
   <main>
     <div class="top-bar">
       <div class="brand">
-        <h1>Тренажёр рулетки</h1>
+        <h1>Тренажёр дилера</h1>
         <p class="brand-tag">Dealer drill · скорость · точность</p>
       </div>
       <div class="top-actions">
         <button class="secondary theme-toggle" id="themeToggleBtn" type="button" aria-pressed="false" title="Тема">Тёмная</button>
       </div>
     </div>
-    <div class="tabs" role="tablist" aria-label="Режим тренировки">
+          <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
       <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
@@ -961,25 +962,36 @@
 
     <section class="panel history" aria-label="Статистика устройства">
       <h2>Статистика устройства</h2>
-      <div class="history-stats">
-        <div class="stat"><span>Умножение: ответов</span><strong id="multiplicationAttempts">0</strong></div>
-        <div class="stat"><span>Умножение: среднее</span><strong id="multiplicationAverage">-</strong></div>
-        <div class="stat"><span>Blackjack: ответов</span><strong id="blackjackAttempts">0</strong></div>
-        <div class="stat"><span>Blackjack: среднее</span><strong id="blackjackAverage">-</strong></div>
-        <div class="stat"><span>Выплаты: ответов</span><strong id="payoutsAttempts">0</strong></div>
-        <div class="stat"><span>Выплаты: среднее</span><strong id="payoutsAverage">-</strong></div>
-      </div>
-      <div class="actions history-reset-actions">
-        <button class="secondary" id="resetMultiplicationStatsBtn" type="button">Сброс умножения</button>
-        <button class="secondary" id="resetBlackjackStatsBtn" type="button">Сброс blackjack</button>
-        <button class="secondary" id="resetPayoutsStatsBtn" type="button">Сброс выплат</button>
-      </div>
-      <h2 class="timing-title">Скорость по примерам</h2>
-      <div class="timing-chart" id="multiplicationChart" aria-live="polite"></div>
-      <h2 class="timing-title">Скорость выплат Blackjack</h2>
-      <div class="timing-chart" id="blackjackChart" aria-live="polite"></div>
-      <h2 class="timing-title">Скорость выплат (кэш / фишки)</h2>
-      <div class="timing-chart" id="payoutsChart" aria-live="polite"></div>
+      <details class="stats-section" data-stats-section="multiplication" open>
+        <summary>Умножение <span class="stats-summary-value"><strong id="multiplicationAttempts">0</strong> ответов · <strong id="multiplicationAverage">-</strong></span></summary>
+        <div class="timing-chart" id="multiplicationChart" aria-live="polite"></div>
+        <button class="secondary" id="resetMultiplicationStatsBtn" type="button">Сбросить статистику</button>
+      </details>
+      <details class="stats-section" data-stats-section="addition" open>
+        <summary>Сложение <span class="stats-summary-value"><strong id="additionAttempts">0</strong> ответов · <strong id="additionAverage">-</strong></span></summary>
+        <div class="timing-chart" id="additionChart" aria-live="polite"></div>
+        <button class="secondary" id="resetAdditionStatsBtn" type="button">Сбросить статистику</button>
+      </details>
+      <details class="stats-section" data-stats-section="blackjack" open>
+        <summary>Blackjack <span class="stats-summary-value"><strong id="blackjackAttempts">0</strong> ответов · <strong id="blackjackAverage">-</strong></span></summary>
+        <div class="timing-chart" id="blackjackChart" aria-live="polite"></div>
+        <button class="secondary" id="resetBlackjackStatsBtn" type="button">Сбросить статистику</button>
+      </details>
+      <details class="stats-section" data-stats-section="counting" open>
+        <summary>Счёт фишек <span class="stats-summary-value"><strong id="countingAttempts">0</strong> ответов · <strong id="countingAverage">-</strong></span></summary>
+        <div class="timing-chart" id="countingChart" aria-live="polite"></div>
+        <button class="secondary" id="resetCountingStatsBtn" type="button">Сбросить статистику</button>
+      </details>
+      <details class="stats-section" data-stats-section="payouts" open>
+        <summary>Выплаты <span class="stats-summary-value"><strong id="payoutsAttempts">0</strong> ответов · <strong id="payoutsAverage">-</strong></span></summary>
+        <div class="timing-chart" id="payoutsChart" aria-live="polite"></div>
+        <button class="secondary" id="resetPayoutsStatsBtn" type="button">Сбросить статистику</button>
+      </details>
+      <details class="stats-section" data-stats-section="poker" open>
+        <summary>Покер <span class="stats-summary-value"><strong id="pokerAttempts">0</strong> ответов · <strong id="pokerAverage">-</strong></span></summary>
+        <div class="timing-chart" id="pokerChart" aria-live="polite"></div>
+        <button class="secondary" id="resetPokerStatsBtn" type="button">Сбросить статистику</button>
+      </details>
     </section>
   </main>
 
@@ -998,6 +1010,7 @@
   <script src="js/settings.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>
+  <script src="js/payout-catalog.js"></script>
   <script src="js/patterns.js"></script>
   <script src="js/modes/multiplication.js"></script>
   <script src="js/modes/addition.js"></script>

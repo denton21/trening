@@ -967,6 +967,10 @@ window.Trainer = window.Trainer || {};
 
   /* ——— MQTT connect ——— */
 
+  function isValidMessage(data) {
+    return data && typeof data === 'object' && typeof data.type === 'string' && data.type.length <= 40;
+  }
+
   function handleMessage(topic, buffer) {
     let data;
     try {
@@ -974,11 +978,14 @@ window.Trainer = window.Trainer || {};
     } catch {
       return;
     }
+    if (!isValidMessage(data) || String(buffer).length > 50000) return;
     if (topic === LOBBY_TOPIC) {
       onLobbyMessage(data);
       return;
     }
     if (state.roomTopic && topic === state.roomTopic) {
+      if (data.roomId && state.roomId && data.roomId !== state.roomId) return;
+      if (data.round != null && state.round && data.type !== 'join_ok' && data.type !== 'sync' && data.round < state.round) return;
       onRoomMessage(data);
     }
   }

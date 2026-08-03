@@ -76,10 +76,9 @@ window.Trainer = window.Trainer || {};
   }
 
   function setNextQuestion(animate = true) {
-    let bet = blackjackBets[Math.floor(Math.random() * blackjackBets.length)];
-    while (bet === state.lastBet) {
-      bet = blackjackBets[Math.floor(Math.random() * blackjackBets.length)];
-    }
+    const available = blackjackBets.filter((bet) => bet !== state.lastBet);
+    const pool = available.length ? available : blackjackBets;
+    const bet = pool[Math.floor(Math.random() * pool.length)];
     state.currentBet = bet;
     state.lastBet = bet;
     state.questionStartedAt = Date.now();

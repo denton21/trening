@@ -1,7 +1,8 @@
 window.Trainer = window.Trainer || {};
 
 (function () {
-  const KEY = 'roulette-trainer-settings-v1';
+  const KEY = 'roulette-trainer-settings-v2';
+  const LEGACY_KEY = 'roulette-trainer-settings-v1';
 
   const defaults = {
     theme: 'light',
@@ -54,12 +55,15 @@ window.Trainer = window.Trainer || {};
 
   function load() {
     try {
-      const raw = JSON.parse(localStorage.getItem(KEY));
+      const rawValue = localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY);
+      const raw = JSON.parse(rawValue || 'null');
       if (raw && typeof raw === 'object') {
-        return deepMerge(defaults, raw);
+        const merged = deepMerge(defaults, raw);
+        localStorage.setItem(KEY, JSON.stringify(merged));
+        return merged;
       }
     } catch {
-      // ignore
+      // ignore damaged cache, blocked storage and migration errors
     }
     return deepMerge(defaults, {});
   }
