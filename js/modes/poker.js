@@ -231,6 +231,15 @@ window.Trainer = window.Trainer || {};
       pay: 'bonus',
       rows: rowsFromCatalog(threeCardPayouts.pairPlus)
     },
+    tcp_plus3: {
+      id: 'tcp_plus3',
+      label: '3-карт · 3+3',
+      short: '3к 3+3',
+      stake: 'std',
+      pay: 'bonus',
+      // Лучшая 5-карточная из 3 игрока + 3 дилера
+      rows: rowsFromCatalog(threeCardPayouts.plus3)
+    },
     tcp_jp: {
       id: 'tcp_jp',
       label: '3-карт · JP Bonus',
