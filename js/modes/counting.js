@@ -21,7 +21,7 @@ window.Trainer = window.Trainer || {};
 
   const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 
-  const ALL_DENOMS = [1, 2, 5];
+  const ALL_DENOMS = [1, 2, 5, 25];
 
   const SLOT_PRESETS = [
     { id: 'few', label: '2–4', minSlots: 2, maxSlots: 4 },

@@ -22,6 +22,21 @@ window.Trainer = window.Trainer || {};
   /** Стек = 20 фишек. */
   const STACK_SIZE = 20;
   const EXACT_STACKS = [1, 2, 3, 4, 5];
+  const PAYOUT_COLORS = [1, 2, 5, 25];
+  const COLOR_25_THROUGHS = [
+    1000,
+    2000, 2000,
+    2500, 2500,
+    3000, 3000,
+    3500,
+    4000,
+    4500,
+    5000,
+    5500, 5500,
+    6000,
+    7500,
+    10000
+  ];
   const APPROX_REQUESTS = [
     { label: '1–2 стека', minChips: 12, maxChips: 45 },
     { label: '2–3 стека', minChips: 30, maxChips: 70 },
@@ -44,6 +59,9 @@ window.Trainer = window.Trainer || {};
     }
     if (color === 2) {
       return [100, 200, 500, 1000];
+    }
+    if (color === 25) {
+      return COLOR_25_THROUGHS;
     }
     return [100, 200, 500, 1000];
   }
@@ -92,6 +110,25 @@ window.Trainer = window.Trainer || {};
   }
 
   function generateCashQuestion(color) {
+    if (color === 25) {
+      const through = pick(COLOR_25_THROUGHS);
+      const cash = cashPart(through, color);
+      const maxLeft = Math.min(800, MAX_PAYOUT - cash);
+      const colorLeft = randomInt(5, Math.floor(maxLeft / color)) * color;
+      const payout = cash + colorLeft;
+
+      return {
+        mode: 'cash',
+        color,
+        payout,
+        through,
+        cash,
+        colorLeft,
+        divisor: color,
+        exampleKey: `кэш ${payout} через ${through} (×${color})`
+      };
+    }
+
     let payout;
     let throughOptions = [];
     let attempts = 0;
@@ -149,8 +186,8 @@ window.Trainer = window.Trainer || {};
    * кэш = (выплата − chips) × color.
    */
   function generateChipsQuestion(color) {
-    const maxPayoutChips = color === 5 ? 380 : color === 2 ? 480 : 520;
-    const minPayoutChips = color === 5 ? 90 : 70;
+    const maxPayoutChips = color === 25 ? 280 : color === 5 ? 380 : color === 2 ? 480 : 520;
+    const minPayoutChips = color === 5 || color === 25 ? 90 : 70;
     const exact = Math.random() < 0.5;
     let attempts = 0;
 
@@ -161,7 +198,7 @@ window.Trainer = window.Trainer || {};
       let cash;
       do {
         attempts += 1;
-        const maxStacks = color === 5 ? 4 : 5;
+        const maxStacks = color === 5 || color === 25 ? 4 : 5;
         stacks = pick(EXACT_STACKS.filter((n) => n <= maxStacks));
         chips = stacks * STACK_SIZE;
         payout = randomInt(Math.max(minPayoutChips, chips + 20), maxPayoutChips);
@@ -171,7 +208,7 @@ window.Trainer = window.Trainer || {};
       if (cash <= 0 || payout <= chips) {
         stacks = 3;
         chips = 60;
-        payout = color === 5 ? 187 : 241;
+        payout = color === 25 ? 187 : color === 5 ? 187 : 241;
         cash = (payout - chips) * color;
       }
 
@@ -191,7 +228,9 @@ window.Trainer = window.Trainer || {};
     }
 
     const pool =
-      color === 5 ? [APPROX_REQUESTS[0], APPROX_REQUESTS[1], APPROX_REQUESTS[2]] : APPROX_REQUESTS;
+      color === 5 || color === 25
+        ? [APPROX_REQUESTS[0], APPROX_REQUESTS[1], APPROX_REQUESTS[2]]
+        : APPROX_REQUESTS;
 
     let request = pick(pool);
     let payout;
@@ -212,7 +251,7 @@ window.Trainer = window.Trainer || {};
 
     if (sampleCash <= 0 || payout <= request.minChips) {
       request = APPROX_REQUESTS[1];
-      payout = color === 5 ? 287 : color === 2 ? 313 : 241;
+      payout = color === 25 ? 287 : color === 5 ? 287 : color === 2 ? 313 : 241;
       sampleChips = 50;
       sampleCash = (payout - sampleChips) * color;
     }
@@ -337,7 +376,9 @@ window.Trainer = window.Trainer || {};
       if (cashMode) {
         const div = state.color;
         const ex =
-          state.color === 5
+          state.color === 25
+            ? { payout: 595, through: 5500 }
+            : state.color === 5
             ? { payout: 240, through: 500 }
             : state.color === 2
               ? { payout: 780, through: 500 }
@@ -349,7 +390,9 @@ window.Trainer = window.Trainer || {};
           `Пример: ${ex.payout} через ${ex.through} → ${ex.through}÷${div}=${exCash}, цвет <strong>${exLeft}</strong>.`;
       } else {
         const ex =
-          state.color === 5
+          state.color === 25
+            ? { payout: 287, chips: 50, cash: 5925 }
+            : state.color === 5
             ? { payout: 287, chips: 50, cash: 1185 }
             : state.color === 2
               ? { payout: 313, chips: 90, cash: 446 }
@@ -657,7 +700,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initPayouts = function initPayouts() {
     if (getSettings) {
       const saved = getSettings().payouts || {};
-      if (saved.color === 1 || saved.color === 2 || saved.color === 5) {
+      if (PAYOUT_COLORS.includes(saved.color)) {
         state.color = saved.color;
       }
       if (saved.mode === 'cash' || saved.mode === 'chips') {

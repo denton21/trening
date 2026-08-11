@@ -207,6 +207,7 @@
             <button class="choice active" type="button" data-denom="1" aria-pressed="true">×1</button>
             <button class="choice" type="button" data-denom="2" aria-pressed="false">×2</button>
             <button class="choice" type="button" data-denom="5" aria-pressed="false">×5</button>
+            <button class="choice" type="button" data-denom="25" aria-pressed="false">×25</button>
           </div>
           <div class="mixed-legend counting-legend hidden" id="countingLegend" aria-label="Номиналы фишек"></div>
         </div>
@@ -280,7 +281,7 @@
         <h2>Выплаты</h2>
         <p class="hint" id="payoutsHint">
           <strong>Через кэш:</strong> кэш = N ÷ цвет, фишки цвета = выплата − кэш. Выплата ≤ 1000.
-          Примеры: на 5 — 240 через 500 → 140; на 2 — 780 через 500 → 530.
+          Примеры: на 5 — 240 через 500 → 140; на 2 — 780 через 500 → 530; на 25 — 595 через 5500 → 375.
           <br>
           <strong>Через фишки:</strong> иногда «5 стеков» ровно, иногда «примерно 2–3 стека»;
           кэш = (выплата − фишки) × цвет.
@@ -292,6 +293,7 @@
             <button class="choice active" type="button" data-color="1" aria-pressed="true">на 1</button>
             <button class="choice" type="button" data-color="2" aria-pressed="false">на 2</button>
             <button class="choice" type="button" data-color="5" aria-pressed="false">на 5</button>
+            <button class="choice" type="button" data-color="25" aria-pressed="false">на 25</button>
           </div>
         </div>
 

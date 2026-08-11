@@ -402,6 +402,10 @@ html[data-theme='dark'] .roulette-board {
   background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #dc2626 50%, #991b1b 100%);
 }
 
+.mixed-legend-item.chip-v25 i {
+  background: radial-gradient(circle at 35% 30%, #fde68a 0%, #d97706 50%, #92400e 100%);
+}
+
 .chip.chip-3d {
   width: 36px;
   height: 36px;
@@ -631,6 +635,23 @@ html[data-theme='dark'] .roulette-board {
 
 .chip-v5 .chip-3d-badge {
   background: #b91c1c;
+}
+
+/* ×25 — оранжевые */
+.chip-v25 {
+  --chip-body: radial-gradient(circle at 35% 28%, #fde68a 0%, #d97706 48%, #92400e 100%);
+  --chip-ring: #fef3c7;
+  --chip-base: #92400e;
+  --chip-edge: #b45309;
+  --chip-dash: rgba(255, 255, 255, 0.45);
+}
+
+.chip-v25 .chip-3d-face {
+  color: #78350f;
+}
+
+.chip-v25 .chip-3d-badge {
+  background: #b45309;
 }
 
 .mixed-task .chip.chip-3d {
