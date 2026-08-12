@@ -59,4 +59,19 @@ assert.equal(T.formatOdds(games.ultimate.refRows.find((r) => r.hand === 'Фле�
 assert.equal(T.formatOdds(games.ultimate.refRows.find((r) => r.hand === 'Меньше стрита')), 'Push');
 assert.equal(T.computePokerPayout('texas', 55, games.texas.rows.find((r) => r.hand === 'Каре').mult), 660);
 
+const niu = catalog.niu;
+assert.equal(niu.rows.length, 13);
+assert.equal(niu.rows[0].hand, '4 of a Kind');
+assert.equal(niu.rows[0].super, 15);
+assert.equal(niu.rows[1].double, 4);
+assert.equal(niu.rows[2].double, 3);
+assert.equal(niu.rows[3].double, 2);
+assert.equal(niu.rows[6].double, 1);
+assert.equal(niu.rows[6].super, 6);
+assert.equal(niu.rows[11].hand, 'Niu 1');
+assert.equal(niu.rows[12].hand, 'Нет комбинации');
+assert.equal(niu.rows[12].bet, 1);
+assert.equal(niu.rows[12].super, 1);
+assert.ok(!games.niu, 'Niu Niu is reference-only');
+
 console.log(`Payout catalog tests OK: ${expectedIds.length} games, ${tableKeys.length} reference tables`);

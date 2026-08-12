@@ -68,6 +68,42 @@ window.Trainer = window.Trainer || {};
     ]
   };
 
+  /** Niu Niu: Bet / Double / SuperDouble. Только справка, не тренировка. */
+  const niu = {
+    columns: [
+      { key: 'bet', merge: true },
+      { key: 'double', merge: true },
+      { key: 'super' }
+    ],
+    rows: [
+      { hand: '4 of a Kind', bet: 1, double: 5, super: 15, top: true },
+      { hand: '5 Pictures', bet: 1, double: 4, super: 12 },
+      { hand: 'Niu 10', bet: 1, double: 3, super: 10 },
+      { hand: 'Niu 9', bet: 1, double: 2, super: 9 },
+      { hand: 'Niu 8', bet: 1, double: 2, super: 8 },
+      { hand: 'Niu 7', bet: 1, double: 2, super: 7 },
+      { hand: 'Niu 6', bet: 1, double: 1, super: 6 },
+      { hand: 'Niu 5', bet: 1, double: 1, super: 5 },
+      { hand: 'Niu 4', bet: 1, double: 1, super: 4 },
+      { hand: 'Niu 3', bet: 1, double: 1, super: 3 },
+      { hand: 'Niu 2', bet: 1, double: 1, super: 2 },
+      { hand: 'Niu 1', bet: 1, double: 1, super: 1 },
+      { hand: 'Нет комбинации', bet: 1, double: 1, super: 1 }
+    ]
+  };
+
+  function countSpan(rows, index, key) {
+    const value = rows[index][key];
+    if (index > 0 && rows[index - 1][key] === value) {
+      return 0;
+    }
+    let n = 1;
+    while (index + n < rows.length && rows[index + n][key] === value) {
+      n += 1;
+    }
+    return n;
+  }
+
   const games = {
     jackpot: {
       id: 'jackpot',
@@ -293,6 +329,9 @@ window.Trainer = window.Trainer || {};
     if (key === 'roulette') {
       return roulette;
     }
+    if (key === 'niu') {
+      return niu;
+    }
     if (key.startsWith('threeCard.')) {
       const name = key.slice('threeCard.'.length);
       const tuples = threeCard[name];
@@ -309,7 +348,7 @@ window.Trainer = window.Trainer || {};
     const formatOdds = Trainer.formatOdds || ((row) => String(row.mult ?? '—'));
     const rows = source.refRows || source.rows;
     tbody.replaceChildren();
-    rows.forEach((row) => {
+    rows.forEach((row, index) => {
       const tr = document.createElement('tr');
       if (row.special === 'jackpot' || row.special === 'jackpotPercent') {
         tr.classList.add('is-jackpot');
@@ -336,6 +375,27 @@ window.Trainer = window.Trainer || {};
         buy.className = 'odds';
         buy.textContent = formatOdds({ mult: row.buy });
         tr.append(deal, buy);
+      } else if (layout === 'cols' && source.columns) {
+        source.columns.forEach((col) => {
+          if (col.merge) {
+            const span = countSpan(rows, index, col.key);
+            if (!span) {
+              return;
+            }
+            const td = document.createElement('td');
+            td.className = 'odds';
+            if (span > 1) {
+              td.rowSpan = span;
+            }
+            td.textContent = formatOdds({ mult: row[col.key] });
+            tr.appendChild(td);
+            return;
+          }
+          const td = document.createElement('td');
+          td.className = 'odds';
+          td.textContent = formatOdds({ mult: row[col.key] });
+          tr.appendChild(td);
+        });
       } else {
         const odds = document.createElement('td');
         odds.className = 'odds';
@@ -356,6 +416,7 @@ window.Trainer = window.Trainer || {};
   Trainer.payoutCatalog = {
     threeCard,
     roulette,
+    niu,
     games
   };
   Trainer.trainRows = trainRows;

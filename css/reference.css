@@ -192,6 +192,14 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
   background: var(--panel-solid);
 }
 
+.ref-table-wrap.is-wide {
+  overflow-x: auto;
+}
+
+.ref-table-wrap.is-wide .ref-table {
+  min-width: 440px;
+}
+
 .ref-table-title {
   margin: 0;
   padding: 12px 14px;
@@ -244,6 +252,10 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
 .ref-table tbody tr:nth-child(7) { animation-delay: 140ms; }
 .ref-table tbody tr:nth-child(8) { animation-delay: 160ms; }
 .ref-table tbody tr:nth-child(9) { animation-delay: 180ms; }
+.ref-table tbody tr:nth-child(10) { animation-delay: 200ms; }
+.ref-table tbody tr:nth-child(11) { animation-delay: 220ms; }
+.ref-table tbody tr:nth-child(12) { animation-delay: 240ms; }
+.ref-table tbody tr:nth-child(13) { animation-delay: 260ms; }
 
 .ref-table tbody tr:hover {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -264,6 +276,10 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
 .ref-table th:not(:first-child),
 .ref-table td.odds {
   text-align: right;
+}
+
+.ref-table td.odds[rowspan] {
+  vertical-align: middle;
 }
 
 html[data-theme='dark'] .ref-table .odds {
