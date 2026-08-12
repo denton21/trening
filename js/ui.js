@@ -17,6 +17,8 @@ function replayClass(element, className) {
   element.classList.add(className);
 }
 
+Trainer.replayClass = replayClass;
+
 const exampleTimers = new WeakMap();
 
 Trainer.showMessage = function showMessage(element, text, type = '') {
@@ -138,8 +140,9 @@ Trainer.showSessionSummary = function showSessionSummary(options = {}) {
   });
 
   const avgSec = total ? (totalMs / total / 1000).toFixed(1) : '—';
+  const esc = Trainer.escapeHtml || ((v) => String(v ?? ''));
   const worstText = worst
-    ? `${worst.label} · ${(worst.ms / 1000).toFixed(1)} с${worst.correct ? '' : ' (ошибка)'}`
+    ? `${esc(worst.label)} · ${(worst.ms / 1000).toFixed(1)} с${worst.correct ? '' : ' (ошибка)'}`
     : '—';
 
   const titleEl = document.getElementById('sessionSummaryTitle');

@@ -19,6 +19,13 @@ window.Trainer = window.Trainer || {};
     showSessionSummary
   } = Trainer;
 
+  const {
+    computePokerPayout,
+    computeUltimateParts,
+    formatMoney,
+    trainRows
+  } = Trainer;
+
   function range(min, max, step) {
     const out = [];
     for (let v = min; v <= max + 1e-9; v += step) {
@@ -61,224 +68,7 @@ window.Trainer = window.Trainer || {};
     return out;
   }
 
-  /**
-   * pay:
-   *  - bonus    — только ставка × коэф
-   *  - texas    — анте по коэф + бет 1:1 (бет = 2×анте) → stake × (mult + 2)
-   *  - russian  — дан ante + комбо; бет = 2×ante (в уме); выплата = бет × коэф
-   *  - ultimate — полная: Ante 1:1 + Play 1:1 + Blind×коэф (Blind=Ante, Play=k×Ante)
-   *               ниже стрита Blind push (×0). Play k ∈ {1, 2, 4}
-   */
-  const threeCardPayouts = Trainer.payoutCatalog?.threeCard || {};
-  const rowsFromCatalog = (rows) => (rows || []).filter(([, mult]) => typeof mult === 'number').map(([hand, mult]) => ({ hand, mult }));
-
-  const CATALOG = {
-    jackpot: {
-      id: 'jackpot',
-      label: 'Джекпот-бонус',
-      short: 'Джекпот',
-      stake: 'jackpot',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Две пары', mult: 2 },
-        { hand: 'Тройка', mult: 10 },
-        { hand: 'Стрит', mult: 25 },
-        { hand: 'Флеш', mult: 50 },
-        { hand: 'Фул-хаус', mult: 100 },
-        { hand: 'Каре', mult: 250 }
-      ]
-    },
-    sixcard: {
-      id: 'sixcard',
-      label: 'Шестикарточный',
-      short: '6-карт',
-      stake: 'std',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Стрит · с раздачи', mult: 25 },
-        { hand: 'Стрит · с покупкой', mult: 7 },
-        { hand: 'Флеш · с раздачи', mult: 50 },
-        { hand: 'Флеш · с покупкой', mult: 15 },
-        { hand: 'Фул-хаус · с раздачи', mult: 100 },
-        { hand: 'Фул-хаус · с покупкой', mult: 30 },
-        { hand: 'Каре · с раздачи', mult: 300 },
-        { hand: 'Каре · с покупкой', mult: 100 },
-        { hand: 'Стрит-флеш · с раздачи', mult: 500 },
-        { hand: 'Стрит-флеш · с покупкой', mult: 150 },
-        { hand: 'Роял-флеш · с раздачи', mult: 1000 },
-        { hand: 'Роял-флеш · с покупкой', mult: 300 }
-      ]
-    },
-    texas: {
-      id: 'texas',
-      label: 'Техасский холдем',
-      short: 'Техас',
-      stake: 'std',
-      pay: 'texas',
-      rows: [
-        { hand: 'Пара', mult: 1 },
-        { hand: 'Две пары', mult: 1 },
-        { hand: 'Тройка', mult: 1 },
-        { hand: 'Стрит', mult: 1 },
-        { hand: 'Флеш', mult: 2 },
-        { hand: 'Фул-хаус', mult: 3 },
-        { hand: 'Каре', mult: 10 },
-        { hand: 'Стрит-флеш', mult: 20 },
-        { hand: 'Роял-флеш', mult: 100 }
-      ]
-    },
-    aa: {
-      id: 'aa',
-      label: 'Бонус AA',
-      short: 'AA',
-      stake: 'std',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Пара тузов', mult: 7 },
-        { hand: 'Две пары', mult: 7 },
-        { hand: 'Тройка', mult: 7 },
-        { hand: 'Стрит', mult: 7 },
-        { hand: 'Флеш', mult: 20 },
-        { hand: 'Фул-хаус', mult: 30 },
-        { hand: 'Каре', mult: 40 },
-        { hand: 'Стрит-флеш', mult: 50 },
-        { hand: 'Роял-флеш', mult: 100 }
-      ]
-    },
-    trips: {
-      id: 'trips',
-      label: 'Бонус Trips',
-      short: 'Trips',
-      stake: 'std',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Тройка', mult: 3 },
-        { hand: 'Стрит', mult: 4 },
-        { hand: 'Флеш', mult: 7 },
-        { hand: 'Фул-хаус', mult: 8 },
-        { hand: 'Каре', mult: 30 },
-        { hand: 'Стрит-флеш', mult: 40 },
-        { hand: 'Роял-флеш', mult: 50 }
-      ]
-    },
-    ultimate: {
-      id: 'ultimate',
-      label: 'Ультимейт',
-      short: 'Ультимейт',
-      stake: 'std',
-      pay: 'ultimate',
-      // Play: ×1 (ривер), ×2 (флоп), ×4 (префлоп)
-      playMults: [1, 2, 4],
-      rows: [
-        { hand: 'Пара', mult: 0 },
-        { hand: 'Две пары', mult: 0 },
-        { hand: 'Тройка', mult: 0 },
-        { hand: 'Стрит', mult: 1 },
-        { hand: 'Флеш', mult: 1.5 },
-        { hand: 'Фул-хаус', mult: 3 },
-        { hand: 'Каре', mult: 10 },
-        { hand: 'Стрит-флеш', mult: 50 },
-        { hand: 'Роял-флеш', mult: 500 }
-      ]
-    },
-    novo: {
-      id: 'novo',
-      label: 'Novo Poker',
-      short: 'Novo',
-      stake: 'std',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Карты одного цвета', mult: 2 },
-        { hand: 'Туз · король · дама', mult: 5 },
-        { hand: 'Тройка', mult: 8 },
-        { hand: 'Стрит', mult: 30 },
-        { hand: 'Флеш', mult: 60 },
-        { hand: 'Фул-хаус', mult: 100 },
-        { hand: 'Пять картинок', mult: 120 },
-        { hand: 'Каре', mult: 200 }
-      ]
-    },
-    russian: {
-      id: 'russian',
-      label: 'Русский покер',
-      short: 'Рус. покер',
-      stake: 'std',
-      pay: 'russian',
-      // Ante на экране; бет = 2×ante в уме; выплата = бет × коэф
-      rows: [
-        { hand: 'Тройка', mult: 3 },
-        { hand: 'Стрит', mult: 4 },
-        { hand: 'Флеш', mult: 5 },
-        { hand: 'Фул-хаус', mult: 7 },
-        { hand: 'Каре', mult: 20 },
-        { hand: 'Стрит-флеш', mult: 50 },
-        { hand: 'Роял-флеш', mult: 100 }
-      ]
-    },
-    tcp_ante: {
-      id: 'tcp_ante',
-      label: '3-карт · Ante Bonus',
-      short: '3к Ante',
-      stake: 'std',
-      pay: 'bonus',
-      rows: rowsFromCatalog(threeCardPayouts.ante)
-    },
-    tcp_pair: {
-      id: 'tcp_pair',
-      label: '3-карт · Пара Плюс',
-      short: '3к Pair+',
-      stake: 'std',
-      pay: 'bonus',
-      rows: rowsFromCatalog(threeCardPayouts.pairPlus)
-    },
-    tcp_plus3: {
-      id: 'tcp_plus3',
-      label: '3-карт · 3+3',
-      short: '3к 3+3',
-      stake: 'std',
-      pay: 'bonus',
-      // Лучшая 5-карточная из 3 игрока + 3 дилера
-      rows: rowsFromCatalog(threeCardPayouts.plus3)
-    },
-    tcp_jp: {
-      id: 'tcp_jp',
-      label: '3-карт · JP Bonus',
-      short: '3к JP',
-      stake: 'jackpot',
-      pay: 'bonus',
-      // Мини-рояль ♠ — джекпот % (не в тренажёре)
-      rows: rowsFromCatalog(threeCardPayouts.jp)
-    },
-    bj20: {
-      id: 'bj20',
-      label: 'BJ · бонус 20',
-      short: 'BJ 20',
-      stake: 'std',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Любые 20', mult: 5 },
-        { hand: 'Одномастные 20', mult: 10 },
-        { hand: 'Одинаковые 20', mult: 30 },
-        { hand: 'Два крестовых короля', mult: 100 }
-      ]
-    },
-    bj_jackpot: {
-      id: 'bj_jackpot',
-      label: 'BJ · джекпот',
-      short: 'BJ JP',
-      stake: 'jackpot',
-      pay: 'bonus',
-      rows: [
-        { hand: 'Блекджек', mult: 2 },
-        { hand: 'Одномастный блекджек', mult: 10 },
-        { hand: 'Дама + король одномастные', mult: 25 },
-        { hand: 'Две семёрки', mult: 50 },
-        { hand: 'Две одномастные семёрки', mult: 100 },
-        { hand: 'Три семёрки', mult: 250 }
-      ]
-    }
-  };
-
+  const CATALOG = Trainer.payoutCatalog?.games || {};
   const ALL_IDS = Object.keys(CATALOG);
 
   const state = {
@@ -369,54 +159,6 @@ window.Trainer = window.Trainer || {};
     return cat.stake === 'jackpot' ? STAKES_JACKPOT : STAKES_STD;
   }
 
-  function formatMoney(n) {
-    if (Number.isInteger(n)) {
-      return String(n);
-    }
-    return String(Math.round(n * 100) / 100).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
-  }
-
-  function roundPay(n) {
-    return Math.round(n * 1000) / 1000;
-  }
-
-  /**
-   * Ultimate: Blind = Ante×mult (0 = push ниже стрита);
-   * Ante+Play 1:1 = Ante + Play, Play = playMult×Ante.
-   */
-  function computeUltimateParts(stake, mult, playMult) {
-    const k = playMult || 1;
-    const blind = roundPay(stake * mult);
-    const antePlay = roundPay(stake + stake * k);
-    return {
-      blind,
-      antePlay,
-      total: roundPay(blind + antePlay)
-    };
-  }
-
-  /**
-   * stake — бонусная ставка или Ante
-   * mult — коэф комбо (для ultimate — коэф Blind; 0 = push)
-   * playMult — множитель Play к Ante (только ultimate)
-   */
-  function computeAnswer(pay, stake, mult, playMult) {
-    if (pay === 'russian') {
-      // Бет = 2 × Ante; выплата по бету: (2 × ante) × mult
-      return roundPay(stake * 2 * mult);
-    }
-    if (pay === 'texas') {
-      // Ante × mult + Bet × 1, Bet = 2 × Ante
-      // Пример: ante 55, каре ×10 → 55×10 + 110 = 660
-      return roundPay(stake * mult + stake * 2);
-    }
-    if (pay === 'ultimate') {
-      return computeUltimateParts(stake, mult, playMult).total;
-    }
-    // bonus — только ставка × коэф
-    return roundPay(stake * mult);
-  }
-
   function stakeLabel(pay) {
     if (pay === 'russian' || pay === 'texas' || pay === 'ultimate') {
       return 'Ante';
@@ -435,23 +177,12 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function updateStats() {
-    els.timeLeft.textContent = formatTime(state.secondsLeft);
-    els.correctCount.textContent = state.correct;
-    els.wrongCount.textContent = state.wrong;
-    setProgress(els.timeProgress, state.secondsLeft, state.duration);
-  }
-
-  function stopTimer() {
-    if (state.timer) {
-      window.clearInterval(state.timer);
-      state.timer = null;
-    }
-    if (state.nextTimer) {
-      window.clearTimeout(state.nextTimer);
-      state.nextTimer = null;
-    }
-  }
+  const session = Trainer.createTimedSession({
+    state,
+    els,
+    summaryTitle: 'Итог: Покер / бонусы'
+  });
+  const { updateStats, stopTimers: stopTimer } = session;
 
   function selectedCatalog() {
     return ALL_IDS.filter((id) => state.selected.has(id)).map((id) => CATALOG[id]);
@@ -463,7 +194,7 @@ window.Trainer = window.Trainer || {};
       const weighted = cat.stake !== 'jackpot';
       const stakes = expandStakes(stakesFor(cat), weighted);
       const playMults = cat.pay === 'ultimate' ? cat.playMults || [1, 2, 4] : [null];
-      cat.rows.forEach((row) => {
+      trainRows(cat).forEach((row) => {
         stakes.forEach((stake) => {
           playMults.forEach((playMult) => {
             const item = {
@@ -475,7 +206,7 @@ window.Trainer = window.Trainer || {};
               mult: row.mult,
               playMult,
               stake,
-              answer: computeAnswer(cat.pay, stake, row.mult, playMult),
+              answer: computePokerPayout(cat.pay, stake, row.mult, playMult),
               key: `${cat.id}|${row.hand}|${stake}|${playMult ?? ''}`
             };
             if (cat.pay === 'ultimate') {
@@ -618,6 +349,7 @@ window.Trainer = window.Trainer || {};
           `<span class="poker-meta-hand">Play ×${q.playMult}</span>`;
       }
       els.meta.innerHTML = html;
+      Trainer.replayClass?.(els.meta, 'is-enter');
     }
     return true;
   }
@@ -633,26 +365,8 @@ window.Trainer = window.Trainer || {};
     focusAnswer(q);
   }
 
-  function presentSummary(correct, wrong, log) {
-    const entries = log || state.sessionLog;
-    if (!entries.length || !showSessionSummary) {
-      return;
-    }
-    showSessionSummary({
-      title: 'Итог: Покер / бонусы',
-      correct: correct != null ? correct : state.correct,
-      wrong: wrong != null ? wrong : state.wrong,
-      log: entries.slice()
-    });
-    state.sessionLog = [];
-  }
-
   function finish() {
-    stopTimer();
-    state.running = false;
-    setAnswersEnabled(false);
-    showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
-    presentSummary();
+    session.finish(() => setAnswersEnabled(false));
   }
 
   function start() {
@@ -660,56 +374,22 @@ window.Trainer = window.Trainer || {};
       showMessage(els.message, 'Выберите хотя бы одну игру', 'bad');
       return;
     }
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.sessionLog = [];
-    state.secondsLeft = state.duration;
-    state.running = true;
+    session.beginRun();
     nextQuestion();
     updateStats();
     showMessage(els.message, 'Назовите выплату', '');
-
-    if (state.secondsLeft !== null) {
-      state.timer = window.setInterval(() => {
-        state.secondsLeft -= 1;
-        updateStats();
-        if (state.secondsLeft <= 0) {
-          finish();
-        }
-      }, 1000);
-    }
+    session.startClock(finish);
   }
 
   function reset() {
-    const prevCorrect = state.correct;
-    const prevWrong = state.wrong;
-    const prevLog = state.sessionLog.slice();
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.secondsLeft = state.duration;
-    state.running = false;
+    const prev = session.resetRun();
     showIdleExample();
     setAnswerMode(false);
     clearAnswers();
     setAnswersEnabled(false);
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
-    presentSummary(prevCorrect, prevWrong, prevLog);
-  }
-
-  function setTime(seconds) {
-    state.duration = seconds;
-    state.secondsLeft = seconds;
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free')
-      );
-    });
-    updateStats();
-    persistSettings();
+    session.presentSummary(prev.correct, prev.wrong, prev.log);
   }
 
   function loadSavedSettings() {
@@ -717,10 +397,7 @@ window.Trainer = window.Trainer || {};
       return;
     }
     const saved = getSettings().poker || {};
-    if (saved.duration === null || typeof saved.duration === 'number') {
-      state.duration = saved.duration;
-      state.secondsLeft = saved.duration;
-    }
+    session.applySavedDuration(saved);
     if (Array.isArray(saved.selected) && saved.selected.length) {
       const valid = saved.selected
         .map((id) => (id === 'ultimate_blind' ? 'ultimate' : id))
@@ -729,13 +406,7 @@ window.Trainer = window.Trainer || {};
         state.selected = new Set(valid);
       }
     }
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(state.duration) === button.dataset.seconds ||
-          (state.duration === null && button.dataset.seconds === 'free')
-      );
-    });
+    session.syncTimeButtons(els.timeButtons);
   }
 
   function parseUserAnswer(raw) {
@@ -755,11 +426,7 @@ window.Trainer = window.Trainer || {};
     loadSavedSettings();
     renderChoiceButtons();
 
-    els.timeButtons.forEach((button) => {
-      button.addEventListener('click', () =>
-        setTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds))
-      );
-    });
+    session.bindTimeButtons(els.timeButtons, persistSettings);
 
     els.selectAllBtn?.addEventListener('click', () => setAll(true));
     els.selectNoneBtn?.addEventListener('click', () => setAll(false));
@@ -823,27 +490,17 @@ window.Trainer = window.Trainer || {};
         flashAnswer(els.answer, isCorrect);
       }
 
-      pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
-      recordAttempt('poker', label, isCorrect, state.questionStartedAt);
+      session.record('poker', label, isCorrect);
       flashTask(els.task, isCorrect);
 
       if (isCorrect) {
-        state.correct += 1;
-        bumpStat(els.correctCount);
         showMessage(els.message, 'Верно', 'good');
         nextQuestion();
       } else {
-        state.wrong += 1;
-        bumpStat(els.wrongCount);
         showMessage(els.message, `Ошибка: ${label}`, 'bad');
         setAnswersEnabled(false);
-        state.nextTimer = window.setTimeout(() => {
-          if (state.running) {
-            nextQuestion();
-          }
-        }, 1100);
+        session.scheduleNext(nextQuestion, 1100);
       }
-      updateStats();
     });
 
     reset();

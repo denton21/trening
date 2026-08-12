@@ -12,6 +12,9 @@ window.Trainer = window.Trainer || {};
       multipliers: null,
       duration: 60
     },
+    addition: {
+      duration: 60
+    },
     blackjack: {
       duration: 60
     },

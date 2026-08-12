@@ -67,9 +67,16 @@ window.Trainer = window.Trainer || {};
     }
     const tabsRect = tabsEl.getBoundingClientRect();
     const btnRect = button.getBoundingClientRect();
-    const x = btnRect.left - tabsRect.left + tabsEl.scrollLeft;
+    const x = btnRect.left - tabsRect.left;
     tabsEl.style.setProperty('--tabs-indicator-x', `${Math.round(x)}px`);
     tabsEl.style.setProperty('--tabs-indicator-w', `${Math.round(btnRect.width)}px`);
+  }
+
+  function revealTab(button) {
+    if (!button || typeof button.scrollIntoView !== 'function') {
+      return;
+    }
+    button.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
   }
 
   function setButtons(name) {
@@ -117,6 +124,7 @@ window.Trainer = window.Trainer || {};
     clearSwitchTimer();
     Object.values(tabs).forEach((tab) => tab.stop());
     setButtons(name);
+    revealTab(next.button);
     activeTab = name;
     Trainer.safeStorageSet?.('roulette-trainer-active-tab', name);
 
@@ -132,12 +140,17 @@ window.Trainer = window.Trainer || {};
       next.panel.setAttribute('aria-hidden', 'false');
       void next.panel.offsetWidth;
       next.panel.classList.add('tab-enter');
+      switching = false;
 
-      // Children stagger + panel enter, then clear classes
-      window.setTimeout(() => {
-        next.panel.classList.remove('tab-enter');
-        switching = false;
-      }, 560);
+      next.panel.addEventListener(
+        'animationend',
+        (event) => {
+          if (event.target === next.panel) {
+            next.panel.classList.remove('tab-enter');
+          }
+        },
+        { once: true }
+      );
     }, LEAVE_MS);
   }
 
@@ -174,9 +187,13 @@ window.Trainer = window.Trainer || {};
 
     setButtons(activeTab);
     showPanel(activeTab, false);
+    revealTab(tabs[activeTab].button);
+    tabsEl?.addEventListener('scroll', () => moveIndicator(tabs[activeTab].button), { passive: true });
     window.addEventListener('resize', () => moveIndicator(tabs[activeTab].button));
-    // After fonts/layout settle
-    window.requestAnimationFrame(() => moveIndicator(tabs[activeTab].button));
+    window.requestAnimationFrame(() => {
+      moveIndicator(tabs[activeTab].button);
+      revealTab(tabs[activeTab].button);
+    });
   }
 
   if (Trainer.initTheme) {

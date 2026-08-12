@@ -150,7 +150,7 @@ main {
   position: relative;
   width: min(980px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0 48px;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 0 max(48px, env(safe-area-inset-bottom, 0px));
   animation: page-in 560ms var(--ease-strict) both;
 }
 
@@ -205,7 +205,10 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: brand-sheen 8s ease-in-out infinite alternate;
+}
+
+.brand:hover h1 {
+  animation: brand-sheen 4.5s ease-in-out infinite alternate;
 }
 
 html[data-theme='dark'] h1 {
@@ -215,6 +218,7 @@ html[data-theme='dark'] h1 {
     #e2e8f0 40%,
     var(--accent) 100%
   );
+  background-size: 160% 100%;
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -346,7 +350,17 @@ html[data-theme='dark'] .trainer::before {
   }
 
   .stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat {
+    min-height: 64px;
+    padding: 10px 8px;
+  }
+
+  .stat strong {
+    font-size: 22px;
   }
 
   .history-stats {

@@ -16,10 +16,12 @@ window.Trainer = window.Trainer || {};
     recordAttempt,
     saveSettings,
     pushSessionAttempt,
-    showSessionSummary
+    showSessionSummary,
+    randInt,
+    shuffle
   } = Trainer;
 
-  const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+  const RED = Trainer.EURO_RED;
 
   const ALL_DENOMS = [1, 2, 5, 25];
 
@@ -94,19 +96,6 @@ window.Trainer = window.Trainer || {};
     wrongCount: $('#countingWrongCount'),
     lastTime: $('#countingLastTime')
   };
-
-  function randInt(min, max) {
-    return min + Math.floor(Math.random() * (max - min + 1));
-  }
-
-  function shuffle(list) {
-    const copy = list.slice();
-    for (let i = copy.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
 
   function formatSeconds(ms) {
     return `${(ms / 1000).toFixed(1)} с`;

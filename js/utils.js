@@ -46,8 +46,14 @@ Trainer.formatTime = function formatTime(seconds) {
 };
 
 Trainer.setPressed = function setPressed(button, active) {
+  const wasActive = button.classList.contains('active');
   button.classList.toggle('active', active);
   button.setAttribute('aria-pressed', String(active));
+  if (active && !wasActive) {
+    button.classList.remove('is-picked');
+    void button.offsetWidth;
+    button.classList.add('is-picked');
+  }
 };
 
 Trainer.makeButton = function makeButton(text, active, onClick) {
@@ -58,4 +64,29 @@ Trainer.makeButton = function makeButton(text, active, onClick) {
   button.setAttribute('aria-pressed', String(active));
   button.addEventListener('click', onClick);
   return button;
+};
+
+Trainer.escapeHtml = function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+};
+
+Trainer.randInt = function randInt(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+};
+
+Trainer.shuffle = function shuffle(list) {
+  const copy = list.slice();
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+Trainer.pick = function pick(array) {
+  return array[Math.floor(Math.random() * array.length)];
 };

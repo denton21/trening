@@ -11,8 +11,15 @@ window.Trainer = window.Trainer || {};
     showMessage,
     winningSlotsForZero,
     winningSlotsForCell,
-    payoutOf
+    payoutOf,
+    randInt,
+    shuffle,
+    blackjackPayout
   } = Trainer;
+
+  const RED = Trainer.EURO_RED;
+  const DUEL_MODES = ['multiplication', 'blackjack', 'counting'];
+  const DUEL_LEVELS = ['easy', 'medium', 'hard'];
 
   const MQTT_URLS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
   const LOBBY_TOPIC = 'roulette-trainer/v2/lobby';
@@ -35,7 +42,6 @@ window.Trainer = window.Trainer || {};
 
   const LEVEL_LABELS = { easy: 'лёгкий', medium: 'средний', hard: 'высокий' };
   const MODE_LABELS = { multiplication: 'Умнож.', blackjack: 'BJ', counting: 'Счёт' };
-  const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 
   const state = {
     mode: 'multiplication',
@@ -106,17 +112,48 @@ window.Trainer = window.Trainer || {};
     backBtn: $('#duelBackBtn')
   };
 
-  function randInt(min, max) {
-    return min + Math.floor(Math.random() * (max - min + 1));
+  function sanitizeMode(mode) {
+    return DUEL_MODES.includes(mode) ? mode : 'multiplication';
   }
 
-  function shuffle(list) {
-    const copy = list.slice();
-    for (let i = copy.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
+  function sanitizeLevel(level) {
+    return DUEL_LEVELS.includes(level) ? level : 'easy';
+  }
+
+  function sanitizeRoomId(id) {
+    if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,48}$/.test(id)) {
+      return null;
     }
-    return copy;
+    return id;
+  }
+
+  function sanitizeRoomNumber(n) {
+    const value = Number(n);
+    if (!Number.isInteger(value) || value < 1 || value > 9999) {
+      return 0;
+    }
+    return value;
+  }
+
+  function sanitizePlayerCount(n) {
+    const value = Number(n);
+    if (!Number.isInteger(value) || value < 0 || value > 64) {
+      return 1;
+    }
+    return value;
+  }
+
+  function sanitizeName(name) {
+    return String(name || 'Игрок').replace(/[\u0000-\u001F<>]/g, '').trim().slice(0, 16) || 'Игрок';
+  }
+
+  function sanitizeStatus(status) {
+    return status === 'playing' || status === 'finished' ? status : 'waiting';
+  }
+
+  function finiteNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
   }
 
   function makeId(prefix) {
@@ -186,7 +223,7 @@ window.Trainer = window.Trainer || {};
 
   function getName() {
     const raw = (els.playerName && els.playerName.value) || state.playerName || 'Игрок';
-    const name = String(raw).trim().slice(0, 16) || 'Игрок';
+    const name = sanitizeName(raw);
     state.playerName = name;
     try {
       localStorage.setItem('duel-player-name', name);
@@ -229,7 +266,11 @@ window.Trainer = window.Trainer || {};
           ? `Счёт (${LEVEL_LABELS[room.level] || room.level})`
           : MODE_LABELS[room.mode] || room.mode;
       const info = document.createElement('div');
-      info.innerHTML = `<strong>Комната ${room.number}</strong><span>${modeText} · игроков: ${room.playerCount || 1}</span>`;
+      const title = document.createElement('strong');
+      title.textContent = `Комната ${room.number}`;
+      const meta = document.createElement('span');
+      meta.textContent = `${modeText} · игроков: ${room.playerCount || 1}`;
+      info.append(title, meta);
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'primary';
@@ -407,7 +448,7 @@ window.Trainer = window.Trainer || {};
   function makeQuestion(mode) {
     if (mode === 'blackjack') {
       const bet = randInt(1, 40) * 5;
-      return { mode: 'blackjack', display: String(bet), answer: bet * 1.5 };
+      return { mode: 'blackjack', display: String(bet), answer: blackjackPayout(bet) };
     }
     if (mode === 'counting') return makeCountingQuestion();
     const tables = [5, 8, 11, 17, 35];
@@ -425,6 +466,7 @@ window.Trainer = window.Trainer || {};
     els.boardWrap.classList.remove('hidden');
     els.example.classList.add('hidden');
     els.winLabel.textContent = `Выпало: ${q.winNumber}`;
+    Trainer.replayClass?.(els.winLabel, 'is-enter');
     const showZero = q.grid.showZero !== false;
     els.board.classList.toggle('no-zero', !showZero);
     els.board.classList.remove('is-enter');
@@ -446,8 +488,11 @@ window.Trainer = window.Trainer || {};
     q.chips.forEach((chip, index) => {
       const el = document.createElement('span');
       el.className = 'chip has-count';
-      el.style.left = `${chip.x}%`;
-      el.style.top = `${chip.y}%`;
+      const x = finiteNumber(chip.x);
+      const y = finiteNumber(chip.y);
+      if (x == null || y == null) return;
+      el.style.left = `${x}%`;
+      el.style.top = `${y}%`;
       el.style.setProperty('--i', String(index));
       el.textContent = String(chip.count);
       els.chips.appendChild(el);
@@ -659,7 +704,18 @@ window.Trainer = window.Trainer || {};
   }
 
   function applyPlayers(players, opts = {}) {
-    state.players = players;
+    const next = {};
+    Object.values(players || {}).forEach((p) => {
+      if (!p || typeof p.id !== 'string') return;
+      next[p.id] = {
+        id: String(p.id).slice(0, 48),
+        name: sanitizeName(p.name),
+        lives: Math.max(0, Math.min(MAX_LIVES, Number(p.lives) || 0)),
+        eliminated: Boolean(p.eliminated),
+        solved: Boolean(p.solved)
+      };
+    });
+    state.players = next;
     const me = myPlayer();
     if (me && me.eliminated && opts.afterPressure && !state.meSolved) {
       // Только что выбил — можно дорешать текущий
@@ -712,15 +768,16 @@ window.Trainer = window.Trainer || {};
     if (!data || !data.type) return;
 
     if (data.type === 'room_announce' && data.roomId) {
-      // Свою комнату тоже показываем в списке? Можно скрыть
-      state.lobbyRooms[data.roomId] = {
-        roomId: data.roomId,
-        number: data.number || 0,
-        mode: data.mode,
-        level: data.level,
-        hostId: data.hostId,
-        status: data.status || 'waiting',
-        playerCount: data.playerCount || 1,
+      const roomId = sanitizeRoomId(data.roomId);
+      if (!roomId) return;
+      state.lobbyRooms[roomId] = {
+        roomId,
+        number: sanitizeRoomNumber(data.number),
+        mode: sanitizeMode(data.mode),
+        level: sanitizeLevel(data.level),
+        hostId: typeof data.hostId === 'string' ? data.hostId.slice(0, 48) : '',
+        status: sanitizeStatus(data.status),
+        playerCount: sanitizePlayerCount(data.playerCount),
         seenAt: Date.now()
       };
       if (state.phase === 'lobby') renderRoomList();
@@ -741,7 +798,7 @@ window.Trainer = window.Trainer || {};
     switch (data.type) {
       case 'join_request':
         if (state.role === 'host' && state.phase === 'waiting') {
-          hostAddPlayer(data.from, data.name || 'Игрок');
+          hostAddPlayer(data.from, sanitizeName(data.name));
         } else if (state.role === 'host' && state.phase !== 'waiting') {
           publishRoom({ type: 'join_denied', to: data.from, reason: 'Игра уже идёт' });
         }
@@ -751,8 +808,8 @@ window.Trainer = window.Trainer || {};
         if (state.role === 'guest' && data.to === state.playerId) {
           state.players = data.players || {};
           state.hostId = data.hostId;
-          state.mode = data.mode || state.mode;
-          state.level = data.level || state.level;
+          state.mode = sanitizeMode(data.mode || state.mode);
+          state.level = sanitizeLevel(data.level || state.level);
           state.roomNumber = data.number;
           state.phase = 'waiting';
           showScreen('waiting');
@@ -823,8 +880,8 @@ window.Trainer = window.Trainer || {};
         state.phase = 'playing';
         state.finished = false;
         state.round = data.round;
-        state.mode = data.mode || state.mode;
-        state.level = data.level || state.level;
+        state.mode = sanitizeMode(data.mode || state.mode);
+        state.level = sanitizeLevel(data.level || state.level);
         if (data.players) applyPlayers(data.players);
         showScreen('game');
         renderQuestion(data.question, true);
@@ -906,8 +963,8 @@ window.Trainer = window.Trainer || {};
   }
 
   function applySync(data) {
-    if (data.mode) state.mode = data.mode;
-    if (data.level) state.level = data.level;
+    if (data.mode) state.mode = sanitizeMode(data.mode);
+    if (data.level) state.level = sanitizeLevel(data.level);
     if (data.hostId) state.hostId = data.hostId;
     if (data.number != null) state.roomNumber = data.number;
     if (data.players) applyPlayers(data.players);
@@ -946,7 +1003,7 @@ window.Trainer = window.Trainer || {};
     }
     state.players[id] = {
       id,
-      name: String(name || 'Игрок').slice(0, 16),
+      name: sanitizeName(name),
       lives: MAX_LIVES,
       eliminated: false,
       solved: false

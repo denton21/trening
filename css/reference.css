@@ -232,7 +232,18 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
 
 .ref-table tbody tr {
   transition: background var(--dur-fast) var(--ease-soft);
+  animation: fade-up 280ms var(--ease-out) both;
 }
+
+.ref-table tbody tr:nth-child(1) { animation-delay: 20ms; }
+.ref-table tbody tr:nth-child(2) { animation-delay: 40ms; }
+.ref-table tbody tr:nth-child(3) { animation-delay: 60ms; }
+.ref-table tbody tr:nth-child(4) { animation-delay: 80ms; }
+.ref-table tbody tr:nth-child(5) { animation-delay: 100ms; }
+.ref-table tbody tr:nth-child(6) { animation-delay: 120ms; }
+.ref-table tbody tr:nth-child(7) { animation-delay: 140ms; }
+.ref-table tbody tr:nth-child(8) { animation-delay: 160ms; }
+.ref-table tbody tr:nth-child(9) { animation-delay: 180ms; }
 
 .ref-table tbody tr:hover {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -324,9 +335,12 @@ html[data-theme='dark'] .ref-table .odds {
   transition: opacity 160ms var(--ease-soft), filter 160ms var(--ease-soft);
 }
 
-.ref-wheel-svg .seg:hover,
+.ref-wheel-svg .seg:hover {
+  filter: brightness(1.16) saturate(1.08);
+}
+
 .ref-wheel-svg .seg.is-hot {
-  filter: brightness(1.18) saturate(1.1);
+  filter: brightness(1.28) saturate(1.18);
 }
 
 .ref-wheel-svg .seg-red {
@@ -408,6 +422,10 @@ html[data-theme='dark'] .ref-table .odds {
   line-height: 1;
 }
 
+.ref-wheel-info .ref-picked.is-pop {
+  animation: win-label-in 340ms var(--ease-spring) both;
+}
+
 .ref-wheel-info .ref-picked.is-red {
   color: #ef4444;
 }
@@ -449,6 +467,16 @@ html[data-theme='dark'] .ref-wheel-info .ref-picked.is-black {
   border: 1px solid var(--line-strong);
   background: var(--input-bg);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur) var(--ease-soft),
+    box-shadow var(--dur) var(--ease-soft);
+}
+
+.ref-bet-chip:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 html[data-theme='dark'] .ref-bet-chip {
@@ -535,13 +563,17 @@ html[data-theme='dark'] .ref-bet-chip strong {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ref-badge-jackpot {
-    animation: none;
+  .ref-badge-jackpot,
+  .ref-picked.is-pop,
+  .ref-table tbody tr,
+  .ref-bet-chip {
+    animation: none !important;
   }
 
   .ref-nav-btn,
   .ref-table tbody tr,
-  .ref-wheel-svg .seg {
+  .ref-wheel-svg .seg,
+  .ref-bet-chip {
     transition: none;
   }
 }

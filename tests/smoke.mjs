@@ -22,4 +22,11 @@ if (!cacheVersion) {
   console.error('Service Worker cache version is missing');
   process.exit(1);
 }
+const cached = [...sw.matchAll(/'\.\/([^']+)'/g)].map((match) => match[1]).filter((ref) => ref.endsWith('.js') || ref.endsWith('.css'));
+const localAssets = localRefs.filter((ref) => ref.endsWith('.js') || ref.endsWith('.css'));
+const uncached = localAssets.filter((ref) => !cached.includes(ref) && !cached.includes(ref.replace(/^\.\//, '')));
+if (uncached.length) {
+  console.error(`Service Worker cache missing: ${uncached.join(', ')}`);
+  process.exit(1);
+}
 console.log(`Smoke OK: ${localRefs.length} local references, ${ids.length} unique IDs, cache ${cacheVersion[1]}`);

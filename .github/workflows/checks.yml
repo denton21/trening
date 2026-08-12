@@ -17,5 +17,7 @@ jobs:
         run: find . -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run payout tests
         run: node tests/payouts.mjs
+      - name: Run formula tests
+        run: node tests/formulas.mjs
       - name: Run smoke checks
         run: node tests/smoke.mjs

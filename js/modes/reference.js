@@ -3,11 +3,8 @@ window.Trainer = window.Trainer || {};
 (function () {
   const { $ } = Trainer;
 
-  const EURO_ORDER = [
-    0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26
-  ];
-
-  const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+  const EURO_ORDER = Trainer.EURO_ORDER;
+  const RED = Trainer.EURO_RED;
 
   function colorOf(n) {
     if (n === 0) return 'green';
@@ -86,6 +83,7 @@ window.Trainer = window.Trainer || {};
       const c = colorOf(num);
       picked.textContent = String(num);
       picked.className = `ref-picked is-${c}`;
+      Trainer.replayClass?.(picked, 'is-pop');
       const colorRu = c === 'green' ? 'зеро' : c === 'red' ? 'красное' : 'чёрное';
       meta.textContent = num === 0 ? 'Зеро · европейская рулетка' : `${colorRu} · прямая ×35`;
       svg.querySelectorAll('.seg').forEach((el) => {
@@ -155,6 +153,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initReference = function initReference() {
     const svg = $('#refWheel');
     const info = $('#refWheelInfo');
+    Trainer.fillPayoutTables?.($('#referenceTab') || document);
     renderWheel(svg);
     wireWheel(svg, info);
     wireNav();

@@ -575,6 +575,7 @@
   transition:
     color 180ms var(--ease-soft),
     text-shadow 220ms var(--ease-soft);
+  will-change: auto;
 }
 
 .example.is-leave {
@@ -604,14 +605,6 @@
   animation: message-pop 340ms var(--ease-spring), message-bad-glow 1.2s var(--ease-soft) 340ms 2;
 }
 
-.answer.flash-good {
-  animation: flash-good 620ms var(--ease-soft);
-}
-
-.answer.flash-bad {
-  animation: shake-bad 400ms var(--ease-out), flash-bad 620ms var(--ease-soft);
-}
-
 .stat strong.is-bump {
   display: inline-block;
   animation: stat-bump 380ms var(--ease-bounce);
@@ -621,22 +614,16 @@
   animation: choice-press 280ms var(--ease-out);
 }
 
-.task,
-.picture-task {
-  animation: task-ready 5s var(--ease-soft) infinite;
-  will-change: box-shadow;
+.answer.flash-good {
+  animation:
+    flash-good 620ms var(--ease-soft),
+    answer-success 440ms var(--ease-spring);
 }
 
-.task.is-correct .answer,
-.picture-task.is-correct .answer,
-.counting-task.is-correct .answer {
-  animation: answer-success 440ms var(--ease-spring);
-}
-
-.task.is-wrong .answer,
-.picture-task.is-wrong .answer,
-.counting-task.is-wrong .answer {
-  animation: answer-failure 380ms var(--ease-out);
+.answer.flash-bad {
+  animation:
+    shake-bad 400ms var(--ease-out),
+    flash-bad 620ms var(--ease-soft);
 }
 
 .stats-section[open] > :not(summary) {
@@ -651,41 +638,10 @@
   animation-delay: 80ms;
 }
 
-.counting-cell {
-  animation: grid-cell-in 340ms var(--ease-out) both;
-}
-
-.counting-grid .counting-cell:nth-child(2) {
-  animation-delay: 24ms;
-}
-.counting-grid .counting-cell:nth-child(3) {
-  animation-delay: 48ms;
-}
-.counting-grid .counting-cell:nth-child(4) {
-  animation-delay: 72ms;
-}
-.counting-grid .counting-cell:nth-child(5) {
-  animation-delay: 96ms;
-}
-.counting-grid .counting-cell:nth-child(6) {
-  animation-delay: 120ms;
-}
-.counting-grid .counting-cell:nth-child(7) {
-  animation-delay: 144ms;
-}
-.counting-grid .counting-cell:nth-child(8) {
-  animation-delay: 168ms;
-}
-.counting-grid .counting-cell:nth-child(9) {
-  animation-delay: 192ms;
-}
-
 .task.is-correct,
 .picture-task.is-correct,
 .counting-task.is-correct {
-  animation:
-    pulse-good 680ms var(--ease-soft),
-    task-ready 5s 680ms var(--ease-soft) infinite;
+  animation: pulse-good 680ms var(--ease-soft);
 }
 
 .task.is-wrong,
@@ -693,8 +649,7 @@
 .counting-task.is-wrong {
   animation:
     pulse-wrong 560ms var(--ease-soft),
-    shake-bad 400ms var(--ease-out),
-    task-ready 5s 560ms var(--ease-soft) infinite;
+    shake-bad 400ms var(--ease-out);
 }
 
 .layout.tab-leave {
@@ -801,8 +756,7 @@
   animation: timing-bar-grow 520ms var(--ease-out) both;
 }
 
-.choice.active,
-.choice[aria-pressed='true'] {
+.choice.is-picked {
   animation: choice-activate 320ms var(--ease-spring);
 }
 
@@ -857,7 +811,11 @@
   .message.good,
   .message.bad,
   .example.is-enter,
-  .example.is-leave {
+  .example.is-leave,
+  .choice.is-picked,
+  .payouts-detail.is-enter,
+  #pokerMeta.is-enter,
+  .counting-win.is-enter {
     animation: none !important;
     filter: none !important;
     clip-path: none !important;

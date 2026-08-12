@@ -1,20 +1,34 @@
-﻿/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-   Components тАФ tabs, controls, task stage, duel, session
-   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* Components — tabs, controls, task stage, duel, session */
 
-/* тФАтФА Tabs тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+.tabs-wrap {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 40;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
 
 .tabs {
   --tabs-indicator-x: 0px;
   --tabs-indicator-w: 0px;
   position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
-  margin: 0 0 24px;
+  margin: 0;
   padding: 0;
-  border-bottom: 1px solid var(--line);
-  background: transparent;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tabs::after {
@@ -47,6 +61,7 @@
 .tab {
   position: relative;
   z-index: 1;
+  flex: 0 0 auto;
   min-height: 46px;
   border: none;
   border-radius: 0;
@@ -335,7 +350,6 @@ html[data-theme='dark'] .tab.active {
   font-weight: 800;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  will-change: transform, opacity, filter;
   text-shadow: 0 2px 24px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
@@ -360,6 +374,10 @@ html[data-theme='dark'] .tab.active {
   letter-spacing: -0.02em;
   color: var(--accent-dark);
   text-shadow: 0 0 28px var(--accent-glow);
+}
+
+.payouts-detail.is-enter {
+  animation: win-label-in 320ms var(--ease-out) both;
 }
 
 html[data-theme='dark'] .payouts-detail {
@@ -580,11 +598,6 @@ html[data-theme='dark'] .secondary {
   background: var(--panel-solid);
   box-shadow: var(--shadow-lg);
   animation: card-rise 480ms var(--ease-strict) both;
-  transition: transform 180ms var(--ease-out);
-}
-
-.session-card:hover {
-  transform: translateY(-1px);
 }
 
 .session-card h2 {
@@ -787,12 +800,9 @@ html[data-theme='dark'] .duel-code {
   color: var(--muted);
 }
 
-.poker-game-choice.active .poker-game-stake {
-  color: color-mix(in srgb, var(--accent-dark) 70%, var(--muted));
-}
-
+.poker-game-choice.active .poker-game-stake,
 html[data-theme='dark'] .poker-game-choice.active .poker-game-stake {
-  color: color-mix(in srgb, var(--accent) 75%, var(--muted));
+  color: rgba(255, 255, 255, 0.78);
 }
 
 #pokerMeta {
@@ -802,6 +812,11 @@ html[data-theme='dark'] .poker-game-choice.active .poker-game-stake {
   justify-content: center;
   gap: 6px 8px;
   font-weight: 700;
+  min-height: 1.4em;
+}
+
+#pokerMeta.is-enter {
+  animation: win-label-in 320ms var(--ease-out) both;
 }
 
 #pokerMeta .poker-meta-game {

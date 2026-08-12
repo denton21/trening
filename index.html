@@ -9,7 +9,7 @@
   <meta name="application-name" content="Тренажёр дилера">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Рулетка">
+  <meta name="apple-mobile-web-app-title" content="Тренажёр дилера">
   <title>Тренажёр дилера</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -21,7 +21,10 @@
   <link rel="stylesheet" href="css/reference.css">
   <script>
     try {
-      var t = JSON.parse(localStorage.getItem('roulette-trainer-settings-v1') || '{}').theme;
+      var raw = localStorage.getItem('roulette-trainer-settings-v2')
+        || localStorage.getItem('roulette-trainer-settings-v1')
+        || '{}';
+      var t = JSON.parse(raw).theme;
       if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
     } catch (e) {}
   </script>
@@ -37,7 +40,8 @@
         <button class="secondary theme-toggle" id="themeToggleBtn" type="button" aria-pressed="false" title="Тема">Тёмная</button>
       </div>
     </div>
-          <div class="tabs" role="tablist" aria-label="Режим тренировки">
+    <div class="tabs-wrap">
+    <div class="tabs" role="tablist" aria-label="Режим тренировки">
       <button class="tab active" id="multiplicationTabBtn" type="button" role="tab" aria-selected="true">Умножение</button>
       <button class="tab" id="additionTabBtn" type="button" role="tab" aria-selected="false">Сложение</button>
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
@@ -46,6 +50,7 @@
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
       <button class="tab" id="referenceTabBtn" type="button" role="tab" aria-selected="false">Справка</button>
+    </div>
     </div>
 
     <div class="layout" id="multiplicationTab" role="tabpanel">
@@ -554,15 +559,7 @@
                   <thead>
                     <tr><th>Ставка</th><th>Числа</th><th>Выплата</th></tr>
                   </thead>
-                  <tbody>
-                    <tr><td class="hand">Straight up</td><td>1</td><td class="odds">35 : 1</td></tr>
-                    <tr><td class="hand">Split</td><td>2</td><td class="odds">17 : 1</td></tr>
-                    <tr><td class="hand">Street / Trio</td><td>3</td><td class="odds">11 : 1</td></tr>
-                    <tr><td class="hand">Corner / First four</td><td>4</td><td class="odds">8 : 1</td></tr>
-                    <tr><td class="hand">Six-line</td><td>6</td><td class="odds">5 : 1</td></tr>
-                    <tr><td class="hand">Dozen / Column</td><td>12</td><td class="odds">2 : 1</td></tr>
-                    <tr><td class="hand">Even chances</td><td>18</td><td class="odds">1 : 1</td></tr>
-                  </tbody>
+                  <tbody data-payout-table="roulette" data-payout-layout="roulette"></tbody>
                 </table>
               </div>
               <div class="ref-bet-chips" style="margin-top: 14px">
@@ -596,15 +593,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">100 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
-                  <tr><td class="hand">Каре</td><td class="odds">20 : 1</td></tr>
-                  <tr><td class="hand">Фул-хаус</td><td class="odds">7 : 1</td></tr>
-                  <tr><td class="hand">Флеш</td><td class="odds">5 : 1</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">4 : 1</td></tr>
-                  <tr><td class="hand">Тройка</td><td class="odds">3 : 1</td></tr>
-                </tbody>
+                <tbody data-payout-table="russian"></tbody>
               </table>
             </div>
             <div>
@@ -644,16 +633,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Две пары</td><td class="odds">2 : 1</td></tr>
-                <tr><td class="hand">Тройка</td><td class="odds">10 : 1</td></tr>
-                <tr><td class="hand">Стрит</td><td class="odds">25 : 1</td></tr>
-                <tr><td class="hand">Флеш</td><td class="odds">50 : 1</td></tr>
-                <tr><td class="hand">Фул-хаус</td><td class="odds">100 : 1</td></tr>
-                <tr><td class="hand">Каре</td><td class="odds">250 : 1</td></tr>
-                <tr class="is-jackpot"><td class="hand">Стрит-флеш</td><td class="odds">Джекпот</td></tr>
-                <tr class="is-jackpot"><td class="hand">Роял-флеш</td><td class="odds">Джекпот</td></tr>
-              </tbody>
+              <tbody data-payout-table="jackpot"></tbody>
             </table>
           </div>
         </div>
@@ -675,14 +655,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>С раздачи</th><th>С покупкой</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Стрит</td><td class="odds">25 : 1</td><td class="odds">7 : 1</td></tr>
-                <tr><td class="hand">Флеш</td><td class="odds">50 : 1</td><td class="odds">15 : 1</td></tr>
-                <tr><td class="hand">Фул-хаус</td><td class="odds">100 : 1</td><td class="odds">30 : 1</td></tr>
-                <tr><td class="hand">Каре</td><td class="odds">300 : 1</td><td class="odds">100 : 1</td></tr>
-                <tr><td class="hand">Стрит-флеш</td><td class="odds">500 : 1</td><td class="odds">150 : 1</td></tr>
-                <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">1000 : 1</td><td class="odds">300 : 1</td></tr>
-              </tbody>
+              <tbody data-payout-table="sixcard" data-payout-layout="deal-buy"></tbody>
             </table>
           </div>
         </div>
@@ -704,17 +677,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Пара</td><td class="odds">1 : 1</td></tr>
-                <tr><td class="hand">Две пары</td><td class="odds">1 : 1</td></tr>
-                <tr><td class="hand">Тройка</td><td class="odds">1 : 1</td></tr>
-                <tr><td class="hand">Стрит</td><td class="odds">1 : 1</td></tr>
-                <tr><td class="hand">Флеш</td><td class="odds">2 : 1</td></tr>
-                <tr><td class="hand">Фул-хаус</td><td class="odds">3 : 1</td></tr>
-                <tr><td class="hand">Каре</td><td class="odds">10 : 1</td></tr>
-                <tr><td class="hand">Стрит-флеш</td><td class="odds">20 : 1</td></tr>
-                <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">100 : 1</td></tr>
-              </tbody>
+              <tbody data-payout-table="texas"></tbody>
             </table>
           </div>
           <p class="ref-note" style="margin-top: 14px">Итого: Ante × коэф + Bet × 1, где Bet = 2 × Ante. Пример: Ante 55, каре → 550 + 110 = 660.</p>
@@ -737,17 +700,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Пара тузов</td><td class="odds">7 : 1</td></tr>
-                <tr><td class="hand">Две пары</td><td class="odds">7 : 1</td></tr>
-                <tr><td class="hand">Тройка</td><td class="odds">7 : 1</td></tr>
-                <tr><td class="hand">Стрит</td><td class="odds">7 : 1</td></tr>
-                <tr><td class="hand">Флеш</td><td class="odds">20 : 1</td></tr>
-                <tr><td class="hand">Фул-хаус</td><td class="odds">30 : 1</td></tr>
-                <tr><td class="hand">Каре</td><td class="odds">40 : 1</td></tr>
-                <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
-                <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">100 : 1</td></tr>
-              </tbody>
+              <tbody data-payout-table="aa"></tbody>
             </table>
           </div>
         </div>
@@ -770,15 +723,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">500 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
-                  <tr><td class="hand">Каре</td><td class="odds">10 : 1</td></tr>
-                  <tr><td class="hand">Фул-хаус</td><td class="odds">3 : 1</td></tr>
-                  <tr><td class="hand">Флеш</td><td class="odds">3 : 2</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">1 : 1</td></tr>
-                  <tr><td class="hand">Меньше стрита</td><td class="odds">Push</td></tr>
-                </tbody>
+                <tbody data-payout-table="ultimate"></tbody>
               </table>
             </div>
             <div class="ref-table-wrap">
@@ -787,15 +732,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr><td class="hand">Тройка</td><td class="odds">3 : 1</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">4 : 1</td></tr>
-                  <tr><td class="hand">Флеш</td><td class="odds">7 : 1</td></tr>
-                  <tr><td class="hand">Фул-хаус</td><td class="odds">8 : 1</td></tr>
-                  <tr><td class="hand">Каре</td><td class="odds">30 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">40 : 1</td></tr>
-                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">50 : 1</td></tr>
-                </tbody>
+                <tbody data-payout-table="trips"></tbody>
               </table>
             </div>
           </div>
@@ -820,12 +757,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr><td class="hand">Стрит</td><td class="odds">1 : 1</td></tr>
-                  <tr><td class="hand">Три одинаковых</td><td class="odds">3 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">4 : 1</td></tr>
-                  <tr class="is-top"><td class="hand">Мини-рояль</td><td class="odds">10 : 1</td></tr>
-                </tbody>
+                <tbody data-payout-table="threeCard.ante"></tbody>
               </table>
             </div>
             <div class="ref-table-wrap">
@@ -834,14 +766,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr><td class="hand">Пара</td><td class="odds">1 : 1</td></tr>
-                  <tr><td class="hand">Флеш</td><td class="odds">4 : 1</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">5 : 1</td></tr>
-                  <tr><td class="hand">Три одинаковых</td><td class="odds">30 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">40 : 1</td></tr>
-                  <tr class="is-top"><td class="hand">Мини-рояль</td><td class="odds">50 : 1</td></tr>
-                </tbody>
+                <tbody data-payout-table="threeCard.pairPlus"></tbody>
               </table>
             </div>
           </div>
@@ -852,15 +777,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr><td class="hand">Три одинаковых</td><td class="odds">5 : 1</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">10 : 1</td></tr>
-                  <tr><td class="hand">Флеш</td><td class="odds">15 : 1</td></tr>
-                  <tr><td class="hand">Фул-хаус</td><td class="odds">25 : 1</td></tr>
-                  <tr><td class="hand">Каре</td><td class="odds">50 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">200 : 1</td></tr>
-                  <tr class="is-top"><td class="hand">Роял-флеш</td><td class="odds">1000 : 1</td></tr>
-                </tbody>
+                <tbody data-payout-table="threeCard.plus3"></tbody>
               </table>
             </div>
             <div class="ref-table-wrap">
@@ -869,15 +786,7 @@
                 <thead>
                   <tr><th>Комбинация</th><th>Выплата</th></tr>
                 </thead>
-                <tbody>
-                  <tr><td class="hand">Флеш</td><td class="odds">2 : 1</td></tr>
-                  <tr><td class="hand">Стрит</td><td class="odds">10 : 1</td></tr>
-                  <tr><td class="hand">Три одинаковых</td><td class="odds">25 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш</td><td class="odds">50 : 1</td></tr>
-                  <tr><td class="hand">Стрит-флеш ♠</td><td class="odds">100 : 1</td></tr>
-                  <tr><td class="hand">Мини-рояль</td><td class="odds">250 : 1</td></tr>
-                  <tr class="is-jackpot"><td class="hand">Мини-рояль ♠</td><td class="odds">Джекпот %</td></tr>
-                </tbody>
+                <tbody data-payout-table="threeCard.jp"></tbody>
               </table>
             </div>
           </div>
@@ -901,16 +810,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Карты одного цвета</td><td class="odds">2 : 1</td></tr>
-                <tr><td class="hand">Туз · король · дама</td><td class="odds">5 : 1</td></tr>
-                <tr><td class="hand">Тройка</td><td class="odds">8 : 1</td></tr>
-                <tr><td class="hand">Стрит</td><td class="odds">30 : 1</td></tr>
-                <tr><td class="hand">Флеш</td><td class="odds">60 : 1</td></tr>
-                <tr><td class="hand">Фул-хаус</td><td class="odds">100 : 1</td></tr>
-                <tr><td class="hand">Пять картинок</td><td class="odds">120 : 1</td></tr>
-                <tr class="is-top"><td class="hand">Каре</td><td class="odds">200 : 1</td></tr>
-              </tbody>
+              <tbody data-payout-table="novo"></tbody>
             </table>
           </div>
         </div>
@@ -932,12 +832,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Любые 20</td><td class="odds">5 : 1</td></tr>
-                <tr><td class="hand">Одномастные 20</td><td class="odds">10 : 1</td></tr>
-                <tr><td class="hand">Одинаковые 20</td><td class="odds">30 : 1</td></tr>
-                <tr class="is-top"><td class="hand">Два крестовых короля (♣K + ♣K)</td><td class="odds">100 : 1</td></tr>
-              </tbody>
+              <tbody data-payout-table="bj20"></tbody>
             </table>
           </div>
           <div class="ref-suit-row">
@@ -966,15 +861,7 @@
               <thead>
                 <tr><th>Комбинация</th><th>Выплата</th></tr>
               </thead>
-              <tbody>
-                <tr><td class="hand">Блекджек</td><td class="odds">2 : 1</td></tr>
-                <tr><td class="hand">Одномастный блекджек</td><td class="odds">10 : 1</td></tr>
-                <tr><td class="hand">Дама + король одномастные</td><td class="odds">25 : 1</td></tr>
-                <tr><td class="hand">Две семёрки</td><td class="odds">50 : 1</td></tr>
-                <tr><td class="hand">Две одномастные семёрки</td><td class="odds">100 : 1</td></tr>
-                <tr><td class="hand">Три семёрки</td><td class="odds">250 : 1</td></tr>
-                <tr class="is-jackpot"><td class="hand">Три одномастные семёрки</td><td class="odds">Джекпот</td></tr>
-              </tbody>
+              <tbody data-payout-table="bj_jackpot"></tbody>
             </table>
           </div>
         </div>
@@ -1031,7 +918,10 @@
   <script src="js/settings.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/stats.js"></script>
+  <script src="js/formulas.js"></script>
   <script src="js/payout-catalog.js"></script>
+  <script src="js/session.js"></script>
+  <script src="js/addition-bank.js"></script>
   <script src="js/patterns.js"></script>
   <script src="js/modes/multiplication.js"></script>
   <script src="js/modes/addition.js"></script>

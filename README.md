@@ -17,6 +17,9 @@ python -m http.server 8080
 - `index.html` — разметка вкладок и справочника.
 - `js/modes/` — отдельные тренировочные режимы.
 - `js/utils.js` — DOM-хелперы, безопасное хранилище и общие функции.
+- `js/formulas.js` — формулы BJ, покера и выплат через кэш/фишки.
+- `js/payout-catalog.js` — единый каталог выплат для тренировки и справки.
+- `js/session.js` — общий таймерный цикл сессии.
 - `js/stats.js` — постоянная статистика по режимам.
 - `js/settings.js` — настройки и миграция локальных данных.
 - `sw.js` — offline-кэш PWA.
@@ -41,8 +44,10 @@ Get-ChildItem -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName 
 
 ```powershell
 node tests/smoke.mjs
+node tests/payouts.mjs
+node tests/formulas.mjs
 ```
 
 ## Добавление выплат
 
-Для новых покерных правил обновляйте каталог в `js/modes/poker.js` и соответствующую секцию справочника в `index.html`. Коэффициенты должны быть проверены по layout конкретного стола.
+Новые покерные правила добавляйте только в `js/payout-catalog.js`. Тренировка и справка читают этот каталог. Коэффициенты должны быть проверены по layout конкретного стола.

@@ -66,13 +66,8 @@ window.Trainer = window.Trainer || {};
     return [100, 200, 500, 1000];
   }
 
-  function cashPart(through, color) {
-    return through / color;
-  }
-
-  function colorLeftFromCash(payout, through, color) {
-    return payout - cashPart(through, color);
-  }
+  const cashPart = Trainer.cashPart;
+  const colorLeftFromCash = Trainer.colorLeftFromCash;
 
   /** Купюры: целый кэш, остаток цвета адекватный (не камаз). */
   function cashThroughOptions(color, payout) {
@@ -93,13 +88,8 @@ window.Trainer = window.Trainer || {};
     });
   }
 
-  function randomInt(min, max) {
-    return min + Math.floor(Math.random() * (max - min + 1));
-  }
-
-  function pick(array) {
-    return array[Math.floor(Math.random() * array.length)];
-  }
+  const randomInt = Trainer.randInt;
+  const pick = Trainer.pick;
 
   /** Выплата, кратная цвету, не больше MAX_PAYOUT. */
   function randomPayout(color, minUnits, maxUnits) {
@@ -270,25 +260,8 @@ window.Trainer = window.Trainer || {};
     };
   }
 
-  function chipsCashFor(payout, chips, color) {
-    return (payout - chips) * color;
-  }
-
-  function isValidChipsAnswer(question, chips, cash) {
-    if (!Number.isInteger(chips) || !Number.isInteger(cash)) {
-      return false;
-    }
-    if (chips <= 0 || chips >= question.payout) {
-      return false;
-    }
-    if (chips < question.minChips || chips > question.maxChips) {
-      return false;
-    }
-    if (cash < 0) {
-      return false;
-    }
-    return cash === chipsCashFor(question.payout, chips, question.color);
-  }
+  const chipsCashFor = Trainer.chipsCashFor;
+  const isValidChipsAnswer = Trainer.isValidChipsAnswer;
 
   function chipsErrorHint(question, chips, cash) {
     const expected = Number.isInteger(chips)
@@ -415,37 +388,12 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function presentSummary(correct, wrong, log) {
-    const entries = log || state.sessionLog;
-    if (!entries.length || !showSessionSummary) {
-      return;
-    }
-    showSessionSummary({
-      title: 'Итог: выплаты',
-      correct: correct != null ? correct : state.correct,
-      wrong: wrong != null ? wrong : state.wrong,
-      log: entries.slice()
-    });
-    state.sessionLog = [];
-  }
-
-  function updateStats() {
-    els.timeLeft.textContent = formatTime(state.secondsLeft);
-    els.correctCount.textContent = state.correct;
-    els.wrongCount.textContent = state.wrong;
-    setProgress(els.timeProgress, state.secondsLeft, state.duration);
-  }
-
-  function stopTimer() {
-    if (state.timer) {
-      window.clearInterval(state.timer);
-      state.timer = null;
-    }
-    if (state.nextTimer) {
-      window.clearTimeout(state.nextTimer);
-      state.nextTimer = null;
-    }
-  }
+  const session = Trainer.createTimedSession({
+    state,
+    els,
+    summaryTitle: 'Итог: выплаты'
+  });
+  const { updateStats, stopTimers: stopTimer } = session;
 
   function setInputsEnabled(enabled) {
     els.answer.disabled = !enabled;
@@ -504,6 +452,7 @@ window.Trainer = window.Trainer || {};
       els.detail.textContent =
         `примерно ${q.requestLabel} (~${q.minChips}–${q.maxChips} фиш.), остальное кэшем · ×${q.color}`;
     }
+    Trainer.replayClass?.(els.detail, 'is-enter');
   }
 
   function nextQuestion() {
@@ -515,20 +464,11 @@ window.Trainer = window.Trainer || {};
   }
 
   function finish() {
-    stopTimer();
-    state.running = false;
-    setInputsEnabled(false);
-    showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
-    presentSummary();
+    session.finish(() => setInputsEnabled(false));
   }
 
   function start() {
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.sessionLog = [];
-    state.secondsLeft = state.duration;
-    state.running = true;
+    session.beginRun();
     updateModeUi();
     nextQuestion();
     updateStats();
@@ -539,27 +479,11 @@ window.Trainer = window.Trainer || {};
         : 'Сколько фишек отдать и сколько $ кэша?',
       ''
     );
-
-    if (state.secondsLeft !== null) {
-      state.timer = window.setInterval(() => {
-        state.secondsLeft -= 1;
-        updateStats();
-        if (state.secondsLeft <= 0) {
-          finish();
-        }
-      }, 1000);
-    }
+    session.startClock(finish);
   }
 
   function reset() {
-    const prevCorrect = state.correct;
-    const prevWrong = state.wrong;
-    const prevLog = state.sessionLog.slice();
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.secondsLeft = state.duration;
-    state.running = false;
+    const prev = session.resetRun();
     state.question = null;
     state.lastKey = null;
     clearInputs();
@@ -569,7 +493,7 @@ window.Trainer = window.Trainer || {};
     els.detail.textContent = 'Нажмите «Старт»';
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
-    presentSummary(prevCorrect, prevWrong, prevLog);
+    session.presentSummary(prev.correct, prev.wrong, prev.log);
   }
 
   function setColor(color) {
@@ -600,19 +524,6 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function setTime(seconds) {
-    state.duration = seconds;
-    state.secondsLeft = seconds;
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free')
-      );
-    });
-    updateStats();
-    persistSettings();
-  }
-
   function submitCash() {
     const q = state.question;
     if (els.answer.value.trim() === '') {
@@ -623,32 +534,22 @@ window.Trainer = window.Trainer || {};
 
     const value = Number(els.answer.value);
     const isCorrect = value === q.colorLeft;
-    recordAttempt('payouts', q.exampleKey, isCorrect, state.questionStartedAt);
-    pushSessionAttempt(state.sessionLog, q.exampleKey, isCorrect, state.questionStartedAt);
+    session.record('payouts', q.exampleKey, isCorrect);
     flashAnswer(els.answer, isCorrect);
     flashTask(els.task, isCorrect);
 
     if (isCorrect) {
-      state.correct += 1;
-      bumpStat(els.correctCount);
       showMessage(els.message, 'Верно', 'good');
       nextQuestion();
     } else {
-      state.wrong += 1;
-      bumpStat(els.wrongCount);
       showMessage(
         els.message,
         `Ошибка: ${q.through}÷${q.divisor}=${q.cash} кэша → ${q.payout}−${q.cash}=${q.colorLeft}`,
         'bad'
       );
       setInputsEnabled(false);
-      state.nextTimer = window.setTimeout(() => {
-        if (state.running) {
-          nextQuestion();
-        }
-      }, 1200);
+      session.scheduleNext(nextQuestion, 1200);
     }
-    updateStats();
   }
 
   function submitChips() {
@@ -667,29 +568,19 @@ window.Trainer = window.Trainer || {};
     const cash = Number(cashRaw);
     const isCorrect = isValidChipsAnswer(q, chips, cash);
 
-    recordAttempt('payouts', q.exampleKey, isCorrect, state.questionStartedAt);
-    pushSessionAttempt(state.sessionLog, q.exampleKey, isCorrect, state.questionStartedAt);
+    session.record('payouts', q.exampleKey, isCorrect);
     flashAnswer(els.chipsAnswer, isCorrect);
     flashAnswer(els.cashAnswer, isCorrect);
     flashTask(els.task, isCorrect);
 
     if (isCorrect) {
-      state.correct += 1;
-      bumpStat(els.correctCount);
       showMessage(els.message, 'Верно', 'good');
       nextQuestion();
     } else {
-      state.wrong += 1;
-      bumpStat(els.wrongCount);
       showMessage(els.message, `Ошибка: ${chipsErrorHint(q, chips, cash)}`, 'bad');
       setInputsEnabled(false);
-      state.nextTimer = window.setTimeout(() => {
-        if (state.running) {
-          nextQuestion();
-        }
-      }, 1800);
+      session.scheduleNext(nextQuestion, 1800);
     }
-    updateStats();
   }
 
   Trainer.stopPayouts = function stopPayouts() {
@@ -706,23 +597,14 @@ window.Trainer = window.Trainer || {};
       if (saved.mode === 'cash' || saved.mode === 'chips') {
         state.mode = saved.mode;
       }
-      if (saved.duration === null || typeof saved.duration === 'number') {
-        state.duration = saved.duration;
-        state.secondsLeft = saved.duration;
-      }
+      session.applySavedDuration(saved);
       els.colorButtons.forEach((button) => {
         setPressed(button, Number(button.dataset.color) === state.color);
       });
       els.modeButtons.forEach((button) => {
         setPressed(button, button.dataset.mode === state.mode);
       });
-      els.timeButtons.forEach((button) => {
-        setPressed(
-          button,
-          String(state.duration) === button.dataset.seconds ||
-            (state.duration === null && button.dataset.seconds === 'free')
-        );
-      });
+      session.syncTimeButtons(els.timeButtons);
     }
 
     els.colorButtons.forEach((button) => {
@@ -731,11 +613,7 @@ window.Trainer = window.Trainer || {};
     els.modeButtons.forEach((button) => {
       button.addEventListener('click', () => setMode(button.dataset.mode));
     });
-    els.timeButtons.forEach((button) => {
-      button.addEventListener('click', () =>
-        setTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds))
-      );
-    });
+    session.bindTimeButtons(els.timeButtons, persistSettings);
     els.startBtn.addEventListener('click', start);
     els.resetBtn.addEventListener('click', reset);
 

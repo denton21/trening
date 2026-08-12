@@ -16,7 +16,8 @@ window.Trainer = window.Trainer || {};
     getSettings,
     saveSettings,
     pushSessionAttempt,
-    showSessionSummary
+    showSessionSummary,
+    blackjackPayout
   } = Trainer;
 
   const blackjackBets = Array.from({ length: 40 }, (_, index) => (index + 1) * 5);
@@ -57,23 +58,12 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function updateStats() {
-    els.timeLeft.textContent = formatTime(state.secondsLeft);
-    els.correctCount.textContent = state.correct;
-    els.wrongCount.textContent = state.wrong;
-    setProgress(els.timeProgress, state.secondsLeft, state.duration);
-  }
-
-  function stopTimer() {
-    if (state.timer) {
-      window.clearInterval(state.timer);
-      state.timer = null;
-    }
-    if (state.nextTimer) {
-      window.clearTimeout(state.nextTimer);
-      state.nextTimer = null;
-    }
-  }
+  const session = Trainer.createTimedSession({
+    state,
+    els,
+    summaryTitle: 'Итог: Blackjack'
+  });
+  const { updateStats, stopTimers: stopTimer } = session;
 
   function setNextQuestion(animate = true) {
     const available = blackjackBets.filter((bet) => bet !== state.lastBet);
@@ -97,49 +87,19 @@ window.Trainer = window.Trainer || {};
     els.answer.focus();
   }
 
-  function presentSummary(correct, wrong, log) {
-    const entries = log || state.sessionLog;
-    if (!entries.length || !showSessionSummary) {
-      return;
-    }
-    showSessionSummary({
-      title: 'Итог: Blackjack',
-      correct: correct != null ? correct : state.correct,
-      wrong: wrong != null ? wrong : state.wrong,
-      log: entries.slice()
-    });
-    state.sessionLog = [];
-  }
-
   function finish() {
-    stopTimer();
-    state.running = false;
-    els.answer.disabled = true;
-    els.answerBtn.disabled = true;
-    showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
-    presentSummary();
+    session.finish(() => {
+      els.answer.disabled = true;
+      els.answerBtn.disabled = true;
+    });
   }
 
   function start() {
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.sessionLog = [];
-    state.secondsLeft = state.duration;
-    state.running = true;
+    session.beginRun();
     nextQuestion();
     updateStats();
     showMessage(els.message, 'Умножьте ставку на 1.5', '');
-
-    if (state.secondsLeft !== null) {
-      state.timer = window.setInterval(() => {
-        state.secondsLeft -= 1;
-        updateStats();
-        if (state.secondsLeft <= 0) {
-          finish();
-        }
-      }, 1000);
-    }
+    session.startClock(finish);
   }
 
   function showIdleExample() {
@@ -149,52 +109,22 @@ window.Trainer = window.Trainer || {};
   }
 
   function reset() {
-    const prevCorrect = state.correct;
-    const prevWrong = state.wrong;
-    const prevLog = state.sessionLog.slice();
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.secondsLeft = state.duration;
-    state.running = false;
+    const prev = session.resetRun();
     showIdleExample();
     els.answer.value = '';
     els.answer.disabled = true;
     els.answerBtn.disabled = true;
     updateStats();
     showMessage(els.message, 'Нажмите «Старт»', '');
-    presentSummary(prevCorrect, prevWrong, prevLog);
-  }
-
-  function setTime(seconds) {
-    state.duration = seconds;
-    state.secondsLeft = seconds;
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free')
-      );
-    });
-    updateStats();
-    persistSettings();
+    session.presentSummary(prev.correct, prev.wrong, prev.log);
   }
 
   function loadSavedSettings() {
     if (!getSettings) {
       return;
     }
-    const saved = getSettings().blackjack || {};
-    if (saved.duration === null || typeof saved.duration === 'number') {
-      state.duration = saved.duration;
-      state.secondsLeft = saved.duration;
-    }
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(state.duration) === button.dataset.seconds ||
-          (state.duration === null && button.dataset.seconds === 'free')
-      );
-    });
+    session.applySavedDuration(getSettings().blackjack || {});
+    session.syncTimeButtons(els.timeButtons);
   }
 
   Trainer.stopBlackjack = function stopBlackjack() {
@@ -205,11 +135,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initBlackjack = function initBlackjack() {
     loadSavedSettings();
 
-    els.timeButtons.forEach((button) => {
-      button.addEventListener('click', () =>
-        setTime(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds))
-      );
-    });
+    session.bindTimeButtons(els.timeButtons, persistSettings);
     els.startBtn.addEventListener('click', start);
     els.resetBtn.addEventListener('click', reset);
 
@@ -224,33 +150,23 @@ window.Trainer = window.Trainer || {};
         return;
       }
 
-      const expected = state.currentBet * 1.5;
+      const expected = blackjackPayout(state.currentBet);
       const isCorrect = Math.abs(Number(els.answer.value.replace(',', '.')) - expected) < 0.001;
       const label = `${state.currentBet} → ${expected}`;
-      recordAttempt('blackjack', label, isCorrect, state.questionStartedAt);
-      pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
+      session.record('blackjack', label, isCorrect);
 
       flashAnswer(els.answer, isCorrect);
       flashTask(els.task, isCorrect);
 
       if (isCorrect) {
-        state.correct += 1;
-        bumpStat(els.correctCount);
         showMessage(els.message, 'Верно', 'good');
         nextQuestion();
       } else {
-        state.wrong += 1;
-        bumpStat(els.wrongCount);
         showMessage(els.message, `Ошибка: ${label}`, 'bad');
         els.answer.disabled = true;
         els.answerBtn.disabled = true;
-        state.nextTimer = window.setTimeout(() => {
-          if (state.running) {
-            nextQuestion();
-          }
-        }, 900);
+        session.scheduleNext(nextQuestion, 900);
       }
-      updateStats();
     });
 
     reset();

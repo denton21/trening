@@ -77,6 +77,13 @@ window.Trainer = window.Trainer || {};
     });
   }
 
+  const session = Trainer.createTimedSession({
+    state,
+    els,
+    summaryTitle: 'Итог: умножение'
+  });
+  const { updateStats, stopTimers: stopTimer } = session;
+
   function getPool() {
     return state.mode === 'all' ? allMultipliers : [...state.selected];
   }
@@ -115,24 +122,6 @@ window.Trainer = window.Trainer || {};
     els.example.textContent = '—';
   }
 
-  function updateStats() {
-    els.timeLeft.textContent = formatTime(state.secondsLeft);
-    els.correctCount.textContent = state.correct;
-    els.wrongCount.textContent = state.wrong;
-    setProgress(els.timeProgress, state.secondsLeft, state.duration);
-  }
-
-  function stopTimer() {
-    if (state.timer) {
-      window.clearInterval(state.timer);
-      state.timer = null;
-    }
-    if (state.nextTimer) {
-      window.clearTimeout(state.nextTimer);
-      state.nextTimer = null;
-    }
-  }
-
   function nextQuestion() {
     setNextQuestion();
     els.answerInput.value = '';
@@ -142,36 +131,15 @@ window.Trainer = window.Trainer || {};
     els.answerInput.focus();
   }
 
-  function presentSummary(correct, wrong, log) {
-    const entries = log || state.sessionLog;
-    if (!entries.length || !showSessionSummary) {
-      return;
-    }
-    showSessionSummary({
-      title: 'Итог: умножение',
-      correct: correct != null ? correct : state.correct,
-      wrong: wrong != null ? wrong : state.wrong,
-      log: entries.slice()
-    });
-    state.sessionLog = [];
-  }
-
   function finish() {
-    stopTimer();
-    state.running = false;
-    els.answerInput.disabled = true;
-    els.answerBtn.disabled = true;
-    showMessage(els.message, `Готово: ${state.correct} верно, ${state.wrong} ошибок`, 'good');
-    presentSummary();
+    session.finish(() => {
+      els.answerInput.disabled = true;
+      els.answerBtn.disabled = true;
+    });
   }
 
   function start() {
-    stopTimer();
-    state.correct = 0;
-    state.wrong = 0;
-    state.sessionLog = [];
-    state.running = true;
-    state.secondsLeft = state.duration;
+    session.beginRun();
     setNextQuestion();
     els.answerInput.disabled = false;
     els.answerBtn.disabled = false;
@@ -180,35 +148,18 @@ window.Trainer = window.Trainer || {};
     showQuestion(true);
     updateStats();
     showMessage(els.message, 'Решайте пример', '');
-
-    if (state.timeMode === 'timed') {
-      state.timer = window.setInterval(() => {
-        state.secondsLeft -= 1;
-        updateStats();
-        if (state.secondsLeft <= 0) {
-          finish();
-        }
-      }, 1000);
-    }
+    session.startClock(finish);
   }
 
   function reset() {
-    const prevCorrect = state.correct;
-    const prevWrong = state.wrong;
-    const prevLog = state.sessionLog.slice();
-    stopTimer();
-    state.running = false;
-    state.secondsLeft = state.duration;
-    state.questionStartedAt = null;
-    state.correct = 0;
-    state.wrong = 0;
+    const prev = session.resetRun();
     els.answerInput.disabled = true;
     els.answerBtn.disabled = true;
     els.answerInput.value = '';
     showIdleExample();
     updateStats();
     showMessage(els.message, 'Нажмите “Старт”', '');
-    presentSummary(prevCorrect, prevWrong, prevLog);
+    session.presentSummary(prev.correct, prev.wrong, prev.log);
   }
 
   function renderTables() {
@@ -261,20 +212,6 @@ window.Trainer = window.Trainer || {};
     persistSettings();
   }
 
-  function setTimeMode(seconds) {
-    state.duration = seconds;
-    state.timeMode = seconds === null ? 'free' : 'timed';
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(seconds) === button.dataset.seconds || (seconds === null && button.dataset.seconds === 'free')
-      );
-    });
-    state.secondsLeft = seconds;
-    updateStats();
-    persistSettings();
-  }
-
   function loadSavedSettings() {
     if (!getSettings) {
       return;
@@ -295,21 +232,11 @@ window.Trainer = window.Trainer || {};
         state.selected = new Set(allMultipliers);
       }
     }
-    if (saved.duration === null || typeof saved.duration === 'number') {
-      state.duration = saved.duration;
-      state.timeMode = saved.duration === null ? 'free' : 'timed';
-      state.secondsLeft = saved.duration;
-    }
+    session.applySavedDuration(saved);
     setPressed(els.allNumbersBtn, state.mode === 'all');
     setPressed(els.customNumbersBtn, state.mode === 'custom');
     els.numberPickerWrap.classList.toggle('hidden', state.mode !== 'custom');
-    els.timeButtons.forEach((button) => {
-      setPressed(
-        button,
-        String(state.duration) === button.dataset.seconds ||
-          (state.duration === null && button.dataset.seconds === 'free')
-      );
-    });
+    session.syncTimeButtons(els.timeButtons);
   }
 
   Trainer.stopMultiplication = function stopMultiplication() {
@@ -322,11 +249,7 @@ window.Trainer = window.Trainer || {};
 
     els.allNumbersBtn.addEventListener('click', () => setNumberMode('all'));
     els.customNumbersBtn.addEventListener('click', () => setNumberMode('custom'));
-    els.timeButtons.forEach((button) => {
-      button.addEventListener('click', () =>
-        setTimeMode(button.dataset.seconds === 'free' ? null : Number(button.dataset.seconds))
-      );
-    });
+    session.bindTimeButtons(els.timeButtons, persistSettings);
     els.startBtn.addEventListener('click', start);
     els.resetBtn.addEventListener('click', reset);
 
@@ -345,30 +268,20 @@ window.Trainer = window.Trainer || {};
       const rightAnswer = state.currentTable * state.currentMultiplier;
       const isCorrect = userAnswer === rightAnswer;
       const label = `${state.currentTable} × ${state.currentMultiplier}`;
-      recordAttempt('multiplication', label, isCorrect, state.questionStartedAt);
-      pushSessionAttempt(state.sessionLog, label, isCorrect, state.questionStartedAt);
+      session.record('multiplication', label, isCorrect);
 
       flashAnswer(els.answerInput, isCorrect);
       flashTask(els.task, isCorrect);
 
       if (isCorrect) {
-        state.correct += 1;
-        bumpStat(els.correctCount);
         showMessage(els.message, 'Верно', 'good');
         nextQuestion();
       } else {
-        state.wrong += 1;
-        bumpStat(els.wrongCount);
         showMessage(els.message, `Ошибка: ${label} = ${rightAnswer}`, 'bad');
         els.answerInput.disabled = true;
         els.answerBtn.disabled = true;
-        state.nextTimer = window.setTimeout(() => {
-          if (state.running) {
-            nextQuestion();
-          }
-        }, 900);
+        session.scheduleNext(nextQuestion, 900);
       }
-      updateStats();
     });
 
     renderTables();
