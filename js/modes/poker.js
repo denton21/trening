@@ -37,30 +37,36 @@ window.Trainer = window.Trainer || {};
   const STAKES_STD = range(25, 200, 5);
   const STAKES_JACKPOT = range(5, 100, 5);
 
-  /** Мелкие ставки чаще; 25–40, 50, 75, 100 — самые частые. Джекпот без весов. */
-  const STAKE_PREFERRED = new Set([25, 30, 35, 40, 50, 75, 100]);
+  /** Джекпот: чаще 5/10/15/20/30. Обычные: чаще 25/30/35/40. Чем выше — тем реже. */
+  const JACKPOT_W = {
+    5: 20, 10: 18, 15: 16, 20: 14, 25: 6, 30: 12, 35: 4, 40: 4, 45: 3, 50: 3
+  };
+  const STD_W = {
+    25: 20, 30: 18, 35: 16, 40: 14, 45: 5, 50: 5
+  };
 
-  function stakeWeight(stake) {
-    if (STAKE_PREFERRED.has(stake)) {
-      return 12;
+  function stakeWeight(stake, kind) {
+    const table = kind === 'jackpot' ? JACKPOT_W : STD_W;
+    if (table[stake]) {
+      return table[stake];
+    }
+    if (kind === 'jackpot') {
+      return stake <= 70 ? 2 : 1;
+    }
+    if (stake <= 70) {
+      return 3;
     }
     if (stake <= 100) {
-      return 4;
-    }
-    if (stake <= 150) {
       return 2;
     }
     return 1;
   }
 
   /** Разворачиваем список ставок по весу (для равномерного random по пулу). */
-  function expandStakes(stakes, weighted) {
-    if (!weighted) {
-      return stakes.slice();
-    }
+  function expandStakes(stakes, kind) {
     const out = [];
     stakes.forEach((s) => {
-      const w = stakeWeight(s);
+      const w = stakeWeight(s, kind);
       for (let i = 0; i < w; i += 1) {
         out.push(s);
       }
@@ -191,8 +197,8 @@ window.Trainer = window.Trainer || {};
   function buildPool() {
     const pool = [];
     selectedCatalog().forEach((cat) => {
-      const weighted = cat.stake !== 'jackpot';
-      const stakes = expandStakes(stakesFor(cat), weighted);
+      const kind = cat.stake === 'jackpot' ? 'jackpot' : 'std';
+      const stakes = expandStakes(stakesFor(cat), kind);
       const playMults = cat.pay === 'ultimate' ? cat.playMults || [1, 2, 4] : [null];
       trainRows(cat).forEach((row) => {
         stakes.forEach((stake) => {
