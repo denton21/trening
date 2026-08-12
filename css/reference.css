@@ -192,14 +192,6 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
   background: var(--panel-solid);
 }
 
-.ref-table-wrap.is-wide {
-  overflow-x: auto;
-}
-
-.ref-table-wrap.is-wide .ref-table {
-  min-width: 440px;
-}
-
 .ref-table-title {
   margin: 0;
   padding: 12px 14px;
@@ -278,10 +270,6 @@ html[data-theme='dark'] .ref-nav-btn.is-active {
   text-align: right;
 }
 
-.ref-table td.odds[rowspan] {
-  vertical-align: middle;
-}
-
 html[data-theme='dark'] .ref-table .odds {
   color: var(--accent);
 }
@@ -320,6 +308,146 @@ html[data-theme='dark'] .ref-table .odds {
   text-transform: uppercase;
   color: var(--muted);
   margin-top: 2px;
+}
+
+/* ── Niu Niu payout list ──────────────────────────────────── */
+
+.niu-pays {
+  display: grid;
+  gap: 10px;
+}
+
+.niu-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel-solid));
+}
+
+.niu-banner-bet {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.niu-banner-bet .niu-chip-label {
+  color: var(--muted);
+}
+
+.niu-banner-bet strong {
+  font-size: 16px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-dark);
+}
+
+html[data-theme='dark'] .niu-banner-bet strong {
+  color: var(--accent);
+}
+
+.niu-banner-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.niu-list {
+  display: grid;
+  gap: 6px;
+}
+
+.niu-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-solid);
+  animation: fade-up 280ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 16ms);
+}
+
+.niu-row.is-top {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--line));
+  background: color-mix(in srgb, var(--gold) 10%, var(--panel-solid));
+}
+
+.niu-hand {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.niu-odds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  flex: 1 1 11rem;
+  min-width: 0;
+}
+
+.niu-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.niu-chip-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.niu-chip strong {
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.niu-chip-double {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+}
+
+.niu-chip-double strong {
+  color: var(--accent-dark);
+}
+
+html[data-theme='dark'] .niu-chip-double strong {
+  color: var(--accent);
+}
+
+.niu-chip-super {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
+}
+
+.niu-chip-super strong {
+  color: #9a7208;
+}
+
+html[data-theme='dark'] .niu-chip-super strong {
+  color: var(--gold);
 }
 
 /* ── Roulette wheel ───────────────────────────────────────── */
@@ -582,6 +710,7 @@ html[data-theme='dark'] .ref-bet-chip strong {
   .ref-badge-jackpot,
   .ref-picked.is-pop,
   .ref-table tbody tr,
+  .niu-row,
   .ref-bet-chip {
     animation: none !important;
   }

@@ -70,11 +70,6 @@ window.Trainer = window.Trainer || {};
 
   /** Niu Niu: Bet / Double / SuperDouble. Только справка, не тренировка. */
   const niu = {
-    columns: [
-      { key: 'bet', merge: true },
-      { key: 'double', merge: true },
-      { key: 'super' }
-    ],
     rows: [
       { hand: '4 of a Kind', bet: 1, double: 5, super: 15, top: true },
       { hand: '5 Pictures', bet: 1, double: 4, super: 12 },
@@ -92,16 +87,45 @@ window.Trainer = window.Trainer || {};
     ]
   };
 
-  function countSpan(rows, index, key) {
-    const value = rows[index][key];
-    if (index > 0 && rows[index - 1][key] === value) {
-      return 0;
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) {
+      node.className = className;
     }
-    let n = 1;
-    while (index + n < rows.length && rows[index + n][key] === value) {
-      n += 1;
+    if (text != null) {
+      node.textContent = text;
     }
-    return n;
+    return node;
+  }
+
+  function niuChip(kind, label, odds) {
+    const chip = el('div', `niu-chip niu-chip-${kind}`);
+    chip.append(el('span', 'niu-chip-label', label), el('strong', null, odds));
+    return chip;
+  }
+
+  function fillNiuList(root, source) {
+    const formatOdds = Trainer.formatOdds || ((row) => String(row.mult ?? '—'));
+    const banner = el('div', 'niu-banner');
+    const bet = el('div', 'niu-banner-bet');
+    bet.append(el('span', 'niu-chip-label', 'Bet'), el('strong', null, formatOdds({ mult: 1 })));
+    banner.append(bet, el('p', 'niu-banner-note', 'на любую комбинацию'));
+
+    const list = el('div', 'niu-list');
+    source.rows.forEach((row, i) => {
+      const item = el('div', row.top ? 'niu-row is-top' : 'niu-row');
+      item.style.setProperty('--i', String(i));
+      const odds = el('div', 'niu-odds');
+      odds.append(
+        niuChip('double', 'Double', formatOdds({ mult: row.double })),
+        niuChip('super', 'Super', formatOdds({ mult: row.super }))
+      );
+      item.append(el('div', 'niu-hand', row.hand), odds);
+      list.appendChild(item);
+    });
+
+    root.replaceChildren(banner, list);
+    return true;
   }
 
   const games = {
@@ -340,15 +364,18 @@ window.Trainer = window.Trainer || {};
     return games[key] || null;
   }
 
-  function fillPayoutTable(tbody, key, layout) {
+  function fillPayoutTable(el, key, layout) {
     const source = resolveTable(key);
-    if (!tbody || !source) {
+    if (!el || !source) {
       return false;
+    }
+    if (layout === 'niu-list') {
+      return fillNiuList(el, source);
     }
     const formatOdds = Trainer.formatOdds || ((row) => String(row.mult ?? '—'));
     const rows = source.refRows || source.rows;
-    tbody.replaceChildren();
-    rows.forEach((row, index) => {
+    el.replaceChildren();
+    rows.forEach((row) => {
       const tr = document.createElement('tr');
       if (row.special === 'jackpot' || row.special === 'jackpotPercent') {
         tr.classList.add('is-jackpot');
@@ -375,34 +402,13 @@ window.Trainer = window.Trainer || {};
         buy.className = 'odds';
         buy.textContent = formatOdds({ mult: row.buy });
         tr.append(deal, buy);
-      } else if (layout === 'cols' && source.columns) {
-        source.columns.forEach((col) => {
-          if (col.merge) {
-            const span = countSpan(rows, index, col.key);
-            if (!span) {
-              return;
-            }
-            const td = document.createElement('td');
-            td.className = 'odds';
-            if (span > 1) {
-              td.rowSpan = span;
-            }
-            td.textContent = formatOdds({ mult: row[col.key] });
-            tr.appendChild(td);
-            return;
-          }
-          const td = document.createElement('td');
-          td.className = 'odds';
-          td.textContent = formatOdds({ mult: row[col.key] });
-          tr.appendChild(td);
-        });
       } else {
         const odds = document.createElement('td');
         odds.className = 'odds';
         odds.textContent = formatOdds(row);
         tr.appendChild(odds);
       }
-      tbody.appendChild(tr);
+      el.appendChild(tr);
     });
     return true;
   }
