@@ -9,6 +9,7 @@ window.Trainer = window.Trainer || {};
     animateExample,
     bumpStat,
     flashAnswer,
+    keepAnswerFocus,
     flashTask,
     setProgress,
     showMessage,
@@ -98,7 +99,7 @@ window.Trainer = window.Trainer || {};
     els.answer.value = '';
     els.answer.disabled = false;
     els.answerBtn.disabled = false;
-    els.answer.focus();
+    keepAnswerFocus(els.answer);
   }
 
   function finish() {
@@ -158,12 +159,13 @@ window.Trainer = window.Trainer || {};
 
     els.answerForm.addEventListener('submit', function (event) {
       event.preventDefault();
-      if (!state.running || !state.current) {
+      if (!state.running || !state.current || session.isWaiting()) {
         return;
       }
       if (els.answer.value.trim() === '') {
         showMessage(els.message, 'Введите сумму', 'bad');
         flashAnswer(els.answer, false);
+        keepAnswerFocus(els.answer);
         return;
       }
 
@@ -180,8 +182,7 @@ window.Trainer = window.Trainer || {};
         nextQuestion();
       } else {
         showMessage(els.message, 'Ошибка: ' + label, 'bad');
-        els.answer.disabled = true;
-        els.answerBtn.disabled = true;
+        keepAnswerFocus(els.answer);
         session.scheduleNext(nextQuestion, 900);
       }
     });

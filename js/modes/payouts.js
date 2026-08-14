@@ -9,6 +9,7 @@ window.Trainer = window.Trainer || {};
     animateExample,
     bumpStat,
     flashAnswer,
+    keepAnswerFocus,
     flashTask,
     setProgress,
     showMessage,
@@ -410,9 +411,9 @@ window.Trainer = window.Trainer || {};
 
   function focusAnswer() {
     if (state.mode === 'cash') {
-      els.answer.focus();
+      keepAnswerFocus(els.answer);
     } else {
-      els.chipsAnswer.focus();
+      keepAnswerFocus(els.chipsAnswer);
     }
   }
 
@@ -529,6 +530,7 @@ window.Trainer = window.Trainer || {};
     if (els.answer.value.trim() === '') {
       showMessage(els.message, 'Введите остаток цвета (фишки)', 'bad');
       flashAnswer(els.answer, false);
+      keepAnswerFocus(els.answer);
       return;
     }
 
@@ -547,7 +549,7 @@ window.Trainer = window.Trainer || {};
         `Ошибка: ${q.through}÷${q.divisor}=${q.cash} кэша → ${q.payout}−${q.cash}=${q.colorLeft}`,
         'bad'
       );
-      setInputsEnabled(false);
+      keepAnswerFocus(els.answer);
       session.scheduleNext(nextQuestion, 1200);
     }
   }
@@ -561,6 +563,7 @@ window.Trainer = window.Trainer || {};
       showMessage(els.message, 'Введите фишки и кэш', 'bad');
       if (chipsRaw === '') flashAnswer(els.chipsAnswer, false);
       if (cashRaw === '') flashAnswer(els.cashAnswer, false);
+      keepAnswerFocus(chipsRaw === '' ? els.chipsAnswer : els.cashAnswer);
       return;
     }
 
@@ -578,7 +581,7 @@ window.Trainer = window.Trainer || {};
       nextQuestion();
     } else {
       showMessage(els.message, `Ошибка: ${chipsErrorHint(q, chips, cash)}`, 'bad');
-      setInputsEnabled(false);
+      keepAnswerFocus(els.chipsAnswer);
       session.scheduleNext(nextQuestion, 1800);
     }
   }
@@ -619,7 +622,7 @@ window.Trainer = window.Trainer || {};
 
     els.answerForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (!state.running || !state.question) {
+      if (!state.running || !state.question || session.isWaiting()) {
         return;
       }
       if (state.mode === 'cash') {

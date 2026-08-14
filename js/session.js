@@ -158,8 +158,16 @@ Trainer.createTimedSession = function createTimedSession(options) {
     updateStats();
   }
 
+  function isWaiting() {
+    return Boolean(state.nextTimer);
+  }
+
   function scheduleNext(fn, ms) {
+    if (state.nextTimer) {
+      window.clearTimeout(state.nextTimer);
+    }
     state.nextTimer = window.setTimeout(() => {
+      state.nextTimer = null;
       if (state.running) {
         fn();
       }
@@ -179,6 +187,7 @@ Trainer.createTimedSession = function createTimedSession(options) {
     finish,
     resetRun,
     record,
+    isWaiting,
     scheduleNext
   };
 };

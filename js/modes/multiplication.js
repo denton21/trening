@@ -12,6 +12,7 @@ window.Trainer = window.Trainer || {};
     animateExample,
     bumpStat,
     flashAnswer,
+    keepAnswerFocus,
     flashTask,
     setProgress,
     showMessage,
@@ -128,7 +129,7 @@ window.Trainer = window.Trainer || {};
     els.answerInput.disabled = false;
     els.answerBtn.disabled = false;
     showQuestion(true);
-    els.answerInput.focus();
+    keepAnswerFocus(els.answerInput);
   }
 
   function finish() {
@@ -255,12 +256,13 @@ window.Trainer = window.Trainer || {};
 
     els.answerForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (!state.running) {
+      if (!state.running || session.isWaiting()) {
         return;
       }
       if (els.answerInput.value.trim() === '') {
         showMessage(els.message, 'Введите ответ', 'bad');
         flashAnswer(els.answerInput, false);
+        keepAnswerFocus(els.answerInput);
         return;
       }
 
@@ -278,8 +280,7 @@ window.Trainer = window.Trainer || {};
         nextQuestion();
       } else {
         showMessage(els.message, `Ошибка: ${label} = ${rightAnswer}`, 'bad');
-        els.answerInput.disabled = true;
-        els.answerBtn.disabled = true;
+        keepAnswerFocus(els.answerInput);
         session.scheduleNext(nextQuestion, 900);
       }
     });

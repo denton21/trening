@@ -9,6 +9,7 @@ window.Trainer = window.Trainer || {};
     animateExample,
     bumpStat,
     flashAnswer,
+    keepAnswerFocus,
     flashTask,
     setProgress,
     showMessage,
@@ -155,10 +156,10 @@ window.Trainer = window.Trainer || {};
 
   function focusAnswer(q) {
     if (isUltimateQ(q) && els.answerBlind) {
-      els.answerBlind.focus();
+      keepAnswerFocus(els.answerBlind);
       return;
     }
-    els.answer?.focus();
+    keepAnswerFocus(els.answer);
   }
 
   function stakesFor(cat) {
@@ -441,7 +442,7 @@ window.Trainer = window.Trainer || {};
 
     els.answerForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (!state.running || !state.current) {
+      if (!state.running || !state.current || session.isWaiting()) {
         return;
       }
 
@@ -504,7 +505,11 @@ window.Trainer = window.Trainer || {};
         nextQuestion();
       } else {
         showMessage(els.message, `Ошибка: ${label}`, 'bad');
-        setAnswersEnabled(false);
+        if (ultimate) {
+          keepAnswerFocus(els.answerBlind);
+        } else {
+          keepAnswerFocus(els.answer);
+        }
         session.scheduleNext(nextQuestion, 1100);
       }
     });

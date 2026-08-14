@@ -70,6 +70,18 @@ Trainer.flashAnswer = function flashAnswer(input, ok) {
   input.classList.add(ok ? 'flash-good' : 'flash-bad');
 };
 
+/** Keep the virtual keyboard open: never disable a focused field, refocus in the same gesture. */
+Trainer.keepAnswerFocus = function keepAnswerFocus(input) {
+  if (!input || input.disabled) {
+    return;
+  }
+  try {
+    input.focus({ preventScroll: true });
+  } catch {
+    input.focus();
+  }
+};
+
 Trainer.bumpStat = function bumpStat(element) {
   if (!element) {
     return;
