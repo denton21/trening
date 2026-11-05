@@ -15,25 +15,26 @@ window.Trainer = window.Trainer || {};
     colorLeftFromCash,
     chipsCashFor,
     isValidChipsAnswer,
-    randInt,
-    pick
+    randInt
   } = Trainer;
 
   const STACK_SIZE = 20;
-  const CASH_AMOUNTS = {
-    1: [50, 100, 200, 500],
-    2: [100, 200, 500, 1000],
-    5: [100, 200, 500, 1000],
-    25: [1000, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 7500, 10000]
-  };
+  const CASH_STEPS = { 1: 50, 2: 100, 5: 100, 25: 500 };
+  const MAX_PAYOUT_CHIPS = 1000;
+  const MIN_COLOR_CHIPS = 5;
+  const MAX_COLOR_CHIPS = 5 * STACK_SIZE;
   const CHIP_PAYOUT_CAPS = { 1: 520, 2: 480, 5: 380, 25: 280 };
   const MODES = ['mixed', 'cash', 'chips'];
   const number = new Intl.NumberFormat('ru-RU');
   const money = (value) => '$' + number.format(value);
 
   function generateCashQuestion(color) {
-    const cash = pick(CASH_AMOUNTS[color]);
-    const payout = cashPart(cash, color) + randInt(5, 5 * STACK_SIZE);
+    const step = CASH_STEPS[color];
+    const cashCap = color === 25 ? 10000 : (MAX_PAYOUT_CHIPS - MIN_COLOR_CHIPS) * color;
+    const cash = randInt(color === 25 ? 2 : 1, Math.floor(cashCap / step)) * step;
+    const cashInChips = cashPart(cash, color);
+    const colorChips = randInt(MIN_COLOR_CHIPS, Math.min(MAX_COLOR_CHIPS, MAX_PAYOUT_CHIPS - cashInChips));
+    const payout = cashInChips + colorChips;
     return {
       mode: 'cash',
       color,
@@ -271,7 +272,7 @@ window.Trainer = window.Trainer || {};
 
   Trainer.initPayouts = function initPayouts() {
     const saved = getSettings().payouts || {};
-    if (Object.hasOwn(CASH_AMOUNTS, saved.color)) state.color = Number(saved.color);
+    if (Object.hasOwn(CASH_STEPS, saved.color)) state.color = Number(saved.color);
     if (MODES.includes(saved.mode)) state.mode = saved.mode;
     session.applySavedDuration(saved);
     session.syncTimeButtons(els.timeButtons);

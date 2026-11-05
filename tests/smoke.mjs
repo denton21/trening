@@ -6,7 +6,8 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 const referenced = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map((match) => match[1]);
 const localRefs = referenced.filter((ref) => !ref.startsWith('http') && !ref.startsWith('#'));
-const missing = localRefs.filter((ref) => !fs.existsSync(path.join(root, ref)));
+const assetPath = (ref) => ref.split(/[?#]/, 1)[0];
+const missing = localRefs.filter((ref) => !fs.existsSync(path.join(root, assetPath(ref))));
 if (missing.length) {
   console.error(`Missing local files: ${missing.join(', ')}`);
   process.exit(1);
@@ -22,8 +23,9 @@ if (!cacheVersion) {
   console.error('Service Worker cache version is missing');
   process.exit(1);
 }
-const cached = [...sw.matchAll(/'\.\/([^']+)'/g)].map((match) => match[1]).filter((ref) => ref.endsWith('.js') || ref.endsWith('.css'));
-const localAssets = localRefs.filter((ref) => ref.endsWith('.js') || ref.endsWith('.css'));
+const isScriptOrStyle = (ref) => /\.(js|css)$/.test(assetPath(ref));
+const cached = [...sw.matchAll(/'\.\/([^']+)'/g)].map((match) => match[1]).filter(isScriptOrStyle);
+const localAssets = localRefs.filter(isScriptOrStyle);
 const uncached = localAssets.filter((ref) => !cached.includes(ref) && !cached.includes(ref.replace(/^\.\//, '')));
 if (uncached.length) {
   console.error(`Service Worker cache missing: ${uncached.join(', ')}`);
