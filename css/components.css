@@ -359,47 +359,107 @@ html[data-theme='dark'] .tab.active {
   gap: 10px;
 }
 
-.payouts-meta {
+.payouts-intro {
+  margin-bottom: 18px;
+}
+
+.payouts-modes > [data-mode='mixed'] {
+  grid-column: 1 / -1;
+}
+
+#payoutsTab .choice:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.payouts-guide {
+  margin-top: 16px;
+}
+
+.payouts-guide summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.payouts-task {
+  justify-items: stretch;
+  padding: 16px;
+  scroll-margin-top: 56px;
+}
+
+.payouts-ticket {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--line);
+}
+
+.payouts-ticket > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 8px;
+  background: var(--panel-solid);
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
 }
 
-.payouts-detail {
-  min-height: 32px;
-  font-size: clamp(22px, 4.5vw, 32px);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--accent-dark);
-  text-shadow: 0 0 28px var(--accent-glow);
+.payouts-ticket .label {
+  margin: 0;
 }
 
-.payouts-detail.is-enter {
-  animation: win-label-in 320ms var(--ease-out) both;
+.payouts-ticket strong {
+  color: var(--text);
+  font-size: clamp(23px, 4vw, 38px);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
-html[data-theme='dark'] .payouts-detail {
-  color: var(--accent);
+.payouts-request {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--felt-mid), var(--felt));
+  color: #fff;
+  text-align: left;
+}
+
+.payouts-request .label {
+  color: #bce4d7;
+}
+
+.payouts-request p {
+  margin: 0;
+  font-size: clamp(16px, 3vw, 22px);
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.payouts-solution {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-solid);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .payouts-answer-row {
   flex-wrap: wrap;
   justify-content: center;
   width: min(520px, 100%);
+  justify-self: center;
 }
 
 .payouts-inputs {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 210px;
   gap: 10px;
   min-width: 0;
-  width: min(420px, 100%);
-}
-
-.payouts-inputs.hidden {
-  display: none;
 }
 
 .payouts-field {
@@ -426,6 +486,16 @@ html[data-theme='dark'] .payouts-detail {
   flex: 0 0 auto;
   align-self: flex-end;
   min-height: 52px;
+}
+
+@media (max-width: 760px) {
+  .payouts-inputs {
+    flex-basis: auto;
+  }
+
+  .payouts-answer-row > .primary {
+    align-self: stretch;
+  }
 }
 
 .answer {
