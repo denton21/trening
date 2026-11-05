@@ -283,29 +283,24 @@
 
     <section class="layout hidden" id="payoutsTab" role="tabpanel" aria-label="Тренировка выплат">
       <div class="panel">
-        <h2>Выплаты</h2>
-        <p class="hint" id="payoutsHint">
-          <strong>Через кэш:</strong> кэш = N ÷ цвет, фишки цвета = выплата − кэш. Выплата ≤ 1000.
-          Примеры: на 5 — 240 через 500 → 140; на 2 — 780 через 500 → 530; на 25 — 595 через 5500 → 375.
-          <br>
-          <strong>Через фишки:</strong> иногда «5 стеков» ровно, иногда «примерно 2–3 стека»;
-          кэш = (выплата − фишки) × цвет.
-        </p>
+        <h2>Выплаты на рулетке</h2>
+        <p class="hint payouts-intro">Выигрыш уже подсчитан. Выдай его цветом и кэшем, как просит гость.</p>
 
         <div class="field">
-          <span class="label">Цвет</span>
+          <span class="label">Цена цветной фишки</span>
           <div class="time-choices" id="payoutsColorChoices">
-            <button class="choice active" type="button" data-color="1" aria-pressed="true">на 1</button>
-            <button class="choice" type="button" data-color="2" aria-pressed="false">на 2</button>
-            <button class="choice" type="button" data-color="5" aria-pressed="false">на 5</button>
-            <button class="choice" type="button" data-color="25" aria-pressed="false">на 25</button>
+            <button class="choice active" type="button" data-color="1" aria-pressed="true">$1</button>
+            <button class="choice" type="button" data-color="2" aria-pressed="false">$2</button>
+            <button class="choice" type="button" data-color="5" aria-pressed="false">$5</button>
+            <button class="choice" type="button" data-color="25" aria-pressed="false">$25</button>
           </div>
         </div>
 
         <div class="field">
-          <span class="label">Режим</span>
-          <div class="toggle-row" id="payoutsModeChoices">
-            <button class="choice active" type="button" data-mode="cash" aria-pressed="true">Через кэш</button>
+          <span class="label">Просьбы гостей</span>
+          <div class="toggle-row payouts-modes" id="payoutsModeChoices">
+            <button class="choice active" type="button" data-mode="mixed" aria-pressed="true">Смешанный раунд</button>
+            <button class="choice" type="button" data-mode="cash" aria-pressed="false">Через кэш</button>
             <button class="choice" type="button" data-mode="chips" aria-pressed="false">Через фишки</button>
           </div>
         </div>
@@ -321,9 +316,15 @@
         </div>
 
         <div class="actions">
-          <button class="primary" id="payoutsStartBtn" type="button">Старт</button>
+          <button class="primary" id="payoutsStartBtn" type="button">Начать раунд</button>
           <button class="secondary" id="payoutsResetBtn" type="button">Сброс</button>
         </div>
+        <details class="hint payouts-guide">
+          <summary>Как считается выплата</summary>
+          <p>В стеке 20 фишек. При просьбе «примерно 2–3 стека» можно выдать от 40 до 60 фишек.</p>
+          <p>Если гость назвал сумму кэша, раздели её на цену фишки и вычти результат из числа фишек к выдаче.</p>
+          <p>Если гость попросил стеки, вычти выданные фишки и умножь остаток на цену фишки.</p>
+        </details>
       </div>
 
       <div class="trainer">
@@ -333,27 +334,44 @@
           <div class="stat"><span>Ошибки</span><strong id="payoutsWrongCount">0</strong></div>
         </div>
         <div class="progress" aria-label="Остаток времени"><span id="payoutsTimeProgress"></span></div>
-        <div class="task" id="payoutsTask">
-          <div class="payouts-meta" id="payoutsMeta">цвет ×1 · через кэш</div>
-          <div class="example" id="payoutsExample">—</div>
-          <div class="payouts-detail" id="payoutsDetail">Нажмите «Старт»</div>
-          <form class="answer-row payouts-answer-row" id="payoutsAnswerForm">
+        <div class="task payouts-task" id="payoutsTask">
+          <div class="payouts-ticket">
+            <div>
+              <span class="label">К выдаче</span>
+              <strong id="payoutsExample">—</strong>
+              <span id="payoutsValue"></span>
+            </div>
+            <div>
+              <span class="label">Цена фишки</span>
+              <strong id="payoutsDenom">$1</strong>
+              <span>20 фишек в стеке</span>
+            </div>
+          </div>
+          <div class="payouts-request hidden" id="payoutsRequest">
+            <span class="label">Гость просит</span>
+            <p id="payoutsDetail"></p>
+          </div>
+          <form class="answer-row payouts-answer-row hidden" id="payoutsAnswerForm" novalidate>
             <div class="payouts-inputs" id="payoutsCashInputs">
-              <input class="answer" id="payoutsAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Остаток фишек цвета" disabled>
+              <label class="payouts-field">
+                <span>Цветные фишки</span>
+                <input class="answer" id="payoutsAnswer" type="number" inputmode="numeric" autocomplete="off" disabled>
+              </label>
             </div>
             <div class="payouts-inputs hidden" id="payoutsChipsInputs">
               <label class="payouts-field">
-                <span>Фишки</span>
-                <input class="answer" id="payoutsChipsAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Число фишек цвета" disabled>
+                <span>Цветные фишки</span>
+                <input class="answer" id="payoutsChipsAnswer" type="number" inputmode="numeric" autocomplete="off" enterkeyhint="next" disabled>
               </label>
               <label class="payouts-field">
-                <span>Кэш</span>
-                <input class="answer" id="payoutsCashAnswer" type="number" inputmode="numeric" autocomplete="off" aria-label="Сумма кэша" disabled>
+                <span>Кэш, $</span>
+                <input class="answer" id="payoutsCashAnswer" type="number" inputmode="numeric" autocomplete="off" disabled>
               </label>
             </div>
-            <button class="primary" id="payoutsAnswerBtn" type="submit" disabled>Ответить</button>
+            <button class="primary" id="payoutsAnswerBtn" type="submit" aria-describedby="payoutsSolution" disabled>Выдать</button>
           </form>
-          <div class="message" id="payoutsMessage">Нажмите «Старт»</div>
+          <div class="message" id="payoutsMessage" role="status">Нажми «Начать раунд»</div>
+          <p class="payouts-solution hidden" id="payoutsSolution"></p>
         </div>
       </div>
     </section>

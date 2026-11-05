@@ -26,7 +26,7 @@ window.Trainer = window.Trainer || {};
     },
     payouts: {
       color: 1,
-      mode: 'cash',
+      mode: 'mixed',
       duration: 60
     },
     poker: {

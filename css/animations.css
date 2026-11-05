@@ -813,7 +813,6 @@
   .example.is-enter,
   .example.is-leave,
   .choice.is-picked,
-  .payouts-detail.is-enter,
   #pokerMeta.is-enter,
   .counting-win.is-enter {
     animation: none !important;
