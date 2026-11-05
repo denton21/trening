@@ -94,7 +94,6 @@ window.Trainer = window.Trainer || {};
     cashInputs: $('#payoutsCashInputs'),
     chipsInputs: $('#payoutsChipsInputs'),
     example: $('#payoutsExample'),
-    value: $('#payoutsValue'),
     denom: $('#payoutsDenom'),
     request: $('#payoutsRequest'),
     detail: $('#payoutsDetail'),
@@ -157,7 +156,6 @@ window.Trainer = window.Trainer || {};
     const cashMode = question.mode === 'cash';
     clearReview();
     els.example.textContent = `${number.format(question.payout)} фиш.`;
-    els.value.textContent = money(question.payout * question.color);
     els.detail.textContent = `«${question.request}»`;
     els.request.classList.remove('hidden');
     els.answerForm.classList.remove('hidden');
@@ -186,7 +184,6 @@ window.Trainer = window.Trainer || {};
     state.question = null;
     clearReview();
     els.example.textContent = '—';
-    els.value.textContent = '';
     els.request.classList.add('hidden');
     els.answerForm.classList.add('hidden');
     syncRoundControls();
