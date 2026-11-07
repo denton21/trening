@@ -3,6 +3,7 @@ window.Trainer = window.Trainer || {};
 (function () {
   const { $, pick, randInt, showMessage, flashTask, keepAnswerFocus } = Trainer;
   const denomination = 5;
+  const maxAmount = 5000;
   const series = [
     { name: 'Voisins', units: 9 },
     { name: 'Orphelins', units: 5 },
@@ -26,7 +27,7 @@ window.Trainer = window.Trainer || {};
       const { name, units } = pick(series);
       const minimum = units * denomination;
       const remainder = randInt(0, 1) ? randInt(1, units - 1) * denomination : 0;
-      const amount = randInt(1, 10) * minimum + remainder;
+      const amount = randInt(1, Math.floor((maxAmount - remainder) / minimum)) * minimum + remainder;
       expectedStake = Math.floor(amount / minimum) * denomination;
       expectedChange = amount - expectedStake * units;
       question.textContent = `${name} · $${amount}`;
