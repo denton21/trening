@@ -29,6 +29,10 @@ window.Trainer = window.Trainer || {};
       button: $('#payoutsTabBtn'),
       stop: () => Trainer.stopPayouts()
     },
+    seriesPayouts: {
+      panel: $('#seriesPayoutsTab'),
+      button: $('#seriesPayoutsTabBtn')
+    },
     poker: {
       panel: $('#pokerTab'),
       button: $('#pokerTabBtn'),
@@ -122,7 +126,7 @@ window.Trainer = window.Trainer || {};
 
     switching = true;
     clearSwitchTimer();
-    Object.values(tabs).forEach((tab) => tab.stop());
+    Object.values(tabs).forEach((tab) => tab.stop?.());
     setButtons(name);
     revealTab(next.button);
     activeTab = name;
@@ -208,6 +212,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initBlackjack();
   Trainer.initCounting();
   Trainer.initPayouts();
+  Trainer.initSeriesPayouts();
   Trainer.initPoker();
   Trainer.initDuel();
   Trainer.initReference();

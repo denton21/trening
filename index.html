@@ -47,6 +47,7 @@
       <button class="tab" id="blackjackTabBtn" type="button" role="tab" aria-selected="false">Blackjack</button>
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
+      <button class="tab" id="seriesPayoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты серии</button>
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
       <button class="tab" id="referenceTabBtn" type="button" role="tab" aria-selected="false">Справка</button>
@@ -371,6 +372,36 @@
           </form>
           <div class="message" id="payoutsMessage" role="status">Нажми «Начать раунд»</div>
           <p class="payouts-solution hidden" id="payoutsSolution"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout hidden" id="seriesPayoutsTab" role="tabpanel" aria-label="Тренировка выплат по сериям">
+      <div class="panel">
+        <h2>Выплаты серии</h2>
+        <p class="hint payouts-intro">Гость называет серию и даёт сумму. Определи, по сколько играет серия и сколько вернуть сдачи.</p>
+        <p class="hint">Базовая ставка кратна $5. Если сдачи нет, оставь поле пустым и нажми Enter.</p>
+      </div>
+      <div class="trainer">
+        <div class="task payouts-task" id="seriesPayoutsTask">
+          <div class="payouts-request">
+            <span class="label">Гость просит</span>
+            <p id="seriesPayoutsQuestion" aria-live="polite"></p>
+          </div>
+          <form class="answer-row payouts-answer-row" id="seriesPayoutsForm" aria-describedby="seriesPayoutsQuestion">
+            <div class="payouts-inputs">
+              <label class="payouts-field">
+                <span>По сколько играет, $</span>
+                <input class="answer" id="seriesPayoutsStake" type="number" inputmode="numeric" autocomplete="off" min="5" required>
+              </label>
+              <label class="payouts-field">
+                <span>Сдача, $</span>
+                <input class="answer" id="seriesPayoutsChange" type="number" inputmode="numeric" autocomplete="off" min="0">
+              </label>
+            </div>
+            <button class="primary" id="seriesPayoutsSubmit" type="submit">Проверить</button>
+          </form>
+          <div class="message" id="seriesPayoutsMessage" role="status"></div>
         </div>
       </div>
     </section>
@@ -963,6 +994,7 @@
   <script src="js/modes/poker.js"></script>
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/modes/series-payouts.js"></script>
+  <script src="js/app.js?v=39"></script>
 </body>
 </html>
