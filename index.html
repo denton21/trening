@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
+  <link rel="stylesheet" href="css/roulette-track.css">
   <script>
     try {
       var raw = localStorage.getItem('roulette-trainer-settings-v2')
@@ -48,6 +49,7 @@
       <button class="tab" id="countingTabBtn" type="button" role="tab" aria-selected="false">Счёт</button>
       <button class="tab" id="payoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты</button>
       <button class="tab" id="seriesPayoutsTabBtn" type="button" role="tab" aria-selected="false">Выплаты серии</button>
+      <button class="tab" id="rouletteTrackTabBtn" type="button" role="tab" aria-selected="false">Трек</button>
       <button class="tab" id="pokerTabBtn" type="button" role="tab" aria-selected="false">Покер</button>
       <button class="tab" id="duelTabBtn" type="button" role="tab" aria-selected="false">Дуэль</button>
       <button class="tab" id="referenceTabBtn" type="button" role="tab" aria-selected="false">Справка</button>
@@ -404,6 +406,23 @@
           <div class="message" id="seriesPayoutsMessage" role="status"></div>
         </div>
       </div>
+    </section>
+
+    <section class="trainer roulette-track-trainer hidden" id="rouletteTrackTab" role="tabpanel">
+      <div class="roulette-track-header">
+        <div>
+          <h2>Трек рулетки</h2>
+          <p class="hint">Нажми ячейку, где находится заданное число.</p>
+        </div>
+        <button class="primary" id="rouletteTrackStart" type="button">Начать</button>
+      </div>
+      <div class="roulette-track-prompt">
+        <span>Найди число</span>
+        <strong id="rouletteTrackTarget" aria-live="polite">—</strong>
+      </div>
+      <svg class="roulette-track-board" id="rouletteTrackBoard" viewBox="0 0 740 180"
+        role="group" aria-label="Трек европейской рулетки"></svg>
+      <p class="message" id="rouletteTrackMessage" role="status"></p>
     </section>
 
     <section class="layout hidden" id="pokerTab" role="tabpanel" aria-label="Тренировка выплат покер и бонусы">
@@ -995,6 +1014,7 @@
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
   <script src="js/modes/series-payouts.js?v=40"></script>
-  <script src="js/app.js?v=39"></script>
+  <script src="js/modes/roulette-track.js"></script>
+  <script src="js/app.js?v=41"></script>
 </body>
 </html>

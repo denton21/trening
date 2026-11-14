@@ -1,0 +1,69 @@
+.roulette-track-trainer {
+  min-height: auto;
+}
+
+.roulette-track-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roulette-track-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+
+.roulette-track-prompt strong {
+  color: var(--text);
+  font-size: clamp(40px, 8vw, 68px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.roulette-track-board {
+  display: block;
+  width: 100%;
+  max-width: 850px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.roulette-track-cell {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.roulette-track-cell.is-red { fill: #a62b35; }
+.roulette-track-cell.is-black { fill: #18212b; }
+.roulette-track-cell.is-green { fill: #18654c; }
+
+.roulette-track-board[aria-disabled="true"] .roulette-track-cell {
+  cursor: default;
+}
+
+.roulette-track-cell:focus-visible {
+  outline: none;
+  stroke: #facc15;
+  stroke-width: 4;
+}
+
+.roulette-track-cell.is-hit {
+  fill: #36a271;
+}
+
+.roulette-track-cell.is-miss {
+  fill: #e35b4c;
+}
+
+#rouletteTrackMessage {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  text-align: center;
+}

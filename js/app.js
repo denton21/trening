@@ -33,6 +33,11 @@ window.Trainer = window.Trainer || {};
       panel: $('#seriesPayoutsTab'),
       button: $('#seriesPayoutsTabBtn')
     },
+    rouletteTrack: {
+      panel: $('#rouletteTrackTab'),
+      button: $('#rouletteTrackTabBtn'),
+      stop: () => Trainer.stopRouletteTrack()
+    },
     poker: {
       panel: $('#pokerTab'),
       button: $('#pokerTabBtn'),
@@ -213,6 +218,7 @@ window.Trainer = window.Trainer || {};
   Trainer.initCounting();
   Trainer.initPayouts();
   Trainer.initSeriesPayouts();
+  Trainer.initRouletteTrack();
   Trainer.initPoker();
   Trainer.initDuel();
   Trainer.initReference();
