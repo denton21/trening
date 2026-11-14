@@ -33,6 +33,25 @@
   margin: 0 auto;
 }
 
+.roulette-track-series-background {
+  fill: #15372f;
+}
+
+.roulette-track-series-boundaries {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 2;
+}
+
+.roulette-track-series-label {
+  fill: #f1f5f9;
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
 .roulette-track-cell {
   stroke: #e2e8f0;
   stroke-width: 1;

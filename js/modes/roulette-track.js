@@ -8,22 +8,26 @@ window.Trainer = window.Trainer || {};
   const centerY = 90;
   const left = 90;
   const right = 650;
+  const top = centerY - innerRadius;
+  const bottom = centerY + innerRadius;
+  const orphelinsStart = left + (right - left) * 5 / 17;
+  const orphelinsEnd = left + (right - left) * 10 / 17;
+  const zeroStart = right - (right - left) * 2.6 / 17;
   const clock = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
   let stop;
 
-  function straightCells(count, top) {
-    const width = (right - left) / count;
-    const y = top ? centerY - outerRadius : centerY + innerRadius;
+  function straightCells(count, from, to, y) {
+    const width = (to - from) / count;
     return Array.from({ length: count }, (_, index) => {
-      const x = top ? left + index * width : right - (index + 1) * width;
+      const x = from + index * width;
       return `M ${x} ${y} h ${width} v ${outerRadius - innerRadius} h ${-width} Z`;
     });
   }
 
-  function curvedCells(centerX, angle) {
-    const step = Math.PI / 5;
+  function curvedCells(centerX, angle, count) {
+    const step = Math.PI / count;
     const point = (radius, a) => `${centerX + radius * Math.cos(a)} ${centerY + radius * Math.sin(a)}`;
-    return Array.from({ length: 5 }, (_, index) => {
+    return Array.from({ length: count }, (_, index) => {
       const start = angle + index * step;
       const end = start + step;
       return [
@@ -35,20 +39,57 @@ window.Trainer = window.Trainer || {};
     });
   }
 
+  function drawSeries(board) {
+    const background = document.createElementNS(namespace, 'path');
+    background.setAttribute('class', 'roulette-track-series-background');
+    background.setAttribute('d', [
+      `M ${left} ${top} H ${right}`,
+      `A ${innerRadius} ${innerRadius} 0 0 1 ${right} ${bottom} H ${left}`,
+      `A ${innerRadius} ${innerRadius} 0 0 1 ${left} ${top} Z`
+    ].join(' '));
+
+    const boundaries = document.createElementNS(namespace, 'path');
+    boundaries.setAttribute('class', 'roulette-track-series-boundaries');
+    boundaries.setAttribute('d', [
+      `M ${orphelinsStart} ${top} V ${bottom}`,
+      `M ${orphelinsEnd} ${top} V ${bottom}`,
+      `M ${zeroStart} ${top} A ${innerRadius} ${innerRadius} 0 0 0 ${zeroStart} ${bottom}`
+    ].join(' '));
+    board.append(background, boundaries);
+
+    const labels = [
+      ['SERIE 5/8', (left + orphelinsStart) / 2],
+      ['ORPHELINS', (orphelinsStart + orphelinsEnd) / 2],
+      ['SERIE 0/2/3', (orphelinsEnd + zeroStart - innerRadius) / 2],
+      ['0-SPIEL', (zeroStart + right) / 2]
+    ];
+    for (const [name, x] of labels) {
+      const label = document.createElementNS(namespace, 'text');
+      label.setAttribute('class', 'roulette-track-series-label');
+      label.setAttribute('x', x);
+      label.setAttribute('y', centerY);
+      label.textContent = name;
+      board.appendChild(label);
+    }
+  }
+
   Trainer.initRouletteTrack = function initRouletteTrack() {
     const board = $('#rouletteTrackBoard');
     const target = $('#rouletteTrackTarget');
     const message = $('#rouletteTrackMessage');
     const start = $('#rouletteTrackStart');
-    // With 14 cells on top, the middle of the right curve is number 26.
-    const first = EURO_ORDER.indexOf(26) - 16;
+    // The reference starts at 10; the right curve reads 3, 26, 0.
+    const first = EURO_ORDER.indexOf(10);
     const numbers = [...EURO_ORDER.slice(first), ...EURO_ORDER.slice(0, first)];
     const paths = [
-      ...straightCells(14, true),
-      ...curvedCells(right, -Math.PI / 2),
-      ...straightCells(13, false),
-      ...curvedCells(left, Math.PI / 2)
+      ...straightCells(17, left, right, centerY - outerRadius),
+      ...curvedCells(right, -Math.PI / 2, 3),
+      ...straightCells(7, right, orphelinsEnd, bottom),
+      ...straightCells(3, orphelinsEnd, orphelinsStart, bottom),
+      ...straightCells(5, orphelinsStart, left, bottom),
+      ...curvedCells(left, Math.PI / 2, 2)
     ];
+    drawSeries(board);
     const cells = paths.map((d, index) => {
       const cell = document.createElementNS(namespace, 'path');
       const number = numbers[index];
