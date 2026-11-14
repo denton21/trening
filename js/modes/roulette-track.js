@@ -5,6 +5,7 @@ window.Trainer = window.Trainer || {};
   const namespace = 'http://www.w3.org/2000/svg';
   const outerRadius = 84;
   const innerRadius = 46;
+  const labelRadius = (outerRadius + innerRadius) / 2;
   const centerY = 90;
   const left = 90;
   const right = 650;
@@ -20,7 +21,11 @@ window.Trainer = window.Trainer || {};
     const width = (to - from) / count;
     return Array.from({ length: count }, (_, index) => {
       const x = from + index * width;
-      return `M ${x} ${y} h ${width} v ${outerRadius - innerRadius} h ${-width} Z`;
+      return {
+        d: `M ${x} ${y} h ${width} v ${outerRadius - innerRadius} h ${-width} Z`,
+        labelX: x + width / 2,
+        labelY: y + (outerRadius - innerRadius) / 2
+      };
     });
   }
 
@@ -30,12 +35,17 @@ window.Trainer = window.Trainer || {};
     return Array.from({ length: count }, (_, index) => {
       const start = angle + index * step;
       const end = start + step;
-      return [
-        `M ${point(outerRadius, start)}`,
-        `A ${outerRadius} ${outerRadius} 0 0 1 ${point(outerRadius, end)}`,
-        `L ${point(innerRadius, end)}`,
-        `A ${innerRadius} ${innerRadius} 0 0 0 ${point(innerRadius, start)} Z`
-      ].join(' ');
+      const middle = (start + end) / 2;
+      return {
+        d: [
+          `M ${point(outerRadius, start)}`,
+          `A ${outerRadius} ${outerRadius} 0 0 1 ${point(outerRadius, end)}`,
+          `L ${point(innerRadius, end)}`,
+          `A ${innerRadius} ${innerRadius} 0 0 0 ${point(innerRadius, start)} Z`
+        ].join(' '),
+        labelX: centerX + labelRadius * Math.cos(middle),
+        labelY: centerY + labelRadius * Math.sin(middle)
+      };
     });
   }
 
@@ -78,6 +88,7 @@ window.Trainer = window.Trainer || {};
     const target = $('#rouletteTrackTarget');
     const message = $('#rouletteTrackMessage');
     const start = $('#rouletteTrackStart');
+    const showNumbers = $('#rouletteTrackShowNumbers');
     // The reference starts at 10; the right curve reads 3, 26, 0.
     const first = EURO_ORDER.indexOf(10);
     const numbers = [...EURO_ORDER.slice(first), ...EURO_ORDER.slice(0, first)];
@@ -90,18 +101,41 @@ window.Trainer = window.Trainer || {};
       ...curvedCells(left, Math.PI / 2, 2)
     ];
     drawSeries(board);
-    const cells = paths.map((d, index) => {
+    const numberLabels = document.createElementNS(namespace, 'g');
+    numberLabels.setAttribute('aria-hidden', 'true');
+    const cells = paths.map(({ d, labelX, labelY }, index) => {
       const cell = document.createElementNS(namespace, 'path');
       const number = numbers[index];
       const color = number === 0 ? 'green' : EURO_RED.has(number) ? 'red' : 'black';
       cell.setAttribute('d', d);
       cell.setAttribute('class', `roulette-track-cell is-${color}`);
       cell.setAttribute('role', 'button');
-      cell.setAttribute('aria-label', `Ячейка ${index + 1} по часовой стрелке`);
       cell.dataset.number = number;
       board.appendChild(cell);
+
+      const label = document.createElementNS(namespace, 'text');
+      label.setAttribute('class', 'roulette-track-number-label');
+      label.setAttribute('x', labelX);
+      label.setAttribute('y', labelY);
+      label.textContent = String(number);
+      numberLabels.appendChild(label);
       return cell;
     });
+    board.appendChild(numberLabels);
+
+    function updateNumberVisibility() {
+      numberLabels.classList.toggle('hidden', !showNumbers.checked);
+      cells.forEach((cell, index) => {
+        const label = showNumbers.checked
+          ? `Число ${numbers[index]}`
+          : `Ячейка ${index + 1} по часовой стрелке`;
+        cell.setAttribute('aria-label', label);
+      });
+    }
+
+    showNumbers.addEventListener('change', updateNumberVisibility);
+    updateNumberVisibility();
+
     let expected = null;
     let startedAt = 0;
     let markedCell;

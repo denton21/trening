@@ -10,6 +10,24 @@
   gap: 12px;
 }
 
+.roulette-track-actions,
+.roulette-track-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.roulette-track-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.roulette-track-toggle {
+  gap: 6px;
+  min-height: 44px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .roulette-track-prompt {
   display: grid;
   justify-items: center;
@@ -46,6 +64,15 @@
 .roulette-track-series-label {
   fill: #f1f5f9;
   font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.roulette-track-number-label {
+  fill: #fff;
+  font-size: 22px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
