@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
-  <link rel="stylesheet" href="css/roulette-track.css?v=45">
+  <link rel="stylesheet" href="css/roulette-track.css?v=46">
   <script>
     try {
       var raw = localStorage.getItem('roulette-trainer-settings-v2')
@@ -436,13 +436,20 @@
           <time id="rouletteTrackTestTime" role="timer">0:00</time>
         </div>
         <div class="roulette-track-prompt">
-          <span>Где это число?</span>
+          <span>Выбери сторону и серию</span>
           <strong id="rouletteTrackTestNumber" aria-live="polite">—</strong>
         </div>
         <button class="primary" id="rouletteTrackTestStart" type="button">Начать тест</button>
         <div class="roulette-track-test-answers hidden" id="rouletteTrackTestAnswers">
-          <button class="primary" type="button" data-side="upper">Верхний</button>
-          <button class="primary" type="button" data-side="lower">Нижний</button>
+          <div class="roulette-track-test-options" role="group" aria-label="Сторона трека">
+            <button class="choice" type="button" data-side="upper" aria-pressed="false">Верхний</button>
+            <button class="choice" type="button" data-side="lower" aria-pressed="false">Нижний</button>
+          </div>
+          <div class="roulette-track-test-options" role="group" aria-label="Серия">
+            <button class="choice" type="button" data-series="Voisins" aria-pressed="false">Voisins</button>
+            <button class="choice" type="button" data-series="Orphelins" aria-pressed="false">Orphelins</button>
+            <button class="choice" type="button" data-series="Tiers" aria-pressed="false">Tiers</button>
+          </div>
         </div>
         <p class="message" id="rouletteTrackTestResult" role="status"></p>
       </div>
@@ -1037,7 +1044,7 @@
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
   <script src="js/modes/series-payouts.js?v=40"></script>
-  <script src="js/modes/roulette-track.js?v=45"></script>
+  <script src="js/modes/roulette-track.js?v=46"></script>
   <script src="js/app.js?v=41"></script>
 </body>
 </html>

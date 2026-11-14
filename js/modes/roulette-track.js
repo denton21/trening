@@ -83,11 +83,12 @@ window.Trainer = window.Trainer || {};
     }
   }
 
-  function initTrackTest(upperNumbers, setTestMode) {
+  function initTrackTest(positions, setTestMode) {
     const mode = $('#rouletteTrackTestMode');
     const panel = $('#rouletteTrackTest');
     const start = $('#rouletteTrackTestStart');
     const answers = $('#rouletteTrackTestAnswers');
+    const answerButtons = answers.querySelectorAll('button');
     const upperButton = answers.querySelector('[data-side="upper"]');
     const number = $('#rouletteTrackTestNumber');
     const progress = $('#rouletteTrackTestProgress');
@@ -105,6 +106,7 @@ window.Trainer = window.Trainer || {};
     }
 
     function showNumber(value) {
+      answerButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
       number.textContent = value ?? '—';
       number.classList.toggle('is-red', value != null && EURO_RED.has(value));
       number.classList.toggle('is-black', value != null && !EURO_RED.has(value));
@@ -151,11 +153,18 @@ window.Trainer = window.Trainer || {};
     });
 
     answers.addEventListener('click', (event) => {
-      const side = event.target.closest('[data-side]')?.dataset.side;
-      if (timer === null || !side) return;
+      const button = event.target.closest('button');
+      if (timer === null || !button) return;
+      button.parentElement.querySelectorAll('button').forEach((option) => {
+        option.setAttribute('aria-pressed', String(option === button));
+      });
 
-      const upper = upperNumbers.has(questions[answered]);
-      const hit = upper === (side === 'upper');
+      const side = answers.querySelector('[data-side][aria-pressed="true"]')?.dataset.side;
+      const series = answers.querySelector('[data-series][aria-pressed="true"]')?.dataset.series;
+      if (!side || !series) return;
+
+      const position = positions.get(questions[answered]);
+      const hit = position.side === side && position.series === series;
       if (hit) correct += 1;
       answered += 1;
       progress.textContent = `${answered} / ${questions.length}`;
@@ -168,7 +177,8 @@ window.Trainer = window.Trainer || {};
         return;
       }
 
-      showMessage(result, hit ? 'Верно' : upper ? 'Правильный ответ — верхний' : 'Правильный ответ — нижний', hit ? 'good' : 'bad');
+      const correctSide = position.side === 'upper' ? 'Верхний' : 'Нижний';
+      showMessage(result, hit ? 'Верно' : `${correctSide} · ${position.series}`, hit ? 'good' : 'bad');
       showNumber(questions[answered]);
     });
 
@@ -287,11 +297,16 @@ window.Trainer = window.Trainer || {};
       setActive(false);
     }
 
-    const upperNumbers = new Set(numbers.filter((number, index) => (
-      number === 26 || paths[index].labelY < centerY
-    )));
+    const positions = new Map(numbers.map((number, index) => {
+      const { labelX, labelY } = paths[index];
+      const side = number === 26 || labelY < centerY ? 'upper' : 'lower';
+      let series = 'Orphelins';
+      if (labelX < orphelinsStart) series = 'Tiers';
+      if (labelX > orphelinsEnd) series = 'Voisins';
+      return [number, { side, series }];
+    }));
     const practiceControls = [hint, showNumbers.parentElement, start, target.parentElement, board, message];
-    const stopTest = initTrackTest(upperNumbers, (active) => {
+    const stopTest = initTrackTest(positions, (active) => {
       stopPractice();
       trainer.classList.toggle('is-testing', active);
       practiceControls.forEach((element) => element.classList.toggle('hidden', active));

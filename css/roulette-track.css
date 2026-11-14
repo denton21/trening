@@ -151,8 +151,19 @@
 
 .roulette-track-test-answers {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.roulette-track-test-options {
+  display: flex;
+  gap: 8px;
+}
+
+.roulette-track-test-options .choice {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 4px;
 }
 
 #rouletteTrackTestResult {
