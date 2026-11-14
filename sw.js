@@ -1,15 +1,15 @@
 /* Offline cache for solo modes. Duel MQTT still needs network. */
-const CACHE = 'roulette-trainer-v44';
+const CACHE = 'roulette-trainer-v45';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/base.css', './css/components.css', './css/board.css', './css/animations.css', './css/reference.css',
-  './css/roulette-track.css?v=44',
+  './css/roulette-track.css?v=45',
   './js/utils.js', './js/settings.js', './js/ui.js', './js/stats.js', './js/formulas.js',
   './js/payout-catalog.js', './js/session.js', './js/addition-bank.js', './js/patterns.js',
   './js/modes/multiplication.js', './js/modes/addition.js', './js/modes/blackjack.js',
   './js/modes/counting.js', './js/modes/payouts.js?v=38', './js/modes/poker.js',
   './js/modes/duel.js', './js/modes/reference.js', './js/modes/series-payouts.js?v=40',
-  './js/modes/roulette-track.js?v=44', './js/app.js?v=41',
+  './js/modes/roulette-track.js?v=45', './js/app.js?v=41',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 

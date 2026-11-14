@@ -1,7 +1,7 @@
 window.Trainer = window.Trainer || {};
 
 (function () {
-  const { $, EURO_ORDER, EURO_RED, pick, showMessage } = Trainer;
+  const { $, EURO_ORDER, EURO_RED, pick, shuffle, formatTime, showMessage } = Trainer;
   const namespace = 'http://www.w3.org/2000/svg';
   const outerRadius = 84;
   const innerRadius = 46;
@@ -83,12 +83,106 @@ window.Trainer = window.Trainer || {};
     }
   }
 
+  function initTrackTest(upperNumbers, setTestMode) {
+    const mode = $('#rouletteTrackTestMode');
+    const panel = $('#rouletteTrackTest');
+    const start = $('#rouletteTrackTestStart');
+    const answers = $('#rouletteTrackTestAnswers');
+    const upperButton = answers.querySelector('[data-side="upper"]');
+    const number = $('#rouletteTrackTestNumber');
+    const progress = $('#rouletteTrackTestProgress');
+    const time = $('#rouletteTrackTestTime');
+    const result = $('#rouletteTrackTestResult');
+    const pool = EURO_ORDER.filter((value) => value !== 0);
+    let questions = [];
+    let answered = 0;
+    let correct = 0;
+    let startedAt;
+    let timer = null;
+
+    function updateTime() {
+      time.textContent = formatTime(Math.floor((performance.now() - startedAt) / 1000));
+    }
+
+    function showNumber(value) {
+      number.textContent = value ?? '—';
+      number.classList.toggle('is-red', value != null && EURO_RED.has(value));
+      number.classList.toggle('is-black', value != null && !EURO_RED.has(value));
+    }
+
+    function endRun() {
+      clearInterval(timer);
+      timer = null;
+      answers.classList.add('hidden');
+      start.classList.remove('hidden');
+      showNumber(null);
+    }
+
+    function reset() {
+      if (timer === null) return;
+      endRun();
+      time.textContent = formatTime(0);
+      progress.textContent = `0 / ${pool.length}`;
+      showMessage(result, '');
+    }
+
+    mode.addEventListener('click', () => {
+      const active = !panel.classList.toggle('hidden');
+      mode.setAttribute('aria-pressed', String(active));
+      mode.textContent = active ? 'Вернуться к треку' : 'Тест по всем числам';
+      reset();
+      setTestMode(active);
+    });
+
+    start.addEventListener('click', () => {
+      if (timer !== null) return;
+      questions = shuffle(pool);
+      answered = 0;
+      correct = 0;
+      progress.textContent = `0 / ${questions.length}`;
+      showMessage(result, '');
+      start.classList.add('hidden');
+      answers.classList.remove('hidden');
+      showNumber(questions[0]);
+      startedAt = performance.now();
+      updateTime();
+      timer = setInterval(updateTime, 250);
+      upperButton.focus();
+    });
+
+    answers.addEventListener('click', (event) => {
+      const side = event.target.closest('[data-side]')?.dataset.side;
+      if (timer === null || !side) return;
+
+      const upper = upperNumbers.has(questions[answered]);
+      const hit = upper === (side === 'upper');
+      if (hit) correct += 1;
+      answered += 1;
+      progress.textContent = `${answered} / ${questions.length}`;
+
+      if (answered === questions.length) {
+        updateTime();
+        endRun();
+        showMessage(result, `Верно ${correct} из ${questions.length} · ${time.textContent}`, 'good');
+        start.focus();
+        return;
+      }
+
+      showMessage(result, hit ? 'Верно' : upper ? 'Правильный ответ — верхний' : 'Правильный ответ — нижний', hit ? 'good' : 'bad');
+      showNumber(questions[answered]);
+    });
+
+    return reset;
+  }
+
   Trainer.initRouletteTrack = function initRouletteTrack() {
     const board = $('#rouletteTrackBoard');
     const target = $('#rouletteTrackTarget');
     const message = $('#rouletteTrackMessage');
     const start = $('#rouletteTrackStart');
     const showNumbers = $('#rouletteTrackShowNumbers');
+    const trainer = $('#rouletteTrackTab');
+    const hint = $('#rouletteTrackHint');
     // The reference starts at 10; the right curve reads 3, 26, 0.
     const first = EURO_ORDER.indexOf(10);
     const numbers = [...EURO_ORDER.slice(first), ...EURO_ORDER.slice(0, first)];
@@ -184,13 +278,27 @@ window.Trainer = window.Trainer || {};
         guess(event.target);
       }
     });
-    stop = () => {
+    function stopPractice() {
       if (expected === null) return;
       expected = null;
       target.textContent = '—';
       clearMark();
       showMessage(message, '');
       setActive(false);
+    }
+
+    const upperNumbers = new Set(numbers.filter((number, index) => (
+      number === 26 || paths[index].labelY < centerY
+    )));
+    const practiceControls = [hint, showNumbers.parentElement, start, target.parentElement, board, message];
+    const stopTest = initTrackTest(upperNumbers, (active) => {
+      stopPractice();
+      trainer.classList.toggle('is-testing', active);
+      practiceControls.forEach((element) => element.classList.toggle('hidden', active));
+    });
+    stop = () => {
+      stopPractice();
+      stopTest();
     };
     setActive(false);
   };

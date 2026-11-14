@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
-  <link rel="stylesheet" href="css/roulette-track.css?v=44">
+  <link rel="stylesheet" href="css/roulette-track.css?v=45">
   <script>
     try {
       var raw = localStorage.getItem('roulette-trainer-settings-v2')
@@ -412,7 +412,7 @@
       <div class="roulette-track-header">
         <div>
           <h2>Трек рулетки</h2>
-          <p class="hint">Нажми ячейку, где находится заданное число.</p>
+          <p class="hint" id="rouletteTrackHint">Нажми ячейку, где находится заданное число.</p>
         </div>
         <div class="roulette-track-actions">
           <label class="roulette-track-toggle">
@@ -420,6 +420,7 @@
             Показать цифры
           </label>
           <button class="primary" id="rouletteTrackStart" type="button">Начать</button>
+          <button class="secondary" id="rouletteTrackTestMode" type="button" aria-pressed="false" aria-controls="rouletteTrackTest">Тест по всем числам</button>
         </div>
       </div>
       <div class="roulette-track-prompt">
@@ -429,6 +430,22 @@
       <svg class="roulette-track-board" id="rouletteTrackBoard" viewBox="0 0 740 180"
         role="group" aria-label="Трек европейской рулетки"></svg>
       <p class="message" id="rouletteTrackMessage" role="status"></p>
+      <div class="roulette-track-test hidden" id="rouletteTrackTest">
+        <div class="roulette-track-test-status">
+          <span id="rouletteTrackTestProgress">0 / 36</span>
+          <time id="rouletteTrackTestTime" role="timer">0:00</time>
+        </div>
+        <div class="roulette-track-prompt">
+          <span>Где это число?</span>
+          <strong id="rouletteTrackTestNumber" aria-live="polite">—</strong>
+        </div>
+        <button class="primary" id="rouletteTrackTestStart" type="button">Начать тест</button>
+        <div class="roulette-track-test-answers hidden" id="rouletteTrackTestAnswers">
+          <button class="primary" type="button" data-side="upper">Верхний</button>
+          <button class="primary" type="button" data-side="lower">Нижний</button>
+        </div>
+        <p class="message" id="rouletteTrackTestResult" role="status"></p>
+      </div>
     </section>
 
     <section class="layout hidden" id="pokerTab" role="tabpanel" aria-label="Тренировка выплат покер и бонусы">
@@ -1020,7 +1037,7 @@
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
   <script src="js/modes/series-payouts.js?v=40"></script>
-  <script src="js/modes/roulette-track.js?v=44"></script>
+  <script src="js/modes/roulette-track.js?v=45"></script>
   <script src="js/app.js?v=41"></script>
 </body>
 </html>

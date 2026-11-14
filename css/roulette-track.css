@@ -114,8 +114,54 @@
   text-align: center;
 }
 
+.roulette-track-test {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 460px);
+  justify-self: center;
+  text-align: center;
+}
+
+.roulette-track-test-status {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+
+.roulette-track-test .roulette-track-prompt {
+  margin: 8px 0;
+}
+
+.roulette-track-test .roulette-track-prompt strong {
+  min-width: 1.8em;
+  padding: 0.18em;
+  border-radius: 12px;
+}
+
+.roulette-track-test strong.is-red {
+  background: #a62b35;
+  color: #fff;
+}
+
+.roulette-track-test strong.is-black {
+  background: #18212b;
+  color: #fff;
+}
+
+.roulette-track-test-answers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#rouletteTrackTestResult {
+  min-height: 1.5em;
+  margin: 0;
+}
+
 @media (orientation: landscape) {
-  .roulette-track-trainer {
+  .roulette-track-trainer:not(.is-testing) {
     grid-template-columns: max-content minmax(0, 1fr);
     grid-template-areas:
       "header header"
@@ -125,11 +171,11 @@
     column-gap: 12px;
   }
 
-  .roulette-track-header { grid-area: header; }
+  .roulette-track-trainer:not(.is-testing) > .roulette-track-header { grid-area: header; }
   .roulette-track-board { grid-area: board; }
   #rouletteTrackMessage { grid-area: status; }
 
-  .roulette-track-prompt {
+  .roulette-track-trainer > .roulette-track-prompt {
     grid-area: prompt;
     margin: 0;
     font-size: 12px;
