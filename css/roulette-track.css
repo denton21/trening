@@ -86,3 +86,44 @@
   margin: 12px 0 0;
   text-align: center;
 }
+
+@media (orientation: landscape) {
+  .roulette-track-trainer {
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-areas:
+      "header header"
+      "prompt board"
+      "status status";
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  .roulette-track-header { grid-area: header; }
+  .roulette-track-board { grid-area: board; }
+  #rouletteTrackMessage { grid-area: status; }
+
+  .roulette-track-prompt {
+    grid-area: prompt;
+    margin: 0;
+    font-size: 12px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  main:has(#rouletteTrackTab:not(.hidden)) {
+    width: min(1120px, calc(100% - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))));
+  }
+
+  .roulette-track-trainer {
+    padding: 10px;
+    row-gap: 8px;
+  }
+
+  .roulette-track-header h2 {
+    margin-bottom: 0;
+  }
+
+  #rouletteTrackMessage {
+    margin: 0;
+  }
+}
