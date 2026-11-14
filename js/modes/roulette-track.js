@@ -108,8 +108,6 @@ window.Trainer = window.Trainer || {};
     function showNumber(value) {
       answerButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
       number.textContent = value ?? '—';
-      number.classList.toggle('is-red', value != null && EURO_RED.has(value));
-      number.classList.toggle('is-black', value != null && !EURO_RED.has(value));
     }
 
     function endRun() {
@@ -161,24 +159,31 @@ window.Trainer = window.Trainer || {};
 
       const side = answers.querySelector('[data-side][aria-pressed="true"]')?.dataset.side;
       const series = answers.querySelector('[data-series][aria-pressed="true"]')?.dataset.series;
-      if (!side || !series) return;
+      const color = answers.querySelector('[data-color][aria-pressed="true"]')?.dataset.color;
+      if (!side || !series || !color) return;
 
-      const position = positions.get(questions[answered]);
-      const hit = position.side === side && position.series === series;
+      const value = questions[answered];
+      const position = positions.get(value);
+      const red = EURO_RED.has(value);
+      const hit = position.side === side && position.series === series && red === (color === 'red');
       if (hit) correct += 1;
       answered += 1;
       progress.textContent = `${answered} / ${questions.length}`;
 
+      const correctSide = position.side === 'upper' ? 'Верхний' : 'Нижний';
+      const correctColor = red ? 'Красный' : 'Чёрный';
+      const correctAnswer = `${correctSide} · ${position.series} · ${correctColor}`;
+
       if (answered === questions.length) {
         updateTime();
         endRun();
-        showMessage(result, `Верно ${correct} из ${questions.length} · ${time.textContent}`, 'good');
+        const summary = `Верно ${correct} из ${questions.length} · ${time.textContent}`;
+        showMessage(result, hit ? summary : `${summary} · ${value}: ${correctAnswer}`, 'good');
         start.focus();
         return;
       }
 
-      const correctSide = position.side === 'upper' ? 'Верхний' : 'Нижний';
-      showMessage(result, hit ? 'Верно' : `${correctSide} · ${position.series}`, hit ? 'good' : 'bad');
+      showMessage(result, hit ? 'Верно' : correctAnswer, hit ? 'good' : 'bad');
       showNumber(questions[answered]);
     });
 

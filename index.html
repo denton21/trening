@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
-  <link rel="stylesheet" href="css/roulette-track.css?v=46">
+  <link rel="stylesheet" href="css/roulette-track.css?v=47">
   <script>
     try {
       var raw = localStorage.getItem('roulette-trainer-settings-v2')
@@ -436,7 +436,7 @@
           <time id="rouletteTrackTestTime" role="timer">0:00</time>
         </div>
         <div class="roulette-track-prompt">
-          <span>Выбери сторону и серию</span>
+          <span>Выбери сторону, серию и цвет</span>
           <strong id="rouletteTrackTestNumber" aria-live="polite">—</strong>
         </div>
         <button class="primary" id="rouletteTrackTestStart" type="button">Начать тест</button>
@@ -449,6 +449,10 @@
             <button class="choice" type="button" data-series="Voisins" aria-pressed="false">Voisins</button>
             <button class="choice" type="button" data-series="Orphelins" aria-pressed="false">Orphelins</button>
             <button class="choice" type="button" data-series="Tiers" aria-pressed="false">Tiers</button>
+          </div>
+          <div class="roulette-track-test-options" role="group" aria-label="Цвет">
+            <button class="choice" type="button" data-color="red" aria-pressed="false">Красный</button>
+            <button class="choice" type="button" data-color="black" aria-pressed="false">Чёрный</button>
           </div>
         </div>
         <p class="message" id="rouletteTrackTestResult" role="status"></p>
@@ -1044,7 +1048,7 @@
   <script src="js/modes/duel.js"></script>
   <script src="js/modes/reference.js"></script>
   <script src="js/modes/series-payouts.js?v=40"></script>
-  <script src="js/modes/roulette-track.js?v=46"></script>
+  <script src="js/modes/roulette-track.js?v=47"></script>
   <script src="js/app.js?v=41"></script>
 </body>
 </html>

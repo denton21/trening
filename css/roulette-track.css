@@ -139,16 +139,6 @@
   border-radius: 12px;
 }
 
-.roulette-track-test strong.is-red {
-  background: #a62b35;
-  color: #fff;
-}
-
-.roulette-track-test strong.is-black {
-  background: #18212b;
-  color: #fff;
-}
-
 .roulette-track-test-answers {
   display: grid;
   gap: 12px;
