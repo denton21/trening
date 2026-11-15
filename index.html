@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/reference.css">
-  <link rel="stylesheet" href="css/roulette-track.css?v=47">
+  <link rel="stylesheet" href="css/roulette-track.css?v=48">
   <script>
     try {
       var raw = localStorage.getItem('roulette-trainer-settings-v2')
@@ -446,13 +446,13 @@
             <button class="choice" type="button" data-side="lower" aria-pressed="false">Нижний</button>
           </div>
           <div class="roulette-track-test-options" role="group" aria-label="Серия">
-            <button class="choice" type="button" data-series="Voisins" aria-pressed="false">Voisins</button>
-            <button class="choice" type="button" data-series="Orphelins" aria-pressed="false">Orphelins</button>
             <button class="choice" type="button" data-series="Tiers" aria-pressed="false">Tiers</button>
+            <button class="choice" type="button" data-series="Orphelins" aria-pressed="false">Orphelins</button>
+            <button class="choice" type="button" data-series="Voisins" aria-pressed="false">Voisins</button>
           </div>
           <div class="roulette-track-test-options" role="group" aria-label="Цвет">
-            <button class="choice" type="button" data-color="red" aria-pressed="false">Красный</button>
-            <button class="choice" type="button" data-color="black" aria-pressed="false">Чёрный</button>
+            <button class="choice" type="button" data-color="red" aria-label="Красный" aria-pressed="false"></button>
+            <button class="choice" type="button" data-color="black" aria-label="Чёрный" aria-pressed="false"></button>
           </div>
         </div>
         <p class="message" id="rouletteTrackTestResult" role="status"></p>
